@@ -67,7 +67,7 @@ export function WorkspaceCard({
           <div className="text-sm text-muted-foreground">
             ID: {workspace.id}
           </div>
-          <Link href={`/${workspace.id}/dashboard/analytics`}>
+          <Link href={`/${workspace.id}/dashboard/members`}>
             <Button>
               Open
               <ArrowRight className="ml-2 size-4" />

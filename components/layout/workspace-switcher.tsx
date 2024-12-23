@@ -114,17 +114,16 @@ export function WorkspaceSwitcher({
                 <div className="font-medium text-foreground">Settings</div>
               </Link>
             </DropdownMenuItem>
-
-            <DropdownMenuItem className="my-1 flex items-center gap-2 p-2">
-              {" "}
-              {/* Added margin */}
-              <Link href="/" className="flex items-center space-x-1">
+            <Link href="/" className="flex items-center space-x-1">
+              <DropdownMenuItem className="my-1 flex items-center gap-2 p-2">
+                {" "}
+                {/* Added margin */}
                 <div className="flex size-5 items-center justify-center rounded-md bg-background">
                   <HomeIcon className="size-4" />
                 </div>
                 <div className="font-medium text-foreground">Home</div>
-              </Link>
-            </DropdownMenuItem>
+              </DropdownMenuItem>{" "}
+            </Link>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
