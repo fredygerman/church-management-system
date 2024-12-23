@@ -1,8 +1,9 @@
+import { getZones } from "@/actions/zone"
+import { zones } from "@/db/schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 
 import { contactInfoSchema } from "@/types/member"
-import { getZones } from "@/lib/mockData"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -26,12 +27,14 @@ type ContactInfoData = {
 
 type ContactInfoStepProps = {
   data: ContactInfoData
+  zones: any[]
   onSubmit: (data: ContactInfoData) => void
   onBack: () => void
 }
 
 export function ContactInfoStep({
   data,
+  zones,
   onSubmit,
   onBack,
 }: ContactInfoStepProps) {
@@ -44,8 +47,6 @@ export function ContactInfoStep({
     resolver: zodResolver(contactInfoSchema),
     defaultValues: data,
   })
-
-  const zones = getZones()
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">

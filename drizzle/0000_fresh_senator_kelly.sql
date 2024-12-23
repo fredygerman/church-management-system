@@ -26,7 +26,11 @@ CREATE TABLE "members" (
 	"emergency_contact_2_name" varchar(255),
 	"emergency_contact_2_relation" varchar(255),
 	"emergency_contact_2_phone" varchar(20),
-	"emergency_contact_2_address" varchar(255)
+	"emergency_contact_2_address" varchar(255),
+	"workspace_id" uuid NOT NULL,
+	"created_at" date DEFAULT now(),
+	"updated_at" date DEFAULT now(),
+	"deleted_at" date
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
@@ -34,9 +38,10 @@ CREATE TABLE "users" (
 	"name" varchar(255) NOT NULL,
 	"email" varchar(255) NOT NULL,
 	"password_hash" varchar(255) NOT NULL,
+	"is_active" boolean DEFAULT true,
 	"created_at" date DEFAULT now(),
 	"updated_at" date DEFAULT now(),
-	"is_active" boolean DEFAULT true,
+	"deleted_at" date,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
@@ -46,7 +51,9 @@ CREATE TABLE "workspaces" (
 	"image_url" varchar(255),
 	"location" varchar(255) NOT NULL,
 	"description" text,
-	"created_at" date DEFAULT now()
+	"created_at" date DEFAULT now(),
+	"updated_at" date DEFAULT now(),
+	"deleted_at" date
 );
 --> statement-breakpoint
 CREATE TABLE "zones" (
@@ -54,7 +61,12 @@ CREATE TABLE "zones" (
 	"name" varchar(255) NOT NULL,
 	"leader" varchar(255) NOT NULL,
 	"description" text,
-	"created_at" date DEFAULT now()
+	"workspace_id" uuid NOT NULL,
+	"created_at" date DEFAULT now(),
+	"updated_at" date DEFAULT now(),
+	"deleted_at" date
 );
 --> statement-breakpoint
-ALTER TABLE "members" ADD CONSTRAINT "members_zone_id_zones_id_fk" FOREIGN KEY ("zone_id") REFERENCES "public"."zones"("id") ON DELETE no action ON UPDATE no action;
+ALTER TABLE "members" ADD CONSTRAINT "members_zone_id_zones_id_fk" FOREIGN KEY ("zone_id") REFERENCES "public"."zones"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "members" ADD CONSTRAINT "members_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "zones" ADD CONSTRAINT "zones_workspace_id_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."workspaces"("id") ON DELETE no action ON UPDATE no action;

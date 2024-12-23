@@ -30,8 +30,8 @@ export function WorkspaceSwitcher({
   workspaces: (typeof dbWorkspaces.$inferSelect)[]
   currentWorkspace: typeof dbWorkspaces.$inferSelect | null
 }) {
-  console.log("WorkspaceSwitcher workspaces", workspaces)
-  console.log("WorkspaceSwitcher currentWorkspace", currentWorkspace)
+  // console.log("WorkspaceSwitcher workspaces", workspaces)
+  // console.log("WorkspaceSwitcher currentWorkspace", currentWorkspace)
   const { isMobile, open } = useSidebar()
   const router = useRouter()
 

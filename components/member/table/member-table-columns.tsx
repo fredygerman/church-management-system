@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { members } from "@/db/schema"
+import { type members } from "@/db/schema"
 import { type ColumnDef } from "@tanstack/react-table"
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"

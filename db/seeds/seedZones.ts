@@ -1,6 +1,6 @@
 import { db } from "@/db"
 
-import { zones } from "../tables/zone"
+import { zones } from "../tables/zones"
 
 export async function seedZones(workspaceId: string) {
   const zoneData = [

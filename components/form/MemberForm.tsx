@@ -1,10 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { createMember } from "@/actions/member"
+import { uuid } from "drizzle-orm/pg-core"
 import { toast } from "sonner"
 
 import { memberFormSchema, type MemberFormData } from "@/types/member"
-import { createMember } from "@/app/actions/member"
+import { Button } from "@/components/ui/Button"
 
 import { ChurchInfoStep } from "./ChurchInfoStep"
 import { ContactInfoStep } from "./ContactInfoStep"
@@ -18,9 +21,17 @@ const steps = [
   "Emergency Contacts",
 ]
 
-export function MemberForm() {
+export function MemberForm({
+  workspaceId,
+  zones,
+}: {
+  workspaceId: string
+  zones: any[]
+}) {
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState<Partial<MemberFormData>>({})
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter()
 
   const handleStepSubmit = (stepData: Partial<MemberFormData>) => {
     setFormData((prevData) => ({ ...prevData, ...stepData }))
@@ -36,20 +47,79 @@ export function MemberForm() {
   }
 
   const handleFormSubmit = async () => {
+    setIsSubmitting(true)
     try {
       const validatedData = memberFormSchema.parse(formData)
       console.log("Validated data:", validatedData)
-      const result = await createMember(validatedData)
+
+      // Ensure optional date fields are either null or valid date strings
+      const sanitizedData = {
+        ...validatedData,
+        churchInfo: {
+          ...validatedData.churchInfo,
+          salvationDate: validatedData.churchInfo.salvationDate || undefined,
+          baptismDate: validatedData.churchInfo.baptismDate || undefined,
+          anointedDate: validatedData.churchInfo.anointedDate || undefined,
+        },
+        contactInfo: {
+          ...validatedData.contactInfo,
+          zoneId: validatedData.contactInfo.zoneId || null,
+        },
+      }
+
+      // if no_zone is selected, set zoneId to null
+      if (
+        sanitizedData.contactInfo.zoneId === "no_zone" ||
+        typeof sanitizedData.contactInfo.zoneId !== typeof uuid()
+      ) {
+        sanitizedData.contactInfo.zoneId = null
+      }
+
+      console.log("Sanitized data:", sanitizedData)
+      console.log("Workspace ID:", workspaceId)
+
+      const result = await createMember({
+        ...sanitizedData,
+        workspaceId,
+      })
       if (result.success) {
-        toast.success("Form submitted successfully")
-        // Reset form or redirect
+        toast.custom((t) => (
+          <div className="rounded bg-background p-4 shadow-lg">
+            <p className="font-semibold">Form submitted successfully</p>
+            <div className="mt-4 flex justify-end space-x-2">
+              <button
+                className="rounded bg-blue-500 px-4 py-2 text-foreground"
+                onClick={() => {
+                  toast.dismiss((t as unknown as { id: string | number }).id)
+                  router.push(`/${workspaceId}/dashboard/members`)
+                }}
+              >
+                Go to Members
+              </button>
+              <button
+                className="rounded bg-green-500 px-4 py-2 text-foreground"
+                onClick={() => {
+                  toast.dismiss((t as unknown as { id: string | number }).id)
+                  setCurrentStep(0)
+                  setFormData({})
+                }}
+              >
+                Add Another
+              </button>
+            </div>
+          </div>
+        ))
       } else {
-        toast.error(result.message)
+        toast.error("An error occurred while submitting the form")
       }
     } catch (error) {
       console.error("Validation error:", error)
-
       toast.error("Please check your inputs and try again.")
+    } finally {
+      setIsSubmitting(false)
+      // scroll to top of the page
+      window.scrollTo(0, 0)
+      router.push(`/${workspaceId}/dashboard/members`)
     }
   }
 
@@ -74,7 +144,7 @@ export function MemberForm() {
           data={
             formData.personalInfo || {
               fullName: "",
-              birthDate: "",
+              birthDate: new Date().toISOString().split("T")[0],
               gender: "Male",
               maritalStatus: "Single",
             }
@@ -101,7 +171,7 @@ export function MemberForm() {
         <ContactInfoStep
           data={{
             ...formData.contactInfo,
-            zoneId: formData.contactInfo?.zoneId ?? "",
+            zoneId: formData.contactInfo?.zoneId ?? undefined,
             district: formData.contactInfo?.district ?? "",
             ward: formData.contactInfo?.ward ?? "",
             street: formData.contactInfo?.street ?? "",
@@ -109,9 +179,10 @@ export function MemberForm() {
             houseNumber: formData.contactInfo?.houseNumber ?? "",
             landmark: formData.contactInfo?.landmark ?? "",
           }}
+          zones={zones}
           onSubmit={(data) =>
             handleStepSubmit({
-              contactInfo: { ...data, zoneId: data.zoneId ?? null },
+              contactInfo: { ...data, zoneId: data.zoneId || null },
             })
           }
           onBack={handleBack}
@@ -135,6 +206,7 @@ export function MemberForm() {
           }}
           onSubmit={(data) => handleStepSubmit(data)}
           onBack={handleBack}
+          isSubmitting={isSubmitting}
         />
       )}
     </div>

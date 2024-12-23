@@ -1,8 +1,8 @@
 "use server"
 
 import { db } from "@/db"
+import { members } from "@/db/tables/members"
 import { workspaces } from "@/db/tables/workspace"
-import { workspaceMembers } from "@/db/tables/workspaceMembers"
 import { count, eq } from "drizzle-orm"
 
 // Function to get all workspaces
@@ -29,8 +29,8 @@ export async function createWorkspace(data: {
 export async function getWorkspaceMembersCount(workspaceId: string) {
   const result = await db
     .select({ count: count() })
-    .from(workspaceMembers)
-    .where(eq(workspaceMembers.workspaceId, workspaceId))
+    .from(members)
+    .where(eq(members.workspaceId, workspaceId))
     .execute()
   return result[0].count
 }

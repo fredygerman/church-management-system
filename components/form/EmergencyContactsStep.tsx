@@ -23,12 +23,14 @@ type EmergencyContactsStepProps = {
   data: EmergencyContactsData
   onSubmit: (data: EmergencyContactsData) => void
   onBack: () => void
+  isSubmitting: boolean
 }
 
 export function EmergencyContactsStep({
   data,
   onSubmit,
   onBack,
+  isSubmitting,
 }: EmergencyContactsStepProps) {
   const {
     register,
@@ -128,7 +130,9 @@ export function EmergencyContactsStep({
         <Button type="button" onClick={onBack}>
           Previous
         </Button>
-        <Button type="submit">Submit</Button>
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Submitting..." : "Submit"}
+        </Button>
       </div>
     </form>
   )

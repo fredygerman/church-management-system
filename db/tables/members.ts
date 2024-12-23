@@ -1,7 +1,8 @@
 import { sql } from "drizzle-orm"
 import { boolean, date, pgTable, uuid, varchar } from "drizzle-orm/pg-core"
 
-import { zones } from "./zone"
+import { workspaces } from "./workspace"
+import { zones } from "./zones"
 
 const members = pgTable("members", {
   id: uuid("id")
@@ -33,23 +34,36 @@ const members = pgTable("members", {
   phone: varchar("phone", { length: 20 }),
   zoneId: uuid("zone_id").references(() => zones.id),
   landmark: varchar("landmark", { length: 255 }),
-  emergencyContact1Name: varchar("emergency_contact_1_name", { length: 255 }),
+  emergencyContact1Name: varchar("emergency_contact_1_name", {
+    length: 255,
+  }),
   emergencyContact1Relation: varchar("emergency_contact_1_relation", {
     length: 255,
   }),
-  emergencyContact1Phone: varchar("emergency_contact_1_phone", { length: 20 }),
+  emergencyContact1Phone: varchar("emergency_contact_1_phone", {
+    length: 20,
+  }),
   emergencyContact1Address: varchar("emergency_contact_1_address", {
     length: 255,
   }),
-  emergencyContact2Name: varchar("emergency_contact_2_name", { length: 255 }),
+  emergencyContact2Name: varchar("emergency_contact_2_name", {
+    length: 255,
+  }),
   emergencyContact2Relation: varchar("emergency_contact_2_relation", {
     length: 255,
   }),
-  emergencyContact2Phone: varchar("emergency_contact_2_phone", { length: 20 }),
+  emergencyContact2Phone: varchar("emergency_contact_2_phone", {
+    length: 20,
+  }),
   emergencyContact2Address: varchar("emergency_contact_2_address", {
     length: 255,
   }),
+  workspaceId: uuid("workspace_id")
+    .references(() => workspaces.id)
+    .notNull(),
   createdAt: date("created_at").defaultNow(),
+  updatedAt: date("updated_at").defaultNow(),
+  deletedAt: date("deleted_at"),
 })
 
 export { members }

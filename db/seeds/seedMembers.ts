@@ -1,7 +1,7 @@
 import { createMember } from "@/actions/member"
 import { db } from "@/db"
 
-import { zones } from "../tables/zone"
+import { zones } from "../tables/zones"
 
 export async function seedMembers(workspaceId: string) {
   const zoneIds = await db.select({ id: zones.id }).from(zones) // Fetch zone IDs
@@ -45,7 +45,35 @@ export async function seedMembers(workspaceId: string) {
   }
 
   for (const member of memberData) {
-    await createMember({ ...member, workspaceId })
+    const validBirthDate =
+      member.birthDate && member.birthDate.trim() !== ""
+        ? member.birthDate
+        : new Date().toISOString()
+    const validJoinedDate =
+      member.joinedDate && member.joinedDate.trim() !== ""
+        ? member.joinedDate
+        : new Date().toISOString()
+
+    await createMember({
+      personalInfo: {
+        fullName: member.fullName,
+        birthDate: validBirthDate,
+        gender: member.gender,
+        maritalStatus: member.maritalStatus,
+      },
+      churchInfo: {
+        joinedDate: validJoinedDate,
+        holySpirit: true,
+      },
+      contactInfo: {
+        district: "Default District",
+        ward: "Default Ward",
+        street: "Default Street",
+        phone: "000-000-0000",
+        zoneId: member.zoneId,
+      },
+      workspaceId,
+    })
   }
 
   console.log("✅ Members seeded")

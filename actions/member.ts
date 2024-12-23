@@ -2,40 +2,67 @@
 
 import { db } from "@/db"
 import { members } from "@/db/tables/members"
-import { workspaceMembers } from "@/db/tables/workspaceMembers"
+import { isValid, parseISO } from "date-fns"
 import { and, count, eq, sql } from "drizzle-orm"
 
-// Function to create a new member and add to workspace
-export async function createMember(data: {
-  fullName: string
-  birthDate: string
-  gender: "Male" | "Female"
-  maritalStatus: "Single" | "Married" | "Divorced" | "Widowed"
-  joinedDate: string
-  workspaceId: string
-}) {
+import { type MemberFormData } from "@/types/member"
+
+function isValidDate(dateStr: string): boolean {
+  try {
+    return isValid(parseISO(dateStr))
+  } catch {
+    return false
+  }
+}
+// Function to create a new member
+export async function createMember(
+  data: MemberFormData & { workspaceId: string }
+): Promise<{ success: boolean; member: typeof members.$inferSelect }> {
+  // Validate required dates
+  if (
+    !data.personalInfo.birthDate ||
+    !isValidDate(data.personalInfo.birthDate)
+  ) {
+    throw new Error("Birth date is required and must be a valid date")
+  }
+  if (!data.churchInfo.joinedDate || !isValidDate(data.churchInfo.joinedDate)) {
+    throw new Error("Joined date is required and must be a valid date")
+  }
+
+  // Validate optional dates if provided
+  if (
+    data.churchInfo.salvationDate &&
+    !isValidDate(data.churchInfo.salvationDate)
+  ) {
+    throw new Error("Salvation date must be a valid date")
+  }
+  if (
+    data.churchInfo.baptismDate &&
+    !isValidDate(data.churchInfo.baptismDate)
+  ) {
+    throw new Error("Baptism date must be a valid date")
+  }
+  if (
+    data.churchInfo.anointedDate &&
+    !isValidDate(data.churchInfo.anointedDate)
+  ) {
+    throw new Error("Anointed date must be a valid date")
+  }
+
   const createdMember = await db
     .insert(members)
     .values({
-      fullName: data.fullName,
-      birthDate: data.birthDate,
-      gender: data.gender,
-      maritalStatus: data.maritalStatus,
-      joinedDate: data.joinedDate,
+      ...data.personalInfo,
+      ...data.churchInfo,
+      workspaceId: data.workspaceId,
     })
     .returning()
     .execute()
 
-  // Add member to workspace
-  await db
-    .insert(workspaceMembers)
-    .values({
-      workspaceId: data.workspaceId,
-      memberId: createdMember[0].id,
-    })
-    .execute()
-
-  return createdMember
+  return {
+    success: true,
+    member: createdMember[0],
+  }
 }
 
 // Function to get all members in a workspace with pagination and filters
@@ -67,7 +94,7 @@ export async function getMembers(
   const offset = (page - 1) * per_page
 
   const filters = [
-    eq(workspaceMembers.workspaceId, workspaceId),
+    eq(members.workspaceId, workspaceId),
     fullName
       ? sql`${members.fullName} ILIKE ${"%" + fullName + "%"}`
       : undefined,
@@ -89,7 +116,6 @@ export async function getMembers(
     db
       .select()
       .from(members)
-      .innerJoin(workspaceMembers, eq(members.id, workspaceMembers.memberId))
       .where(and(...filters))
       .orderBy(sql`${sort}`)
       .limit(per_page)
@@ -100,9 +126,7 @@ export async function getMembers(
 
   const pageCount = Math.ceil(totalCount / per_page)
 
-  const membersOnly = memberList.map((item) => item.members)
-
-  return { members: membersOnly, pageCount }
+  return { members: memberList, pageCount }
 }
 
 // Function to update a member
@@ -134,8 +158,8 @@ export async function deleteMember(id: string) {
 export async function countMembers(workspaceId: string) {
   const result = await db
     .select({ count: count() })
-    .from(workspaceMembers)
-    .where(eq(workspaceMembers.workspaceId, workspaceId))
+    .from(members)
+    .where(eq(members.workspaceId, workspaceId))
     .execute()
   return result[0].count
 }

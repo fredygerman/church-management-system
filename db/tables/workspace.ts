@@ -11,6 +11,8 @@ const workspaces = pgTable("workspaces", {
   location: varchar("location", { length: 255 }).notNull(),
   description: text("description"),
   createdAt: date("created_at").defaultNow(),
+  updatedAt: date("updated_at").defaultNow(),
+  deletedAt: date("deleted_at"),
 })
 
 export { workspaces }

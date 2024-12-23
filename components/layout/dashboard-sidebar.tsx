@@ -40,15 +40,15 @@ export function DashboardSidebar({
   workspaces,
   currentWorkspace,
 }: DashboardSidebarProps) {
-  console.log("DashboardSidebar workspaces", workspaces)
+  // console.log("DashboardSidebar workspaces", workspaces)
   const { workspaceId } = useParams()
   const { isMobile, open, setOpen } = useSidebar()
   const pathname = usePathname()
   const hoverRef = React.useRef(null)
   const isHover = useHover(hoverRef)
 
-  console.log("DashboardSidebar currentWorkspace", currentWorkspace)
-  console.log("DashboardSidebar workspaceId", workspaceId)
+  // console.log("DashboardSidebar currentWorkspace", currentWorkspace)
+  // console.log("DashboardSidebar workspaceId", workspaceId)
 
   React.useEffect(() => {
     if (isHover && !isMobile) {
