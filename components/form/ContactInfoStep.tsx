@@ -1,5 +1,3 @@
-import { getZones } from "@/actions/zone"
-import { zones } from "@/db/schema"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Controller, useForm } from "react-hook-form"
 

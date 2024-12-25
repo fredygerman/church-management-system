@@ -8,6 +8,27 @@
       "when": 1734940017031,
       "tag": "0000_cute_otto_octavius",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1735107868505,
+      "tag": "0001_breezy_bloodscream",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1735108012819,
+      "tag": "0002_dark_gideon",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1735108173280,
+      "tag": "0003_black_viper",
+      "breakpoints": true
     }
   ]
 }

@@ -7,7 +7,6 @@ import { uuid } from "drizzle-orm/pg-core"
 import { toast } from "sonner"
 
 import { memberFormSchema, type MemberFormData } from "@/types/member"
-import { Button } from "@/components/ui/Button"
 
 import { ChurchInfoStep } from "./ChurchInfoStep"
 import { ContactInfoStep } from "./ContactInfoStep"

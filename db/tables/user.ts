@@ -10,7 +10,7 @@ import {
 
 export const roleEnum = pgEnum("role", ["admin", "user"])
 
-export type roleEnum = (typeof rolesEnum.enumValues)[number]
+export type roleEnum = (typeof roleEnum.enumValues)[number]
 
 export const users = pgTable("users", {
   id: uuid("id")
@@ -20,10 +20,7 @@ export const users = pgTable("users", {
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   passwordHash: varchar("password_hash", { length: 255 }).notNull(),
-  role: varchar("role", {
-    length: 255,
-    enum: roleEnum,
-  }).default("user"),
+  role: roleEnum("role").default("user"),
   isActive: boolean("is_active").default(true),
   createdAt: date("created_at").defaultNow(),
   updatedAt: date("updated_at").defaultNow(),
