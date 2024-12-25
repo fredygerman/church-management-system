@@ -65,3 +65,6 @@ export const memberFormSchema = z.object({
 })
 
 export type MemberFormData = z.infer<typeof memberFormSchema>
+
+//  CreateMemberData should be the same as MemberFormData but with feild number added
+export type CreateMemberData = MemberFormData & { number: string }

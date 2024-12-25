@@ -86,3 +86,27 @@ export function generateCombinedTitle(pathname: string, pageTitle: string) {
 
   return toTitleCase(pageTitle || "")
 }
+
+export function generateFriendlyMemberNumber() {
+  const letters = "ABCDEFGHJKLMNPQRSTUVWXYZ" // Avoid O, I
+  const numbers = "23456789" // Avoid 0, 1
+  let letterPart = ""
+  let numberPart = ""
+
+  // Create the letter part 'ABE'
+  for (let i = 0; i < 3; i++) {
+    const letter = letters.charAt(Math.floor(Math.random() * letters.length))
+    letterPart += letter
+  }
+
+  // Create the number part '1234'
+  for (let i = 0; i < 4; i++) {
+    const number = numbers.charAt(Math.floor(Math.random() * numbers.length))
+    numberPart += number
+  }
+
+  // Combine parts with a dash in the center
+  const formattedResult = letterPart + "-" + numberPart
+
+  return formattedResult
+}

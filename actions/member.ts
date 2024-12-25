@@ -6,6 +6,7 @@ import { isValid, parseISO } from "date-fns"
 import { and, count, eq, sql } from "drizzle-orm"
 
 import { type MemberFormData } from "@/types/member"
+import { generateFriendlyMemberNumber } from "@/lib/utils"
 
 function isValidDate(dateStr: string): boolean {
   try {
@@ -14,6 +15,7 @@ function isValidDate(dateStr: string): boolean {
     return false
   }
 }
+
 // Function to create a new member
 export async function createMember(
   data: MemberFormData & { workspaceId: string }
@@ -49,12 +51,31 @@ export async function createMember(
     throw new Error("Anointed date must be a valid date")
   }
 
+  let memberNumber: string = ""
+  let isUnique = false
+
+  while (!isUnique) {
+    memberNumber = generateFriendlyMemberNumber()
+    const existingMember = await db
+      .select()
+      .from(members)
+      .where(eq(members.number, memberNumber))
+      .execute()
+
+    if (existingMember.length === 0) {
+      isUnique = true
+    }
+  }
+
+  console.log("Member Number:", memberNumber)
+
   const createdMember = await db
     .insert(members)
     .values({
       ...data.personalInfo,
       ...data.churchInfo,
       workspaceId: data.workspaceId,
+      number: memberNumber,
     })
     .returning()
     .execute()

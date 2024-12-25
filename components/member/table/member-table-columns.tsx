@@ -9,13 +9,11 @@ import { DataTableColumnHeader } from "@/components/data-table/data-table-column
 export function getColumns(): ColumnDef<typeof members.$inferSelect>[] {
   return [
     {
-      accessorKey: "id",
+      accessorKey: "number",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="ID" />
+        <DataTableColumnHeader column={column} title="Number" />
       ),
-      cell: ({ row }) => (
-        <div>{row.original.id.toString().substring(0, 5)}</div>
-      ),
+      cell: ({ row }) => <div>{row.original.number.toString()}</div>,
       enableSorting: true,
     },
     {

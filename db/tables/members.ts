@@ -32,6 +32,7 @@ const members = pgTable("members", {
   street: varchar("street", { length: 255 }),
   houseNumber: varchar("house_number", { length: 50 }),
   phone: varchar("phone", { length: 20 }),
+  number: varchar("number", { length: 9 }).notNull().unique(),
   zoneId: uuid("zone_id").references(() => zones.id),
   landmark: varchar("landmark", { length: 255 }),
   emergencyContact1Name: varchar("emergency_contact_1_name", {

@@ -1,0 +1,1 @@
+ALTER TABLE "members" ALTER COLUMN "number" SET DATA TYPE varchar(9);

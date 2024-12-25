@@ -1,6 +1,8 @@
 import { createMember } from "@/actions/member"
 import { db } from "@/db"
 
+import { generateFriendlyMemberNumber } from "@/lib/utils"
+
 import { zones } from "../tables/zones"
 
 export async function seedMembers(workspaceId: string) {
