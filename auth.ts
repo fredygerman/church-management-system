@@ -61,26 +61,9 @@ export const authOptions: NextAuthOptions = {
       session.user.id = token.id
       return session
     },
-    async jwt({
-      token,
-      user,
-      account,
-      profile,
-      trigger,
-      isNewUser,
-      session,
-    }: {
-      token: any
-      user: any
-      account: Account | null
-      profile?: Profile
-      trigger?: "signIn" | "signUp" | "update"
-      isNewUser?: boolean
-      session?: any
-    }) {
-      console.log("in jwt callback")
-      // log all the parameters to the console
-      console.log("token", token)
+    async jwt({ token }: { token: any }) {
+      // console.log("in jwt callback")
+      // console.log("token", token)
 
       return token
     },

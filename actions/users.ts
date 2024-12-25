@@ -1,6 +1,5 @@
 "use server"
 
-import { cookies } from "next/headers"
 import { db } from "@/db"
 import { users } from "@/db/tables/user"
 import { eq } from "drizzle-orm"
