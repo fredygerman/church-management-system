@@ -1,4 +1,4 @@
-import { createUser, getUserByEmail, signOutUser } from "@/actions/users"
+import { createUser, getUserByEmail, updateUserProfile } from "@/actions/users"
 import NextAuth, {
   getServerSession,
   type Account,
@@ -38,6 +38,13 @@ export const authOptions: NextAuthOptions = {
           return false
         }
         let existingUser = await getUserByEmail(email)
+
+        if (existingUser && profile) {
+          await updateUserProfile(email, {
+            picture: profile.image || "",
+            name: profile.name || "",
+          })
+        }
 
         if (!existingUser) {
           // User does not exist, create new user
