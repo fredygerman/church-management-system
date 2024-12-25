@@ -13,6 +13,8 @@ const workspaces = pgTable("workspaces", {
   createdAt: date("created_at").defaultNow(),
   updatedAt: date("updated_at").defaultNow(),
   deletedAt: date("deleted_at"),
+  createdBy: uuid("created_by"),
+  updatedBy: uuid("updated_by"),
 })
 
 export { workspaces }

@@ -5,57 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1734940017031,
-      "tag": "0000_cute_otto_octavius",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1735107868505,
-      "tag": "0001_breezy_bloodscream",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1735108012819,
-      "tag": "0002_dark_gideon",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1735108173280,
-      "tag": "0003_black_viper",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1735109493362,
-      "tag": "0004_tricky_magneto",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1735111956258,
-      "tag": "0005_old_black_tom",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1735116366956,
-      "tag": "0006_nostalgic_boom_boom",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "7",
-      "when": 1735117077436,
-      "tag": "0007_bouncy_random",
+      "when": 1735148606879,
+      "tag": "0000_living_anita_blake",
       "breakpoints": true
     }
   ]
