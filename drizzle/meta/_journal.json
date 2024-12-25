@@ -29,6 +29,13 @@
       "when": 1735108173280,
       "tag": "0003_black_viper",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1735109493362,
+      "tag": "0004_tricky_magneto",
+      "breakpoints": true
     }
   ]
 }
