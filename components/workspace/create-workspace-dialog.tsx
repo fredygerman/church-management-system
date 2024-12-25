@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createWorkspace } from "@/actions/workspace"
+import { useSession } from "next-auth/react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -20,13 +21,22 @@ export function CreateWorkspaceDialog() {
   const [location, setLocation] = useState("")
   const [imageUrl, setImageUrl] = useState("")
   const router = useRouter()
+  const { data: session } = useSession()
 
   const handleCreate = async () => {
+    const { customUser } = session?.user as any
+
+    if (!session?.user) {
+      toast.error("User not authenticated")
+      return
+    }
+
     const newWorkspace = {
       name,
       location,
       imageUrl,
-      totalMembers: 0, // Assuming default value for totalMembers
+      createdBy: customUser.id,
+      updatedBy: customUser.id,
     }
 
     toast.promise(
@@ -40,7 +50,7 @@ export function CreateWorkspaceDialog() {
         }
       })(),
       {
-        loading: "Creating workspace...",
+        loading: "Please wait, Creating workspace...",
         success: "Workspace created successfully 🎉",
         error: (error) => `${error}`,
       }

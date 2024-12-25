@@ -3,6 +3,8 @@
 import { db } from "@/db"
 import { members } from "@/db/tables/members"
 import { workspaces } from "@/db/tables/workspace"
+import { workspaceUserRequests } from "@/db/tables/workspaceUserRequests"
+import { workspaceUsers } from "@/db/tables/workspaceUsers"
 import { count, eq } from "drizzle-orm"
 
 // Function to get all workspaces
@@ -13,15 +15,28 @@ export async function getWorkspaces() {
 // Function to create a new workspace
 export async function createWorkspace(data: {
   name: string
-  totalMembers: number
   imageUrl: string
   location: string
+  createdBy: string | null
+  updatedBy: string | null
 }) {
   const createdWorkspace = await db
     .insert(workspaces)
     .values(data)
     .returning()
     .execute()
+
+  // Add the creator to the workspaceUsers table
+  if (createdWorkspace.length > 0 && data.createdBy) {
+    await db
+      .insert(workspaceUsers)
+      .values({
+        workspaceId: createdWorkspace[0].id,
+        userId: data.createdBy,
+      })
+      .execute()
+  }
+
   return createdWorkspace
 }
 
@@ -33,4 +48,21 @@ export async function getWorkspaceMembersCount(workspaceId: string) {
     .where(eq(members.workspaceId, workspaceId))
     .execute()
   return result[0].count
+}
+
+export async function requestToJoinWorkspace(
+  workspaceId: string,
+  userId: string
+) {
+  const request = await db
+    .insert(workspaceUserRequests)
+    .values({
+      workspaceId,
+      userId,
+      status: "pending",
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // One week from now
+    })
+    .returning()
+    .execute()
+  return request
 }
