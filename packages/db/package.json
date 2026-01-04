@@ -1,0 +1,26 @@
+{
+  "name": "@church/db",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+    "db:generate": "dotenv drizzle-kit generate",
+    "db:push": "dotenv drizzle-kit push",
+    "db:migrate": "dotenv tsx migrate.ts",
+    "db:seed": "dotenv tsx seed.ts",
+    "db:studio": "dotenv drizzle-kit studio"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.38.2",
+    "dotenv": "^17.2.3",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "drizzle-kit": "^0.30.1",
+    "dotenv-cli": "^7.4.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5"
+  }
+}

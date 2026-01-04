@@ -1,73 +1,158 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Church Management System - Monorepo
+
+A modern monorepo for the Church Management System using pnpm workspaces, Turbo, Next.js, and NestJS.
 
 ## Overview
 
 This is a church management system platform designed to help churches manage their members, events, donations, and communications efficiently. The platform provides tools for tracking attendance, organizing events, managing donations, and communicating with members through various channels.
 
-## Warning
+## ⚠️ Warning
 
-⚠️ This project is under active development. Features and functionality may change frequently. ⚠️
+This project is under active development. Features and functionality may change frequently.
 
-## Getting Started
+## 📦 Workspace Structure
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+.
+├── apps/
+│   ├── web/              # Next.js frontend application
+│   └── api/              # NestJS backend application
+├── packages/
+│   ├── db/               # Shared Drizzle ORM database layer
+│   ├── config/           # Shared configuration (types, DTOs, etc.)
+│   ├── eslint-config/    # Shared ESLint configuration
+│   └── typescript-config/ # Shared TypeScript configuration
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🚀 Quick Start
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Prerequisites
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+- Node.js 18+ or 20+
+- pnpm 9.12.3+
+- PostgreSQL 14+
 
-## Database Setup
-
-To generate the necessary migrations, run:
-
-```bash
-pnpm db:generate
-```
-
-To run the migrations, execute:
+### Installation
 
 ```bash
-pnpm db:migrate
-```
+# Install dependencies
+pnpm install
 
-To seed the database, use:
+# Setup environment variables
+cp .env.example .env.local
 
-```bash
+# Setup database
+pnpm db:push
 pnpm db:seed
 ```
 
-## Environment Variables
+### Development
 
-Make sure to follow the [env.js](env.js) file to know about the required environment variables. You can use the [.example.env](.example.env) file to create your own `.env` file with the necessary variables.
+```bash
+# Start all apps
+pnpm dev
 
-## Learn More
+# Or start individually
+pnpm web:dev   # Frontend only
+pnpm api:dev   # Backend only
+```
 
-To learn more about Next.js, take a look at the following resources:
+Visit:
+- Frontend: [http://localhost:3000](http://localhost:3000)
+- API: [http://localhost:3001](http://localhost:3001)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📚 Available Scripts
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### Root Level
 
-## Deploy on Vercel
+- `pnpm dev` - Start all apps in development mode
+- `pnpm build` - Build all apps
+- `pnpm start` - Start all apps in production
+- `pnpm lint` - Lint all packages
+- `pnpm lint:fix` - Fix linting issues
+- `pnpm type-check` - Type checking
+- `pnpm format` - Format code with Prettier
+- `pnpm clean` - Clean all build artifacts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Frontend (Web)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+- `pnpm web:dev` - Start Next.js dev server
+- `pnpm web:build` - Build Next.js app
 
-## Authors
+### Backend (API)
+
+- `pnpm api:dev` - Start NestJS dev server
+- `pnpm api:build` - Build NestJS app
+
+### Database
+
+- `pnpm db:generate` - Generate Drizzle migrations
+- `pnpm db:push` - Push migrations to database
+- `pnpm db:migrate` - Run migrations
+- `pnpm db:seed` - Seed database with initial data
+- `pnpm db:studio` - Open Drizzle Studio
+
+## 🏗️ Architecture
+
+### Frontend (`apps/web`)
+- Next.js 14 with React 18
+- Server Components & Actions
+- NextAuth for authentication
+- TailwindCSS + Radix UI
+- Zod for validation
+- React Query for data fetching
+
+### Backend (`apps/api`)
+- NestJS framework
+- JWT authentication
+- Drizzle ORM with PostgreSQL
+- RESTful API
+- Email (Resend)
+- File uploads
+- Payment processing
+- SMS notifications
+
+### Shared Packages
+- `@church/db` - Database schema and migrations
+- `@church/config` - Types, DTOs, configurations
+- `@church/eslint-config` - ESLint rules
+- `@church/typescript-config` - TypeScript configs
+
+## 🔧 Environment Setup
+
+Copy `.env.example` to `.env.local` and configure:
+
+```bash
+cp .env.example .env.local
+```
+
+Key variables:
+- `DATABASE_URL` - PostgreSQL connection string
+- `JWT_SECRET` - JWT signing secret
+- `SESSION_SECRET` - Session secret
+- `API_BASE_URL` - Backend API URL
+- `RESEND_API_KEY` - Email service key
+
+## 📖 Additional Documentation
+
+- [Development Guide](./docs/DEVELOPMENT.md)
+- [Database Setup](./docs/DATABASE.md)
+- [API Documentation](./docs/API.md)
+- [Deployment Guide](./docs/DEPLOYMENT.md)
+
+## 🤝 Contributing
+
+1. Create a feature branch: `git checkout -b feature/your-feature`
+2. Make your changes
+3. Commit: `git commit -m 'Add feature'`
+4. Push: `git push origin feature/your-feature`
+5. Open a Pull Request
+
+## 👨‍💻 Authors
 
 - [@fredygerman](https://github.com/fredygerman)
 - Mito ya Baraka Church IT team
+
+## 📄 License
+
+MIT License

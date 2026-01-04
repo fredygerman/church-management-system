@@ -1,0 +1,80 @@
+{
+  "name": "@church/config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./src/schema/index.ts",
+  "types": "./src/schema/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/schema/index.ts",
+      "default": "./src/schema/index.ts"
+    },
+    "./types": {
+      "types": "./src/types/index.ts",
+      "default": "./src/types/index.ts"
+    },
+    "./types/notifications": {
+      "types": "./src/types/notifications.ts",
+      "default": "./src/types/notifications.ts"
+    },
+    "./dtos": {
+      "types": "./src/dtos/index.ts",
+      "default": "./src/dtos/index.ts"
+    },
+    "./dtos/sms": {
+      "types": "./src/dtos/sms/index.ts",
+      "default": "./src/dtos/sms/index.ts"
+    },
+    "./dtos/notifications": {
+      "types": "./src/dtos/notifications/index.ts",
+      "default": "./src/dtos/notifications/index.ts"
+    },
+    "./dtos/mail": {
+      "types": "./src/dtos/mail/index.ts",
+      "default": "./src/dtos/mail/index.ts"
+    },
+    "./dtos/payments": {
+      "types": "./src/dtos/payments.dto.ts",
+      "default": "./src/dtos/payments.dto.ts"
+    },
+    "./dtos/auth": {
+      "types": "./src/dtos/auth/index.ts",
+      "default": "./src/dtos/auth/index.ts"
+    },
+    "./dtos/registration": {
+      "types": "./src/dtos/registration/index.ts",
+      "default": "./src/dtos/registration/index.ts"
+    },
+    "./utils": {
+      "types": "./src/utils/index.ts",
+      "default": "./src/utils/index.ts"
+    },
+    "./schema": {
+      "types": "./src/schema/index.ts",
+      "default": "./src/schema/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "echo 'No build needed - using direct TS files'",
+    "dev": "echo 'No dev needed - using direct TS files'",
+    "start": "echo 'No start needed - using direct TS files'",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "lint:fix": "eslint \"src/**/*.ts\" --fix",
+    "type-check": "tsc --noEmit",
+    "test": "echo 'No tests configured yet'",
+    "clean": "echo 'No clean needed - no build artifacts'"
+  },
+  "dependencies": {
+    "@nestjs/swagger": "^7.1.17",
+    "class-validator": "^0.14.0",
+    "class-transformer": "^0.5.1",
+    "reflect-metadata": "^0.1.13",
+    "drizzle-orm": "^0.44.7"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.48.0",
+    "typescript": "^5.2.2"
+  }
+}
