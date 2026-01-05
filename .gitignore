@@ -1,19 +1,17 @@
 # Dependencies
-/node_modules
-/.pnp
+node_modules/
+.pnp
 .pnp.js
 
 # Testing
-/coverage
+coverage/
 
 # Build outputs
-**/dist/
-**/.next/
-**/.turbo/
-**/.swc/
-**/*.js
-**/*.js.map
-**/*.tsbuildinfo
+dist/
+.next/
+.turbo/
+.swc/
+*.tsbuildinfo
 
 # Specific exceptions (if needed)
 !*.config.js
@@ -75,5 +73,3 @@ Thumbs.db
 # Monorepo specific
 .turbo/
 .pnpm/
-/apps/web/node_modules
-/apps/api/node_modules
