@@ -1,9 +1,8 @@
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { Client } from 'pg';
-import * as schema from './schema/index';
+import * as schema from '../../../../packages/db';
 import config from '../config';
 import { Logger } from '@nestjs/common';
-import * as bcrypt from 'bcrypt';
 
 const logger = new Logger('Seed');
 
@@ -27,93 +26,73 @@ async function seed() {
 
     logger.log('Connected to database for seeding');
 
-    // Create admin user
-    const adminPassword = await bcrypt.hash('admin123', 10);
-
+    // Create super admin user
     const adminUser = await db
       .insert(schema.users)
       .values({
         email: 'admin@church.org',
-        firstName: 'System',
-        lastName: 'Administrator',
-        password: adminPassword,
-        isActive: true,
+        name: 'System Administrator',
+        role: 'super_admin',
       })
       .returning();
 
-    logger.log(`✅ Created admin user: ${adminUser[0].email}`);
+    logger.log(`✅ Created super admin user: ${adminUser[0].email}`);
 
-    // Create a sample manager user
-    const managerPassword = await bcrypt.hash('manager123', 10);
-
-    const managerUser = await db
+    // Create a sample admin (IT admin) user
+    const itAdminUser = await db
       .insert(schema.users)
       .values({
-        email: 'manager@church.org',
-        firstName: 'John',
-        lastName: 'Doe',
-        password: managerPassword,
-        isActive: true,
+        email: 'itadmin@church.org',
+        name: 'IT Administrator',
+        role: 'admin',
       })
       .returning();
 
-    logger.log(`✅ Created manager user: ${managerUser[0].email}`);
+    logger.log(`✅ Created admin (IT) user: ${itAdminUser[0].email}`);
 
-    // Create a sample driver user
-    const driverPassword = await bcrypt.hash('driver123', 10);
-
-    const driverUser = await db
+    // Create a sample branch admin user
+    const branchAdminUser = await db
       .insert(schema.users)
       .values({
-        email: 'driver@church.org',
-        firstName: 'Michael',
-        lastName: 'Johnson',
-        password: driverPassword,
-        isActive: true,
+        email: 'branch@church.org',
+        name: 'Branch Administrator',
+        role: 'branch_admin',
       })
       .returning();
 
-    logger.log(`✅ Created driver user: ${driverUser[0].email}`);
+    logger.log(`✅ Created branch admin user: ${branchAdminUser[0].email}`);
 
-    // Create sample customer
-    const customerPassword = await bcrypt.hash('customer123', 10);
-
-    const customerUser = await db
+    // Create a sample zone leader user
+    const zoneLeaderUser = await db
       .insert(schema.users)
       .values({
-        email: 'customer@example.com',
-        firstName: 'Jane',
-        lastName: 'Smith',
-        password: customerPassword,
-        isActive: true,
+        email: 'zoneleader@church.org',
+        name: 'Zone Leader',
+        role: 'zone_leader',
       })
       .returning();
 
-    logger.log(`✅ Created customer user: ${customerUser[0].email}`);
+    logger.log(`✅ Created zone leader user: ${zoneLeaderUser[0].email}`);
 
-    // Create test user
-    const testPassword = await bcrypt.hash('test123', 10);
-
-    const testUser = await db
+    // Create a sample member user
+    const memberUser = await db
       .insert(schema.users)
       .values({
-        email: 'test@church.org',
-        firstName: 'Test',
-        lastName: 'User',
-        password: testPassword,
-        isActive: true,
+        email: 'member@church.org',
+        name: 'Regular Member',
+        role: 'member',
       })
       .returning();
 
-    logger.log(`✅ Created test user: ${testUser[0].email}`);
+    logger.log(`✅ Created member user: ${memberUser[0].email}`);
 
     logger.log('🎉 Database seeding completed successfully!');
     logger.log('\n📋 Default Users Created:');
-    logger.log('👤 Admin: admin@church.org / admin123');
-    logger.log('👤 Manager: manager@church.org / manager123');
-    logger.log('👤 Driver: driver@church.org / driver123');
-    logger.log('👤 Customer: customer@example.com / customer123');
-    logger.log('👤 Test: test@church.org / test123');
+    logger.log('👤 Super Admin: admin@church.org');
+    logger.log('👤 IT Admin: itadmin@church.org');
+    logger.log('👤 Branch Admin: branch@church.org');
+    logger.log('👤 Zone Leader: zoneleader@church.org');
+    logger.log('👤 Member: member@church.org');
   } catch (error) {
     logger.error('❌ Error seeding database:', error);
     process.exit(1);

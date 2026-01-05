@@ -23,7 +23,6 @@ export default async function MembersPage(props: PageProps) {
   const { churchId } = props.params
   const searchParams = await props.searchParams
   const queryParams = membersSearchParamsCache.parse(searchParams)
-  console.log("goodQueryParams", queryParams)
   const memberPromise = getMembers(queryParams, churchId)
 
   return (

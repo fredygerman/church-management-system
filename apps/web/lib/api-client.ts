@@ -74,6 +74,7 @@ async function serverFetch<D = any>({
 
   if (token) {
     headers.set("Authorization", `Bearer ${token}`)
+    console.log(`[API] Token (first 50 chars): ${token.substring(0, 50)}...`)
   }
 
   const method = (requestConfig.method || "GET").toUpperCase()
@@ -90,6 +91,9 @@ async function serverFetch<D = any>({
 
     console.log(`[API] ${method} ${url.toString()} with token: ${token ? "yes" : "no"}`)
     console.log(`[API] Base URL: ${baseUrl}`)
+    if (requestConfig.data) {
+      console.log(`[API] Request body:`, requestConfig.data)
+    }
 
     const response = await fetch(url.toString(), {
       method,
@@ -97,6 +101,10 @@ async function serverFetch<D = any>({
       body,
       cache: requestConfig.skipAuth ? "default" : ("no-store" as RequestCache),
     })
+
+    console.log(`[API] Response status: ${response.status}`)
+    const contentType = response.headers.get('content-type')
+    console.log(`[API] Response Content-Type: ${contentType || 'unknown'}`)
 
     let data: any
     try {
@@ -106,11 +114,12 @@ async function serverFetch<D = any>({
       data = {}
     }
 
-    console.log(`[API] Response status: ${response.status}`)
+    console.log(`[API] Response data:`, data)
 
-    // Handle 401/403 errors - try to refresh token
+
+    // Handle 401 errors - try to refresh token
     if (
-      (response.status === 401 || response.status === 403) &&
+      response.status === 401 &&
       !requestConfig.skipAuth &&
       token
     ) {
@@ -181,6 +190,15 @@ async function serverFetch<D = any>({
     }
 
     if (!response.ok) {
+      // For 403 errors (permission/context errors), return the error instead of redirecting
+      if (response.status === 403) {
+        return {
+          success: false,
+          message: data?.message || `HTTP ${response.status}: Forbidden`,
+          data: null,
+        } as ApiResponse<D>
+      }
+      
       return {
         success: false,
         message: data?.message || `HTTP ${response.status}`,
@@ -198,13 +216,15 @@ async function serverFetch<D = any>({
     console.error("[API] Request failed:", {
       url: url.toString(),
       method,
-      error: error?.message,
-      code: error?.code,
-      errno: error?.errno,
+      message: error?.message || 'Unknown error',
+      code: error?.code || undefined,
+      errno: error?.errno || undefined,
+      cause: error?.cause || undefined,
     })
+    console.error("[API] Full error:", error)
     return {
       success: false,
-      message: error?.message || "Request failed",
+      message: `${error?.message || "Request failed"} (${method} ${requestConfig.url})`,
       data: null,
     } as ApiResponse<D>
   }
@@ -250,10 +270,10 @@ export async function apiRequest<D = any>({
       ...requestConfig,
       skipAuth,
       headers: {
-        ...requestConfig.headers,
-        "Content-Type": requestConfig.data instanceof FormData
-          ? undefined
-          : "application/json",
+        ...(requestConfig.headers || {}),
+        ...(!(requestConfig.data instanceof FormData) && {
+          "Content-Type": "application/json",
+        }),
       },
     },
     token,

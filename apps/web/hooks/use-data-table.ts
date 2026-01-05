@@ -18,7 +18,7 @@ import {
 } from "@tanstack/react-table"
 import { z } from "zod"
 
-import type { DataTableFilterField } from "@/types/general"
+import type { DataTableFilterField } from "@/types/data-table"
 import { useDebounce } from "@/hooks/use-debounce"
 
 interface UseDataTableProps<TData, TValue> {

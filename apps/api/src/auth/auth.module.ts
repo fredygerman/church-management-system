@@ -8,7 +8,7 @@ import { RegistrationService } from './registration.service';
 import { DatabaseModule } from '../database/database.module';
 import { MailModule } from '../mail/mail.module';
 import { SmsModule } from '../sms/sms.module';
-import { JwtStrategy, LocalStrategy, JwtRefreshStrategy } from './strategies';
+import { JwtStrategy,  JwtRefreshStrategy } from './strategies';
 import { JwtAuthGuard } from './guards';
 import config from '../config';
 
@@ -30,7 +30,6 @@ import config from '../config';
     AuthService,
     RegistrationService,
     JwtStrategy,
-    LocalStrategy,
     JwtRefreshStrategy,
     JwtAuthGuard,
   ],

@@ -91,7 +91,7 @@ export function CreateChurchDialog() {
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g., Nairobi, Kenya"
+              placeholder="e.g., Dar Es Salaam, Tanzania"
             />
           </div>
           <div>

@@ -3,7 +3,6 @@
 import { useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { toast } from "sonner"
-import Cookies from "js-cookie"
 
 import { Button } from "@/components/ui/button"
 
@@ -19,24 +18,21 @@ export default function SignInPage() {
     if (callbackUrl) {
       toast.error(`You need to be signed in to access ${callbackUrl}`)
     }
-
-    // Store redirect URL in cookie if present so it survives OAuth round-trips
-    if (callbackUrl) {
-      Cookies.set("returnTo", callbackUrl, { expires: 1 / 24 }) // expires in 1 hour
-    }
   }, [callbackUrl])
 
   const handleGoogleSignIn = () => {
     try {
       const apiBase = getApiBaseUrl()
-      const redirectUrl = callbackUrl || "/"
       
-      // Store the return URL in a cookie so it survives the OAuth redirect
-      Cookies.set("returnTo", redirectUrl, { expires: 1 / 24 })
+      // Create callback URL with callbackUrl param if present
+      const callback = new URL(`${apiBase}/auth/google`)
+      if (callbackUrl) {
+        callback.searchParams.set("callbackUrl", callbackUrl)
+      }
       
       // Redirect to backend Google OAuth endpoint
       // The backend will handle the redirect to Google's OAuth consent screen
-      window.location.href = `${apiBase}/auth/google`
+      window.location.href = callback.toString()
     } catch (error) {
       console.error("Sign-in error:", error)
       toast.error("Failed to initiate sign-in. Please try again.")

@@ -21,6 +21,9 @@
 !tailwind.config.js
 !prettier.config.js
 !drizzle.config.js
+!env.js
+!/apps/api/env.js
+!/apps/web/env.js
 !/apps/api/drizzle.config.js
 !/packages/db/drizzle.config.js
 !/packages/db/migrate.ts
@@ -72,3 +75,4 @@ Thumbs.db
 # Monorepo specific
 .turbo/
 .pnpm/
+/apps/web/node_modules

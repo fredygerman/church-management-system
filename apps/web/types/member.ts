@@ -1,5 +1,13 @@
+/**
+ * Member Types
+ * Types and schemas for member-related data
+ */
+
 import { z } from "zod"
 
+/**
+ * Personal information schema
+ */
 export const personalInfoSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   birthDate: z.string().refine((date) => !isNaN(Date.parse(date)), {
@@ -14,6 +22,11 @@ export const personalInfoSchema = z.object({
   tribe: z.string().optional(),
 })
 
+export type PersonalInfo = z.infer<typeof personalInfoSchema>
+
+/**
+ * Church information schema
+ */
 export const churchInfoSchema = z.object({
   salvationDate: z
     .string()
@@ -39,6 +52,11 @@ export const churchInfoSchema = z.object({
   holySpirit: z.boolean(),
 })
 
+export type ChurchInfo = z.infer<typeof churchInfoSchema>
+
+/**
+ * Contact information schema
+ */
 export const contactInfoSchema = z.object({
   district: z.string().min(1, "District is required"),
   ward: z.string().min(1, "Ward is required"),
@@ -48,6 +66,8 @@ export const contactInfoSchema = z.object({
   zoneId: z.string().nullable(),
   landmark: z.string().optional(),
 })
+
+export type ContactInfo = z.infer<typeof contactInfoSchema>
 
 export const emergencyContactSchema = z.object({
   name: z.string().optional(),

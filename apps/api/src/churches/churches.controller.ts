@@ -11,7 +11,9 @@ import {
   BadRequestException,
 } from '@nestjs/common'
 import { ChurchService } from './churches.service'
+import { GetUser } from '@/auth/decorators'
 import { churches } from '@church/db'
+import { UserContext } from '@/auth/types/permission.types'
 
 export type CreateChurchInput = {
   churchId?: string
@@ -38,21 +40,32 @@ export class ChurchController {
 
   /**
    * POST /churches - Create new church/branch
+   * The creator becomes the super_admin for this church
    */
   @Post()
-  async create(@Body() input: CreateChurchInput) {
+  async create(
+    @Body() input: CreateChurchInput,
+    @GetUser() user: UserContext,
+  ) {
     if (!input.name || !input.location || !input.leadPastorName) {
       throw new BadRequestException('Missing required fields: name, location, leadPastorName')
     }
 
-    return this.churchService.createChurch({
-      name: input.name,
-      location: input.location,
-      leadPastorName: input.leadPastorName,
-      phone: input.phone,
-      email: input.email,
-      description: input.description,
-    })
+    if (!user?.id) {
+      throw new BadRequestException('User context required to create church')
+    }
+
+    return this.churchService.createChurch(
+      {
+        name: input.name,
+        location: input.location,
+        leadPastorName: input.leadPastorName,
+        phone: input.phone,
+        email: input.email,
+        description: input.description,
+      },
+      user.id, // Pass the current user ID to be assigned as super_admin
+    )
   }
 
   /**

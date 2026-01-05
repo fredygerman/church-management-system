@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { toast } from "sonner"
-import Cookies from "js-cookie"
 
 export default function OAuthCallbackPage() {
   const router = useRouter()
@@ -30,9 +30,9 @@ export default function OAuthCallbackPage() {
           return
         }
 
-        if (!accessToken) {
-          setError("No access token received")
-          toast.error("Authentication failed: No access token received")
+        if (!accessToken || !refreshToken) {
+          setError("No tokens received from authentication server")
+          toast.error("Authentication failed: Missing tokens")
           setIsProcessing(false)
           
           setTimeout(() => {
@@ -41,27 +41,30 @@ export default function OAuthCallbackPage() {
           return
         }
 
-        // Store tokens in cookies
-        Cookies.set("accessToken", accessToken, {
-          expires: 30,
-          secure: true,
-          sameSite: "Lax",
+        // Sign in with NextAuth using the tokens from the backend
+        // This creates a JWT session with the tokens
+        const result = await signIn("credentials", {
+          accessToken,
+          refreshToken,
+          redirect: false,
         })
 
-        if (refreshToken) {
-          Cookies.set("refreshToken", refreshToken, {
-            expires: 30,
-            secure: true,
-            sameSite: "Lax",
-          })
+        if (!result?.ok) {
+          setError("Failed to create session")
+          toast.error("Failed to create session")
+          setIsProcessing(false)
+          
+          setTimeout(() => {
+            router.push("/auth/signin")
+          }, 2000)
+          return
         }
 
-        // Get the return URL from cookie or use default
-        const returnUrl = Cookies.get("returnTo") || "/"
-        Cookies.remove("returnTo")
-
         toast.success("Sign-in successful!")
-        router.push(returnUrl)
+        
+        // Get redirect URL from search params or use default
+        const callbackUrl = searchParams.get("callbackUrl") || "/"
+        router.push(callbackUrl)
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unknown error"
         setError(message)

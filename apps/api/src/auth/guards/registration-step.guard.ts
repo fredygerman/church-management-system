@@ -38,10 +38,6 @@ export class RegistrationStepGuard implements CanActivate {
       throw new NotFoundException('User not found');
     }
 
-    // Check if registration is already completed
-    if (user.registrationCompleted) {
-      throw new BadRequestException('Registration already completed');
-    }
 
     // Extract expected step from route path
     const path = request.route.path;
@@ -58,11 +54,7 @@ export class RegistrationStepGuard implements CanActivate {
     // For other steps, user should be at the previous step
     const requiredStep = expectedStep === 2 ? 1 : expectedStep - 1;
 
-    if (user.registrationStep !== requiredStep && user.registrationStep !== expectedStep) {
-      throw new BadRequestException(
-        `Must complete step ${user.registrationStep} first. Current step: ${user.registrationStep}, Attempting: ${expectedStep}`
-      );
-    }
+   
 
     return true;
   }

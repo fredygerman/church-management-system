@@ -3,7 +3,6 @@
 import { getSession } from "@/auth"
 import { isValid, parseISO } from "date-fns"
 import { type MemberFormData } from "@/types/member"
-import { generateFriendlyMemberNumber } from "@/lib/utils"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 

@@ -4,7 +4,7 @@ import * as React from "react"
 // import { Cross2Icon } from "@radix-ui/react-icons"
 import type { Table } from "@tanstack/react-table"
 
-import type { DataTableFilterField } from "@/types/general"
+import type { DataTableFilterField } from "@/types/data-table"
 import { cn } from "@/lib/utils"
 // import { Button } from "@/components/ui/button"
 // import { Input } from "@/components/ui/input"

@@ -4,9 +4,9 @@
   "private": true,
   "packageManager": "pnpm@9.12.3",
   "scripts": {
-    "build": "turbo build",
-    "dev": "turbo dev",
-    "start": "turbo start",
+    "build": "turbo build --filter=api --filter=web",
+    "dev": "turbo dev --filter=api --filter=web",
+    "start": "turbo start --filter=api --filter=web",
     "lint": "turbo lint",
     "lint:fix": "turbo lint:fix",
     "type-check": "turbo type-check",

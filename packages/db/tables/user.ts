@@ -28,6 +28,7 @@ export const users = pgTable(
       .notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     email: varchar("email", { length: 255 }).notNull().unique(),
+    phone: varchar("phone", { length: 20 }).unique(),
     picture: varchar("picture", { length: 255 }),
     role: roleEnum("role").default("member"),
     churchId: uuid("church_id"),
@@ -39,6 +40,7 @@ export const users = pgTable(
   },
   (table) => ({
     emailIdx: index("idx_users_email").on(table.email),
+    phoneIdx: index("idx_users_phone").on(table.phone),
     churchIdx: index("idx_users_church").on(table.churchId),
     roleIdx: index("idx_users_role").on(table.role),
     zoneIdx: index("idx_users_zone").on(table.assignedZoneId),

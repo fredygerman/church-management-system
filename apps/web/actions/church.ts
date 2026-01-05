@@ -23,6 +23,29 @@ export async function getChurches() {
   }
 }
 
+export async function setupChurch(data: {
+  name: string
+  location: string
+  leadPastorName: string
+  phone?: string
+  email?: string
+  description?: string
+}) {
+  const response = await apiRequest({
+    requestConfig: {
+      method: 'POST',
+      url: '/auth/setup',
+      data,
+    },
+  })
+
+  if (!response.success) {
+    throw new Error(response.message || 'Failed to setup church')
+  }
+
+  return response.data
+}
+
 export async function createChurch(data: {
   name: string
   location: string

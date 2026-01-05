@@ -2,13 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import {
   Form,
@@ -21,8 +19,7 @@ import {
 } from '@/components/ui/form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { createChurch } from '@/actions/church'
-import { Building2 } from 'lucide-react'
+import { setupChurch } from '@/actions/church'
 
 const churchFormSchema = z.object({
   name: z.string().min(2, 'Church name must be at least 2 characters'),
@@ -31,7 +28,7 @@ const churchFormSchema = z.object({
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
   description: z.string().optional(),
-})
+}) as any
 
 type ChurchFormValues = z.infer<typeof churchFormSchema>
 
@@ -41,12 +38,11 @@ interface SetupChurchProps {
 
 export function SetupChurch({ onSuccess }: SetupChurchProps) {
   const router = useRouter()
-  const { data: session } = useSession()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   const form = useForm<ChurchFormValues>({
-    resolver: zodResolver(churchFormSchema),
+    resolver: zodResolver(churchFormSchema) as any,
     defaultValues: {
       name: '',
       location: '',
@@ -57,11 +53,12 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
     },
   })
 
+
   async function onSubmit(data: ChurchFormValues) {
     setIsLoading(true)
     setError(null)
     try {
-      const church = await createChurch({
+      const result = await setupChurch({
         name: data.name,
         location: data.location,
         leadPastorName: data.leadPastorName,
@@ -70,19 +67,20 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
         description: data.description || undefined,
       })
 
-      toast.success('Church created successfully! Redirecting to dashboard...')
+      // After successful setup, redirect to the church dashboard
+      toast.success('Church setup completed! Redirecting to dashboard...')
       
       if (onSuccess) {
-        onSuccess(church.id)
+        onSuccess(result.church.id)
       }
       
       // Use setTimeout to ensure user sees the success message
       setTimeout(() => {
-        router.push(`/${church.id}/dashboard`)
+        router.push(`/${result.church.id}/dashboard`)
       }, 1000)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create church'
-      console.error('Church creation error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to setup church'
+      console.error('Church setup error:', error)
       setError(errorMessage)
       toast.error(errorMessage)
     } finally {
@@ -96,7 +94,20 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
         <CardHeader className="space-y-2 text-center">
           <div className="flex justify-center">
             <div className="rounded-lg bg-blue-100 p-3">
-              <Building2 className="h-8 w-8 text-blue-600" />
+              <svg
+                className="h-8 w-8 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+                />
+              </svg>
             </div>
           </div>
           <CardTitle className="text-2xl">Setup Your Church</CardTitle>
@@ -133,7 +144,7 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
                   <FormItem>
                     <FormLabel>Location</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Nairobi, Kenya" {...field} />
+                      <Input placeholder="e.g., Dar Es Salaam, Tanzania" {...field} />
                     </FormControl>
                     <FormDescription>
                       City and country where the church is located

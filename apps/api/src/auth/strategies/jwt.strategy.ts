@@ -2,9 +2,9 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { DatabaseService } from '../../database/database.service';
-import { users } from '../../../../../packages/config/src/schema';
-import { eq } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 import config from '../../config';
+import { users } from '@church/db';
 
 export interface JwtPayload {
   sub: string; // user id
@@ -36,13 +36,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
       throw new UnauthorizedException('User not found');
     }
 
-    if (!user.isActive) {
-      throw new UnauthorizedException('User account is inactive');
+    // Check if user is soft-deleted
+    if (user.deletedAt) {
+      throw new UnauthorizedException('User account is deleted');
     }
 
-    // Remove password from user object
-    const { password, ...userWithoutPassword } = user;
-
-    return userWithoutPassword;
+    return user;
   }
 }

@@ -13,12 +13,15 @@ export default async function HomePage() {
   }
 
   // Get churches for current user
-  const churches = await getChurches()
-
-  // If user has no churches, redirect to setup to create one
-  if (!churches || churches.length === 0) {
+  const churchesResult = await getChurches()
+  
+  // Handle errors - if churches endpoint fails (403 Church context required), redirect to setup
+  // If no churches returned, also redirect to setup
+  if (!churchesResult || churchesResult.length === 0) {
     redirect('/setup')
   }
+
+  const churches = churchesResult
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-start gap-4 p-8">
