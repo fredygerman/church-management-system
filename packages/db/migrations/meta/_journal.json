@@ -8,6 +8,20 @@
       "when": 1767521561920,
       "tag": "0000_nostalgic_zemo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767527168101,
+      "tag": "0001_phase1_digital_shepherd",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767540748000,
+      "tag": "0002_permission_system",
+      "breakpoints": true
     }
   ]
 }

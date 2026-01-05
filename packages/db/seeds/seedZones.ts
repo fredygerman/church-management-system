@@ -2,19 +2,19 @@ import { db } from "@/db"
 
 import { zones } from "../tables/zones"
 
-export async function seedZones(workspaceId: string) {
+export async function seedZones(churchId: string) {
   const zoneData = [
     {
       name: "Zone 1",
       leader: "Leader 1",
       description: "Description 1",
-      workspaceId,
+      churchId,
     },
     {
       name: "Zone 2",
       leader: "Leader 2",
       description: "Description 2",
-      workspaceId,
+      churchId,
     },
     // Add more zones as needed
   ]

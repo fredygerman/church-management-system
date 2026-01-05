@@ -30,7 +30,6 @@ import { ModeToggle } from "@/components/layout/mode-toggle"
 
 export default function Header() {
   const pathname = usePathname()
-  // const { workspaceId } = useParams()
   const { data: session, status } = useSession()
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
 

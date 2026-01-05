@@ -2,67 +2,71 @@
   "name": "@church/config",
   "version": "0.0.0",
   "private": true,
-  "main": "./src/schema/index.ts",
-  "types": "./src/schema/index.ts",
+  "main": "./dist/schema/index.js",
+  "types": "./dist/schema/index.d.ts",
   "exports": {
     ".": {
-      "types": "./src/schema/index.ts",
-      "default": "./src/schema/index.ts"
+      "types": "./dist/schema/index.d.ts",
+      "default": "./dist/schema/index.js"
     },
     "./types": {
-      "types": "./src/types/index.ts",
-      "default": "./src/types/index.ts"
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.js"
     },
     "./types/notifications": {
-      "types": "./src/types/notifications.ts",
-      "default": "./src/types/notifications.ts"
+      "types": "./dist/types/notifications.d.ts",
+      "default": "./dist/types/notifications.js"
     },
     "./dtos": {
-      "types": "./src/dtos/index.ts",
-      "default": "./src/dtos/index.ts"
+      "types": "./dist/dtos/index.d.ts",
+      "default": "./dist/dtos/index.js"
     },
     "./dtos/sms": {
-      "types": "./src/dtos/sms/index.ts",
-      "default": "./src/dtos/sms/index.ts"
+      "types": "./dist/dtos/sms/index.d.ts",
+      "default": "./dist/dtos/sms/index.js"
     },
     "./dtos/notifications": {
-      "types": "./src/dtos/notifications/index.ts",
-      "default": "./src/dtos/notifications/index.ts"
+      "types": "./dist/dtos/notifications/index.d.ts",
+      "default": "./dist/dtos/notifications/index.js"
     },
     "./dtos/mail": {
-      "types": "./src/dtos/mail/index.ts",
-      "default": "./src/dtos/mail/index.ts"
+      "types": "./dist/dtos/mail/index.d.ts",
+      "default": "./dist/dtos/mail/index.js"
     },
     "./dtos/payments": {
-      "types": "./src/dtos/payments.dto.ts",
-      "default": "./src/dtos/payments.dto.ts"
+      "types": "./dist/dtos/payments.dto.d.ts",
+      "default": "./dist/dtos/payments.dto.js"
     },
     "./dtos/auth": {
-      "types": "./src/dtos/auth/index.ts",
-      "default": "./src/dtos/auth/index.ts"
+      "types": "./dist/dtos/auth/index.d.ts",
+      "default": "./dist/dtos/auth/index.js"
     },
     "./dtos/registration": {
-      "types": "./src/dtos/registration/index.ts",
-      "default": "./src/dtos/registration/index.ts"
+      "types": "./dist/dtos/registration/index.d.ts",
+      "default": "./dist/dtos/registration/index.js"
+    },
+    "./dtos/users": {
+      "types": "./dist/dtos/users/index.d.ts",
+      "default": "./dist/dtos/users/index.js"
     },
     "./utils": {
-      "types": "./src/utils/index.ts",
-      "default": "./src/utils/index.ts"
+      "types": "./dist/utils/index.d.ts",
+      "default": "./dist/utils/index.js"
     },
     "./schema": {
-      "types": "./src/schema/index.ts",
-      "default": "./src/schema/index.ts"
+      "types": "./dist/schema/index.d.ts",
+      "default": "./dist/schema/index.js"
     }
   },
   "scripts": {
-    "build": "echo 'No build needed - using direct TS files'",
-    "dev": "echo 'No dev needed - using direct TS files'",
+    "build": "tsc",
+    "dev": "tsc --watch",
     "start": "echo 'No start needed - using direct TS files'",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "type-check": "tsc --noEmit",
     "test": "echo 'No tests configured yet'",
-    "clean": "echo 'No clean needed - no build artifacts'"
+    "clean": "rimraf dist"
   },
   "dependencies": {
     "@nestjs/swagger": "^7.1.17",

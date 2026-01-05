@@ -3,7 +3,6 @@
 import * as React from "react"
 import Link from "next/link"
 import { useParams, usePathname } from "next/navigation"
-import { workspaces } from "@/db/schema"
 import { ChevronDown } from "lucide-react"
 
 import { sidebarConfig } from "@/config/sidebar"
@@ -27,34 +26,35 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { WorkspaceSwitcher } from "@/components/layout/workspace-switcher"
+import { ChurchSwitcher } from "@/components/layout/church-switcher"
 
-// import { NavUser } from "./nav-user"
+interface Church {
+  id: string
+  name: string
+  location?: string
+  imageUrl?: string
+}
 
 interface DashboardSidebarProps {
-  workspaces: (typeof workspaces.$inferSelect)[]
-  currentWorkspace: typeof workspaces.$inferSelect | null
+  churches: Church[]
+  currentChurch: Church | null
 }
 
 export function DashboardSidebar({
-  workspaces,
-  currentWorkspace,
+  churches,
+  currentChurch,
 }: DashboardSidebarProps) {
-  // console.log("DashboardSidebar workspaces", workspaces)
-  const { workspaceId } = useParams()
+  const { churchId } = useParams()
   const { isMobile, open, setOpen } = useSidebar()
   const pathname = usePathname()
   const hoverRef = React.useRef(null)
   const isHover = useHover(hoverRef)
 
-  // console.log("DashboardSidebar currentWorkspace", currentWorkspace)
-  // console.log("DashboardSidebar workspaceId", workspaceId)
-
   React.useEffect(() => {
     if (isHover && !isMobile) {
       setOpen(true)
     } else if (!isHover && !isMobile && open) {
-      // TODO avoid closing sidebar when dropdowns like workspace switcher are open
+      // TODO avoid closing sidebar when dropdowns like church switcher are open
       // setOpen(false)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -63,10 +63,10 @@ export function DashboardSidebar({
   return (
     <Sidebar collapsible="icon" variant="sidebar" side="left" ref={hoverRef}>
       <SidebarHeader>
-        {workspaces && (
-          <WorkspaceSwitcher
-            workspaces={workspaces}
-            currentWorkspace={currentWorkspace}
+        {churches && (
+          <ChurchSwitcher
+            churches={churches}
+            currentChurch={currentChurch}
           />
         )}
       </SidebarHeader>
@@ -87,14 +87,14 @@ export function DashboardSidebar({
               <CollapsibleContent>
                 <SidebarMenu>
                   {section.items.map((item) => {
-                    const isActive = pathname === `/${workspaceId}${item.href}`
+                    const isActive = pathname === `/${churchId}${item.href}`
                     const Icon = item.icon
 
                     return (
                       <SidebarMenuItem key={item.href}>
                         <SidebarMenuButton asChild>
                           <Link
-                            href={`/${workspaceId}${item.href}`}
+                            href={`/${churchId}${item.href}`}
                             target={item.target || "_self"}
                             className={cn(
                               "flex items-center gap-2 rounded-md px-2 py-1 text-sm hover:bg-muted",
@@ -120,8 +120,6 @@ export function DashboardSidebar({
       <SidebarFooter>
         {open && (
           <>
-            {/* <NavUser user={userData.user} /> */}
-
             <Card
               className={`${open ? "" : "hidden"} w-auto bg-background shadow-sm transition-all`}
             >

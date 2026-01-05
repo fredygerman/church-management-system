@@ -17,13 +17,14 @@ class SendSmsDto {
 exports.SendSmsDto = SendSmsDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'User ID to associate the notification with',
-        example: 1,
-        type: Number,
+        description: 'User ID (UUID) to associate the notification with',
+        example: '550e8400-e29b-41d4-a716-446655440000',
+        type: String,
     }),
     (0, class_validator_1.IsNotEmpty)(),
-    (0, class_validator_1.IsNumber)(),
-    __metadata("design:type", Number)
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsUUID)('4'),
+    __metadata("design:type", String)
 ], SendSmsDto.prototype, "userId", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({

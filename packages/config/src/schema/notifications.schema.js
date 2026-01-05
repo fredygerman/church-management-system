@@ -24,8 +24,8 @@ exports.notificationStatusEnum = (0, pg_core_1.pgEnum)('notification_status', [
     'delivered',
 ]);
 exports.notifications = (0, pg_core_1.pgTable)('notifications', {
-    id: (0, pg_core_1.serial)('id').primaryKey(),
-    userId: (0, pg_core_1.integer)('user_id')
+    id: (0, pg_core_1.uuid)('id').defaultRandom().primaryKey(),
+    userId: (0, pg_core_1.uuid)('user_id')
         .notNull()
         .references(() => users_schema_1.users.id, { onDelete: 'cascade' }),
     type: (0, exports.notificationTypeEnum)('type').notNull(),

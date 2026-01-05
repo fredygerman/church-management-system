@@ -21,10 +21,10 @@ const steps = [
 ]
 
 export function MemberForm({
-  workspaceId,
+  churchId,
   zones,
 }: {
-  workspaceId: string
+  churchId: string
   zones: any[]
 }) {
   const [currentStep, setCurrentStep] = useState(0)
@@ -75,11 +75,11 @@ export function MemberForm({
       }
 
       console.log("Sanitized data:", sanitizedData)
-      console.log("Workspace ID:", workspaceId)
+      console.log("Church ID:", churchId)
 
       const result = await createMember({
         ...sanitizedData,
-        workspaceId,
+        churchId,
       })
       if (result.success) {
         toast.custom((t) => (
@@ -90,7 +90,7 @@ export function MemberForm({
                 className="rounded bg-blue-500 px-4 py-2 text-foreground"
                 onClick={() => {
                   toast.dismiss((t as unknown as { id: string | number }).id)
-                  router.push(`/${workspaceId}/dashboard/members`)
+                  router.push(`/${churchId}/dashboard/members`)
                 }}
               >
                 Go to Members
@@ -118,7 +118,7 @@ export function MemberForm({
       setIsSubmitting(false)
       // scroll to top of the page
       window.scrollTo(0, 0)
-      router.push(`/${workspaceId}/dashboard/members`)
+      router.push(`/${churchId}/dashboard/members`)
     }
   }
 

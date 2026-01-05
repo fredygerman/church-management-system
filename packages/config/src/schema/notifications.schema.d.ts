@@ -1,17 +1,17 @@
-export declare const notificationTypeEnum: import("node_modules/drizzle-orm/pg-core").PgEnum<["sms", "email", "push"]>;
-export declare const notificationCategoryEnum: import("node_modules/drizzle-orm/pg-core").PgEnum<["auth", "account", "order", "shipment", "payment", "system", "marketing"]>;
-export declare const notificationStatusEnum: import("node_modules/drizzle-orm/pg-core").PgEnum<["pending", "sent", "failed", "delivered"]>;
-export declare const notifications: import("node_modules/drizzle-orm/pg-core").PgTableWithColumns<{
+export declare const notificationTypeEnum: import("node_modules/drizzle-orm/pg-core/index.cjs").PgEnum<["sms", "email", "push"]>;
+export declare const notificationCategoryEnum: import("node_modules/drizzle-orm/pg-core/index.cjs").PgEnum<["auth", "account", "order", "shipment", "payment", "system", "marketing"]>;
+export declare const notificationStatusEnum: import("node_modules/drizzle-orm/pg-core/index.cjs").PgEnum<["pending", "sent", "failed", "delivered"]>;
+export declare const notifications: import("node_modules/drizzle-orm/pg-core/table.cjs").PgTableWithColumns<{
     name: "notifications";
     schema: undefined;
     columns: {
-        id: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        id: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "id";
             tableName: "notifications";
-            dataType: "number";
-            columnType: "PgSerial";
-            data: number;
-            driverParam: number;
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
             notNull: true;
             hasDefault: true;
             isPrimaryKey: true;
@@ -22,13 +22,13 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        userId: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        userId: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "user_id";
             tableName: "notifications";
-            dataType: "number";
-            columnType: "PgInteger";
-            data: number;
-            driverParam: string | number;
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
             notNull: true;
             hasDefault: false;
             isPrimaryKey: false;
@@ -39,12 +39,12 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        type: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        type: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "type";
             tableName: "notifications";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "push" | "email" | "sms";
+            data: "email" | "sms" | "push";
             driverParam: string;
             notNull: true;
             hasDefault: false;
@@ -56,7 +56,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        recipient: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        recipient: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "recipient";
             tableName: "notifications";
             dataType: "string";
@@ -75,7 +75,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
         }, {}, {
             length: 255;
         }>;
-        sender: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        sender: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "sender";
             tableName: "notifications";
             dataType: "string";
@@ -94,7 +94,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
         }, {}, {
             length: 100;
         }>;
-        category: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        category: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "category";
             tableName: "notifications";
             dataType: "string";
@@ -111,7 +111,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        purpose: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        purpose: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "purpose";
             tableName: "notifications";
             dataType: "string";
@@ -130,7 +130,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
         }, {}, {
             length: 100;
         }>;
-        subject: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        subject: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "subject";
             tableName: "notifications";
             dataType: "string";
@@ -149,7 +149,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
         }, {}, {
             length: 255;
         }>;
-        message: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        message: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "message";
             tableName: "notifications";
             dataType: "string";
@@ -166,7 +166,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        preview: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        preview: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "preview";
             tableName: "notifications";
             dataType: "string";
@@ -185,7 +185,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
         }, {}, {
             length: 200;
         }>;
-        showInApp: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        showInApp: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "show_in_app";
             tableName: "notifications";
             dataType: "boolean";
@@ -202,7 +202,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        isRead: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        isRead: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "is_read";
             tableName: "notifications";
             dataType: "boolean";
@@ -219,7 +219,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        readAt: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        readAt: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "read_at";
             tableName: "notifications";
             dataType: "date";
@@ -236,7 +236,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        reference: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        reference: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "reference";
             tableName: "notifications";
             dataType: "string";
@@ -255,7 +255,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
         }, {}, {
             length: 100;
         }>;
-        status: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        status: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "status";
             tableName: "notifications";
             dataType: "string";
@@ -272,7 +272,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        response: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        response: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "response";
             tableName: "notifications";
             dataType: "json";
@@ -289,7 +289,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        error: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        error: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "error";
             tableName: "notifications";
             dataType: "string";
@@ -306,7 +306,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        metadata: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        metadata: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "metadata";
             tableName: "notifications";
             dataType: "json";
@@ -339,7 +339,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
                 actionUrl?: string;
             };
         }>;
-        sentAt: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        sentAt: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "sent_at";
             tableName: "notifications";
             dataType: "date";
@@ -356,7 +356,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        deliveredAt: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        deliveredAt: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "delivered_at";
             tableName: "notifications";
             dataType: "date";
@@ -373,7 +373,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        createdAt: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        createdAt: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "created_at";
             tableName: "notifications";
             dataType: "date";
@@ -390,7 +390,7 @@ export declare const notifications: import("node_modules/drizzle-orm/pg-core").P
             identity: undefined;
             generated: undefined;
         }, {}, {}>;
-        updatedAt: import("node_modules/drizzle-orm/pg-core").PgColumn<{
+        updatedAt: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
             name: "updated_at";
             tableName: "notifications";
             dataType: "date";

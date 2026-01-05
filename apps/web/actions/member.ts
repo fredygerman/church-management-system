@@ -1,10 +1,11 @@
 "use server"
 
-import { db, members, and, count, eq, sql } from "@church/db"
+import { getSession } from "@/auth"
 import { isValid, parseISO } from "date-fns"
-
 import { type MemberFormData } from "@/types/member"
 import { generateFriendlyMemberNumber } from "@/lib/utils"
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
 function isValidDate(dateStr: string): boolean {
   try {
@@ -16,8 +17,13 @@ function isValidDate(dateStr: string): boolean {
 
 // Function to create a new member
 export async function createMember(
-  data: MemberFormData & { workspaceId: string }
-): Promise<{ success: boolean; member: typeof members.$inferSelect }> {
+  data: MemberFormData & { churchId: string }
+): Promise<{ success: boolean; member: any }> {
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
+
   // Validate required dates
   if (
     !data.personalInfo.birthDate ||
@@ -49,42 +55,37 @@ export async function createMember(
     throw new Error("Anointed date must be a valid date")
   }
 
-  let memberNumber: string = ""
-  let isUnique = false
-
-  while (!isUnique) {
-    memberNumber = generateFriendlyMemberNumber()
-    const existingMember = await db
-      .select()
-      .from(members)
-      .where(eq(members.number, memberNumber))
-      .execute()
-
-    if (existingMember.length === 0) {
-      isUnique = true
-    }
-  }
-
-  console.log("Member Number:", memberNumber)
-
-  const createdMember = await db
-    .insert(members)
-    .values({
-      ...data.personalInfo,
-      ...data.churchInfo,
-      workspaceId: data.workspaceId,
-      number: memberNumber,
+  try {
+    const response = await fetch(`${API_BASE_URL}/members`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...data.personalInfo,
+        ...data.churchInfo,
+        churchId: data.churchId,
+      }),
     })
-    .returning()
-    .execute()
 
-  return {
-    success: true,
-    member: createdMember[0],
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to create member')
+    }
+
+    const member = await response.json()
+    return {
+      success: true,
+      member,
+    }
+  } catch (error) {
+    console.error('Error creating member:', error)
+    throw error
   }
 }
 
-// Function to get all members in a workspace with pagination and filters
+// Function to get all members for a church with pagination and filters
 export async function getMembers(
   queryParams: {
     page: number
@@ -97,55 +98,69 @@ export async function getMembers(
     from: string
     to: string
   },
-  workspaceId: string
-): Promise<{ members: (typeof members.$inferSelect)[]; pageCount: number }> {
-  const {
-    page,
-    per_page,
-    sort,
-    fullName,
-    gender,
-    maritalStatus,
-    occupation,
-    from,
-    to,
-  } = queryParams
-  const offset = (page - 1) * per_page
+  churchId: string
+): Promise<{ members: any[]; pageCount: number }> {
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
 
-  const filters = [
-    eq(members.workspaceId, workspaceId),
-    fullName
-      ? sql`${members.fullName} ILIKE ${"%" + fullName + "%"}`
-      : undefined,
-    gender ? eq(members.gender, gender as "Male" | "Female") : undefined,
-    maritalStatus
-      ? eq(
-          members.maritalStatus,
-          maritalStatus as "Single" | "Married" | "Divorced" | "Widowed"
-        )
-      : undefined,
-    occupation
-      ? sql`${members.occupation} ILIKE ${"%" + occupation + "%"}`
-      : undefined,
-    from ? sql`${members.createdAt} >= ${from}` : undefined,
-    to ? sql`${members.createdAt} <= ${to}` : undefined,
-  ].filter(Boolean)
+  try {
+    // Build query string
+    const queryString = new URLSearchParams({
+      churchId,
+      page: queryParams.page.toString(),
+      per_page: queryParams.per_page.toString(),
+      sort: queryParams.sort,
+      ...(queryParams.fullName && { fullName: queryParams.fullName }),
+      ...(queryParams.gender && { gender: queryParams.gender }),
+      ...(queryParams.maritalStatus && { maritalStatus: queryParams.maritalStatus }),
+      ...(queryParams.occupation && { occupation: queryParams.occupation }),
+      ...(queryParams.from && { from: queryParams.from }),
+      ...(queryParams.to && { to: queryParams.to }),
+    })
 
-  const [memberList, totalCount] = await Promise.all([
-    db
-      .select()
-      .from(members)
-      .where(and(...filters))
-      .orderBy(sql`${sort}`)
-      .limit(per_page)
-      .offset(offset)
-      .execute(),
-    countMembers(workspaceId),
-  ])
+    const response = await fetch(`${API_BASE_URL}/members?${queryString}`, {
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    })
 
-  const pageCount = Math.ceil(totalCount / per_page)
+    if (!response.ok) {
+      throw new Error('Failed to fetch members')
+    }
 
-  return { members: memberList, pageCount }
+    const data = await response.json()
+    return data
+  } catch (error) {
+    console.error('Error fetching members:', error)
+    return { members: [], pageCount: 0 }
+  }
+}
+
+// Function to get a single member by ID
+export async function getMemberById(id: string): Promise<any> {
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch member')
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error('Error fetching member:', error)
+    throw error
+  }
 }
 
 // Function to update a member
@@ -159,26 +174,44 @@ export async function updateMember(
     joinedDate?: string
   }
 ) {
-  const updatedMember = await db
-    .update(members)
-    .set(data)
-    .where(eq(members.id, id))
-    .returning()
-    .execute()
-  return updatedMember
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
+
+  const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${session.accessToken}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Failed to update member')
+  }
+
+  return response.json()
 }
 
 // Function to delete a member
 export async function deleteMember(id: string) {
-  await db.delete(members).where(eq(members.id, id)).execute()
-}
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
 
-// Function to count members in a workspace
-export async function countMembers(workspaceId: string) {
-  const result = await db
-    .select({ count: count() })
-    .from(members)
-    .where(eq(members.workspaceId, workspaceId))
-    .execute()
-  return result[0].count
+  const response = await fetch(`${API_BASE_URL}/members/${id}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${session.accessToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.message || 'Failed to delete member')
+  }
 }

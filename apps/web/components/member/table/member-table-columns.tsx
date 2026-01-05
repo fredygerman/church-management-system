@@ -1,12 +1,13 @@
 "use client"
 
 import * as React from "react"
+import Link from "next/link"
 import { type members } from "@/db/schema"
 import { type ColumnDef } from "@tanstack/react-table"
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 
-export function getColumns(): ColumnDef<typeof members.$inferSelect>[] {
+export function getColumns(churchId: string): ColumnDef<typeof members.$inferSelect>[] {
   return [
     {
       accessorKey: "number",
@@ -21,7 +22,14 @@ export function getColumns(): ColumnDef<typeof members.$inferSelect>[] {
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Full Name" />
       ),
-      cell: ({ row }) => <div>{row.original.fullName}</div>,
+      cell: ({ row }) => (
+        <Link 
+          href={`/${churchId}/dashboard/members/${row.original.id}`}
+          className="text-blue-600 hover:underline font-semibold"
+        >
+          {row.original.fullName}
+        </Link>
+      ),
       enableSorting: true,
     },
     {

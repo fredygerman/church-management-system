@@ -5,7 +5,7 @@ import { generateFriendlyMemberNumber } from "@/lib/utils"
 
 import { zones } from "../tables/zones"
 
-export async function seedMembers(workspaceId: string) {
+export async function seedMembers(churchId: string) {
   const zoneIds = await db.select({ id: zones.id }).from(zones) // Fetch zone IDs
 
   const memberData: Array<{
@@ -74,7 +74,7 @@ export async function seedMembers(workspaceId: string) {
         phone: "000-000-0000",
         zoneId: member.zoneId,
       },
-      workspaceId,
+      churchId,
     })
   }
 

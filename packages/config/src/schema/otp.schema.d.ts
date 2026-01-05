@@ -1,0 +1,138 @@
+export declare const otps: import("node_modules/drizzle-orm/pg-core/table.cjs").PgTableWithColumns<{
+    name: "otps";
+    schema: undefined;
+    columns: {
+        id: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
+            name: "id";
+            tableName: "otps";
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: true;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        userId: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
+            name: "user_id";
+            tableName: "otps";
+            dataType: "string";
+            columnType: "PgUUID";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        code: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
+            name: "code";
+            tableName: "otps";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 6;
+        }>;
+        purpose: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
+            name: "purpose";
+            tableName: "otps";
+            dataType: "string";
+            columnType: "PgVarchar";
+            data: string;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: [string, ...string[]];
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {
+            length: 50;
+        }>;
+        isUsed: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
+            name: "is_used";
+            tableName: "otps";
+            dataType: "boolean";
+            columnType: "PgBoolean";
+            data: boolean;
+            driverParam: boolean;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        expiresAt: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
+            name: "expires_at";
+            tableName: "otps";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: false;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+        createdAt: import("node_modules/drizzle-orm/pg-core/index.cjs").PgColumn<{
+            name: "created_at";
+            tableName: "otps";
+            dataType: "date";
+            columnType: "PgTimestamp";
+            data: Date;
+            driverParam: string;
+            notNull: true;
+            hasDefault: true;
+            isPrimaryKey: false;
+            isAutoincrement: false;
+            hasRuntimeDefault: false;
+            enumValues: undefined;
+            baseColumn: never;
+            identity: undefined;
+            generated: undefined;
+        }, {}, {}>;
+    };
+    dialect: "pg";
+}>;
+export type Otp = typeof otps.$inferSelect;
+export type NewOtp = typeof otps.$inferInsert;
+export declare const OtpPurpose: {
+    readonly REGISTRATION: "registration";
+    readonly PASSWORD_RESET: "password-reset";
+    readonly LOGIN: "login";
+};
+export type OtpPurposeType = (typeof OtpPurpose)[keyof typeof OtpPurpose];

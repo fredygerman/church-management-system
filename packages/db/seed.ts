@@ -1,14 +1,14 @@
 import { sql } from "drizzle-orm"
 
 import { seedMembers } from "./seeds/seedMembers"
-import { getFirstWorkspaceId, seedWorkspaces } from "./seeds/seedWorkspaces"
+import { getFirstChurchId, seedChurches } from "./seeds/seedChurches"
 import { seedZones } from "./seeds/seedZones"
 
 async function clearTables() {
   console.log("🗑️  Clearing existing data...")
   await sql`DELETE FROM members`
   await sql`DELETE FROM zones`
-  await sql`DELETE FROM workspaces`
+  await sql`DELETE FROM churches`
   console.log("✨ Tables cleared")
 }
 async function runSeed() {
@@ -17,10 +17,10 @@ async function runSeed() {
   const start = Date.now()
 
   await clearTables()
-  await seedWorkspaces()
-  const workspaceId = await getFirstWorkspaceId() // Fetch the first workspace ID
-  await seedZones(workspaceId) // Pass workspaceId to seedZones
-  await seedMembers(workspaceId) // Pass workspaceId to seedMembers
+  await seedChurches()
+  const churchId = await getFirstChurchId() // Fetch the first church ID
+  await seedZones(churchId) // Pass churchId to seedZones
+  await seedMembers(churchId) // Pass churchId to seedMembers
 
   const end = Date.now()
 

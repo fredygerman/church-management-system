@@ -5,6 +5,9 @@ import {
   Settings,
   Users,
   Users2,
+  MapPin,
+  Home,
+  Users3,
   type LucideIcon,
 } from "lucide-react"
 
@@ -23,10 +26,20 @@ interface SidebarSection {
 
 export const sidebarConfig: SidebarSection[] = [
   {
+    title: "Dashboard",
+    items: [
+      {
+        title: "Home",
+        href: "/dashboard/home",
+        icon: Home,
+      },
+    ],
+  },
+  {
     title: "Reporting",
     items: [
       {
-        title: "Analysis",
+        title: "Analytics",
         href: "/dashboard/analytics",
         icon: BarChart2,
       },
@@ -41,8 +54,18 @@ export const sidebarConfig: SidebarSection[] = [
         icon: Users,
       },
       {
-        title: "Attendance",
-        href: "/dashboard/members/attendance",
+        title: "Zones",
+        href: "/dashboard/zones",
+        icon: MapPin,
+      },
+      {
+        title: "Families",
+        href: "/dashboard/families",
+        icon: Users3,
+      },
+      {
+        title: "Visitors",
+        href: "/dashboard/visitors",
         icon: Users2,
       },
     ],
@@ -51,9 +74,14 @@ export const sidebarConfig: SidebarSection[] = [
     title: "Settings",
     items: [
       {
+        title: "Church Settings",
+        href: "/dashboard/settings/church",
+        icon: Settings,
+      },
+      {
         title: "Users",
         href: "/dashboard/settings/users",
-        icon: Settings,
+        icon: Users,
       },
     ],
   },

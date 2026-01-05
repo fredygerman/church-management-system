@@ -2,9 +2,20 @@
   "name": "@church/db",
   "version": "0.0.0",
   "private": true,
-  "main": "./index.ts",
-  "types": "./index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "default": "./dist/schema.js"
+    }
+  },
   "scripts": {
+    "build": "tsc",
     "db:generate": "dotenv drizzle-kit generate",
     "db:push": "dotenv drizzle-kit push",
     "db:migrate": "dotenv tsx migrate.ts",
@@ -12,7 +23,7 @@
     "db:studio": "dotenv drizzle-kit studio"
   },
   "dependencies": {
-    "drizzle-orm": "^0.38.2",
+    "drizzle-orm": "^0.44.7",
     "dotenv": "^17.2.3",
     "postgres": "^3.4.5"
   },

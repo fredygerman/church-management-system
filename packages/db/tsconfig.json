@@ -2,8 +2,14 @@
   "extends": "../typescript-config/base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "."
+    "rootDir": ".",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "incremental": false,
+    "declaration": true,
+    "declarationMap": true,
+    "allowImportingTsExtensions": false
   },
-  "include": ["."],
-  "exclude": ["node_modules", "dist"]
+  "include": ["index.ts", "schema.ts", "tables/**/*.ts"],
+  "exclude": ["node_modules", "dist", "seeds", "migrations"]
 }

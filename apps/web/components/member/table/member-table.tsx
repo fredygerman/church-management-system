@@ -12,13 +12,14 @@ import { MemberTableToolbarActions } from "./member-table-toolbar-actions"
 
 interface MemberTableProps {
   memberPromise: ReturnType<typeof getMembers>
+  churchId: string
 }
 
-export function MemberTable({ memberPromise }: MemberTableProps) {
+export function MemberTable({ memberPromise, churchId }: MemberTableProps) {
   const { members, pageCount = 1 } = React.use(memberPromise)
   console.log("member table members", members)
   console.log("member table pageCount", pageCount)
-  const columns = React.useMemo(() => getColumns(), [])
+  const columns = React.useMemo(() => getColumns(churchId), [churchId])
 
   const { table } = useDataTable({
     data: members,

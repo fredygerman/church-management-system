@@ -1,19 +1,35 @@
-import { getWorkspaceMembersCount, getWorkspaces } from "@/actions/workspace"
+import { getChurches } from "@/actions/church"
+import { getSession } from "@/auth"
+import { redirect } from "next/navigation"
 
-import { CreateWorkspaceDialog } from "@/components/workspace/create-workspace-dialog"
-import { WorkspaceCard } from "@/components/workspace/workspace-card"
+import { CreateChurchDialog } from "@/components/church-management/create-church-dialog"
+import { ChurchCard } from "@/components/church-management/church-card"
 
 export default async function HomePage() {
-  const workspaces = await getWorkspaces()
+  const session = await getSession()
 
-  if (!workspaces) {
-    return <div>Loading...</div>
+  if (!session?.user) {
+    redirect('/auth/signin')
   }
 
-  const workspacesWithMembersCount = await Promise.all(
-    workspaces.map(async (workspace) => {
-      const totalMembers = await getWorkspaceMembersCount(workspace.id)
-      return { workspace, totalMembers }
+  // Get churches for current user
+  let churches = []
+  try {
+    churches = await getChurches()
+  } catch (error) {
+    console.error('Failed to fetch churches:', error)
+  }
+
+  // If HQ user with no churches, redirect to setup
+  if (churches.length === 0 && session.user.role === 'SUPER_ADMIN') {
+    redirect('/setup')
+  }
+
+  // Get member counts for each church
+  const churchesWithMembersCount = await Promise.all(
+    churches.map(async (church) => {
+      const totalMembers = await getChurchMembersCount(church.id)
+      return { church, totalMembers }
     })
   )
 
@@ -29,10 +45,10 @@ export default async function HomePage() {
           </p>
         </div>
         <div className="text-right">
-          <CreateWorkspaceDialog />
+          <CreateChurchDialog />
         </div>
       </div>
-      {workspacesWithMembersCount.length === 0 ? (
+      {churchesWithMembersCount.length === 0 ? (
         <div className="text-center">
           <p className="text-xl text-muted-foreground">
             You have no church. Create a new church to get started.
@@ -40,10 +56,10 @@ export default async function HomePage() {
         </div>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {workspacesWithMembersCount.map(({ workspace, totalMembers }) => (
-            <WorkspaceCard
-              key={workspace.id}
-              workspace={workspace}
+          {churchesWithMembersCount.map(({ church, totalMembers }) => (
+            <ChurchCard
+              key={church.id}
+              church={church}
               totalMembers={totalMembers}
               className="w-full sm:w-80 lg:w-96"
             />

@@ -3,7 +3,6 @@
 import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { workspaces as dbWorkspaces } from "@/db/schema"
 import { ChevronsUpDown, HomeIcon, Settings } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -23,15 +22,20 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
+interface Church {
+  id: string
+  name: string
+  location?: string
+  imageUrl?: string
+}
+
 export function WorkspaceSwitcher({
   workspaces,
   currentWorkspace,
 }: {
-  workspaces: (typeof dbWorkspaces.$inferSelect)[]
-  currentWorkspace: typeof dbWorkspaces.$inferSelect | null
+  workspaces: Church[]
+  currentWorkspace: Church | null
 }) {
-  // console.log("WorkspaceSwitcher workspaces", workspaces)
-  // console.log("WorkspaceSwitcher currentWorkspace", currentWorkspace)
   const { isMobile, open } = useSidebar()
   const router = useRouter()
 
@@ -44,7 +48,7 @@ export function WorkspaceSwitcher({
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuLabel className="text-xs text-muted-foreground">
-            {open ? "Workspace" : null}
+            {open ? "Church" : null}
           </DropdownMenuLabel>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
@@ -58,7 +62,7 @@ export function WorkspaceSwitcher({
                   src={currentWorkspace?.imageUrl || ""}
                   alt={currentWorkspace?.name}
                 />
-                <AvatarFallback className="rounded-lg">CF</AvatarFallback>
+                <AvatarFallback className="rounded-lg">CH</AvatarFallback>
               </Avatar>
               {open && currentWorkspace && (
                 <div className="grid flex-1 text-left text-sm leading-tight">
@@ -66,7 +70,7 @@ export function WorkspaceSwitcher({
                     {currentWorkspace.name}
                   </span>
                   <span className="truncate text-xs">
-                    {/* {currentWorkspace.plan} */} plan
+                    {currentWorkspace.location || "Church"}
                   </span>
                 </div>
               )}
@@ -86,7 +90,7 @@ export function WorkspaceSwitcher({
                   router.push(`/${workspace.id}/dashboard`)
                 }}
                 className={cn(
-                  "my-1 flex items-center gap-2 p-2", // Added margin
+                  "my-1 flex items-center gap-2 p-2",
                   currentWorkspace?.id === workspace.id && "bg-muted"
                 )}
               >
@@ -95,15 +99,13 @@ export function WorkspaceSwitcher({
                     src={workspace.imageUrl || ""}
                     alt={workspace.name}
                   />
-                  <AvatarFallback className="rounded-sm">DN</AvatarFallback>
+                  <AvatarFallback className="rounded-sm">CH</AvatarFallback>
                 </Avatar>
                 <span className="truncate">{workspace.name}</span>
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem className="my-1 flex items-center gap-2 p-2">
-              {" "}
-              {/* Added margin */}
               <Link
                 href={`/${currentWorkspace?.id}/settings`}
                 className="flex items-center space-x-1"
@@ -116,13 +118,11 @@ export function WorkspaceSwitcher({
             </DropdownMenuItem>
             <Link href="/" className="flex items-center space-x-1">
               <DropdownMenuItem className="my-1 flex items-center gap-2 p-2">
-                {" "}
-                {/* Added margin */}
                 <div className="flex size-5 items-center justify-center rounded-md bg-background">
                   <HomeIcon className="size-4" />
                 </div>
                 <div className="font-medium text-foreground">Home</div>
-              </DropdownMenuItem>{" "}
+              </DropdownMenuItem>
             </Link>
           </DropdownMenuContent>
         </DropdownMenu>
