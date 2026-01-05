@@ -1,81 +1,26 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
+import { ArrowLeft, Edit2, Users } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Edit2, Trash2, Users, MapPin } from 'lucide-react'
-import { toast } from 'sonner'
+import { getZoneById } from '@/actions/zone'
+import type { Zone } from '@church/db'
 
-interface Zone {
-  id: string
-  name: string
-  leader?: string
-  description?: string
-  memberCount?: number
+interface ZoneDetailPageProps {
+  params: {
+    churchId: string
+    zoneId: string
+  }
 }
 
-export default function ZoneDetailPage() {
-  const router = useRouter()
-  const params = useParams()
-  const churchId = params.churchId as string
-  const zoneId = params.zoneId as string
+export default async function ZoneDetailPage({ params }: ZoneDetailPageProps) {
+  const { churchId, zoneId } = params
+  let zone: Zone | null = null
+  let error: string | null = null
 
-  const [zone, setZone] = useState<Zone | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-
-  useEffect(() => {
-    async function loadZone() {
-      try {
-        setLoading(true)
-        setError(null)
-        // TODO: Implement getZoneById action
-        toast.info('Zone detail page coming soon')
-        setZone({
-          id: zoneId,
-          name: 'Zone 1',
-          leader: 'John Doe',
-          description: 'This is a sample zone',
-          memberCount: 15,
-        })
-      } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load zone'
-        setError(errorMessage)
-        toast.error(errorMessage)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    if (zoneId) {
-      loadZone()
-    }
-  }, [zoneId])
-
-  const handleDelete = async () => {
-    setIsDeleting(true)
-    try {
-      // TODO: Implement deleteZone action
-      toast.success('Zone deleted successfully')
-      router.push(`/${churchId}/dashboard/zones`)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete zone'
-      toast.error(errorMessage)
-      setShowDeleteDialog(false)
-      setIsDeleting(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="flex min-h-screen w-full flex-col items-center justify-center p-4">
-        <div className="text-lg text-gray-600">Loading zone details...</div>
-      </div>
-    )
+  try {
+    zone = await getZoneById(zoneId)
+  } catch (err) {
+    error = err instanceof Error ? err.message : 'Failed to load zone'
   }
 
   if (error) {
@@ -137,14 +82,6 @@ export default function ZoneDetailPage() {
               Edit
             </Button>
           </Link>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={() => setShowDeleteDialog(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete
-          </Button>
         </div>
       </div>
 
@@ -161,10 +98,10 @@ export default function ZoneDetailPage() {
                 <p className="text-sm font-medium text-gray-600">Zone Name</p>
                 <p className="mt-2 text-lg font-semibold">{zone.name}</p>
               </div>
-              {zone.leader && (
+              {zone.meetingDay && (
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Zone Leader</p>
-                  <p className="mt-2 text-lg font-semibold">{zone.leader}</p>
+                  <p className="text-sm font-medium text-gray-600">Meeting Day</p>
+                  <p className="mt-2 text-lg font-semibold">{zone.meetingDay}</p>
                 </div>
               )}
               {zone.description && (
@@ -181,7 +118,7 @@ export default function ZoneDetailPage() {
             <CardHeader>
               <CardTitle>Members in Zone</CardTitle>
               <CardDescription>
-                {zone.memberCount || 0} members assigned to this zone
+                Members assigned to this zone
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -228,37 +165,6 @@ export default function ZoneDetailPage() {
           </Card>
         </div>
       </div>
-
-      {/* Delete Dialog */}
-      {showDeleteDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Delete Zone</CardTitle>
-              <p className="mt-2 text-sm text-gray-600">
-                Are you sure you want to delete {zone.name}?
-                This action cannot be undone.
-              </p>
-            </CardHeader>
-            <CardContent className="flex gap-4">
-              <Button
-                variant="outline"
-                disabled={isDeleting}
-                onClick={() => setShowDeleteDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                disabled={isDeleting}
-                onClick={handleDelete}
-              >
-                {isDeleting ? 'Deleting...' : 'Delete'}
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   )
 }

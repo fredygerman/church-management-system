@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { getFamilies } from '@/actions/family'
 
 interface PageProps {
   params: {
@@ -9,10 +10,7 @@ interface PageProps {
 
 export default async function FamiliesPage({ params }: PageProps) {
   const { churchId } = params
-  let families = []
-  
-  // TODO: Fetch families from API
-  // const families = await getFamilies()
+  const families = await getFamilies(churchId)
 
   return (
     <div className="flex min-h-screen w-full flex-col p-2">

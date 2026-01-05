@@ -24,7 +24,7 @@ export class ZonesController {
   constructor(private readonly zonesService: ZonesService) {}
 
   /**
-   * POST /zones - Create new zone (Jumuiya)
+   * POST /zones - Create new zone (Zone)
    */
   @Post()
   @RequirePermission('manage:zones')

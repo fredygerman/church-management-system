@@ -64,10 +64,7 @@ export class AuthController {
       const decoded = await this.authService.verifyRefreshToken(body.refreshToken);
       const tokens = this.authService.generateTokens(decoded as any);
       
-      return {
-        success: true,
-        data: tokens,
-      };
+      return tokens;
     } catch (error) {
       throw new BadRequestException('Invalid or expired refresh token');
     }
@@ -155,12 +152,9 @@ export class AuthController {
     const tokens = this.authService.generateTokens(user);
     
     return {
-      success: true,
-      data: {
-        ...tokens,
-        user,
-        isNewUser,
-      },
+      ...tokens,
+      user,
+      isNewUser,
     };
   }
 
@@ -421,13 +415,10 @@ export class AuthController {
       this.logger.log(`Church setup completed for user: ${user.id}, church: ${church.id}`);
 
       return {
-        success: true,
-        data: {
-          church,
-          user: updatedUser,
-          accessToken: tokens.accessToken,
-          refreshToken: tokens.refreshToken,
-        },
+        church,
+        user: updatedUser,
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
       };
     } catch (error) {
       this.logger.error('Church setup error:', error);

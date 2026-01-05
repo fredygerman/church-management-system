@@ -72,10 +72,10 @@
 ---
 
 ### 4. **ZONE_LEADER** (Cell Group Leadership)
-- Manage their assigned zone/jumuiya only
+- Manage their assigned zone only
 - Cannot create members
 - Read and track visitations
-- **Use Case**: Zone coordinators, jumuiya leaders
+- **Use Case**: Zone coordinators, zone leaders
 
 **Permissions:**
 - ❌ create:member

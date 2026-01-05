@@ -5,17 +5,12 @@ import { redirect } from "next/navigation"
 
 export interface ApiResponse<D = any> {
   success: boolean
-  message?: string
+  message: string
   data?: D
-  error?: string
-  meta?: {
-    page?: number
-    per_page?: number
-    total_count?: number
-    total_pages?: number
-    has_previous_page?: boolean
-    has_next_page?: boolean
-  }
+  error?: any
+  timestamp: string
+  path: string
+  statusCode: number
 }
 
 interface RequestConfig {
@@ -106,16 +101,21 @@ async function serverFetch<D = any>({
     const contentType = response.headers.get('content-type')
     console.log(`[API] Response Content-Type: ${contentType || 'unknown'}`)
 
-    let data: any
+    let data: ApiResponse<D> = {} as ApiResponse<D>
     try {
       data = await response.json()
     } catch (e) {
       console.error(`[API] Failed to parse JSON response from ${url.toString()}:`, e)
-      data = {}
+      return {
+        success: false,
+        message: 'Failed to parse API response',
+        timestamp: new Date().toISOString(),
+        path: url.pathname,
+        statusCode: response.status,
+      }
     }
 
     console.log(`[API] Response data:`, data)
-
 
     // Handle 401 errors - try to refresh token
     if (
@@ -123,96 +123,70 @@ async function serverFetch<D = any>({
       !requestConfig.skipAuth &&
       token
     ) {
-      const cookieStore = await cookies()
-      const refreshToken = cookieStore.get("refreshToken")?.value
+      try {
+        // Get the session to access the refresh token
+        const { getSession } = await import("@/auth")
+        const session = await getSession()
+        const refreshToken = session?.refreshToken
 
-      if (refreshToken) {
-        try {
-          // Try to refresh the token via API
-          const refreshResponse = await fetch(
-            new URL("/auth/refresh", baseUrl).toString(),
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ refreshToken }),
-              cache: "no-store",
+        if (refreshToken) {
+          try {
+            // Try to refresh the token via API
+            const refreshResponse = await fetch(
+              new URL("/auth/refresh", baseUrl).toString(),
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ refreshToken }),
+                cache: "no-store",
+              }
+            )
+
+            const refreshData = await refreshResponse.json()
+
+            if (
+              refreshResponse.ok &&
+              refreshData?.data?.accessToken
+            ) {
+              const newAccessToken = refreshData.data.accessToken
+
+              // Retry original request with new token
+              const retryHeaders = new Headers(headers)
+              retryHeaders.set("Authorization", `Bearer ${newAccessToken}`)
+
+              const retryResponse = await fetch(url.toString(), {
+                method,
+                headers: retryHeaders,
+                body,
+                cache: requestConfig.skipAuth
+                  ? "default"
+                  : ("no-store" as RequestCache),
+              })
+
+              const retryData: ApiResponse<D> = await retryResponse.json()
+              return retryData
             }
-          )
-
-          const refreshData = await refreshResponse.json()
-
-          if (
-            refreshResponse.ok &&
-            refreshData?.data?.accessToken
-          ) {
-            const newAccessToken = refreshData.data.accessToken
-
-            // Retry original request with new token
-            const retryHeaders = new Headers(headers)
-            retryHeaders.set("Authorization", `Bearer ${newAccessToken}`)
-
-            const retryResponse = await fetch(url.toString(), {
-              method,
-              headers: retryHeaders,
-              body,
-              cache: requestConfig.skipAuth
-                ? "default"
-                : ("no-store" as RequestCache),
-            })
-
-            const retryData = await retryResponse.json()
-
-            if (!retryResponse.ok) {
-              return {
-                success: false,
-                message:
-                  retryData?.message || `HTTP ${retryResponse.status}`,
-                data: null,
-              } as ApiResponse<D>
-            }
-
-            return {
-              success: true,
-              data: retryData?.data,
-              message: retryData?.message,
-              meta: retryData?.meta,
-            } as ApiResponse<D>
+          } catch (refreshError) {
+            // Ignore refresh error - proceed to login redirect
+            console.error("[API] Token refresh failed:", refreshError)
           }
-        } catch (refreshError) {
-          // Ignore refresh error - proceed to login redirect
-          console.error("[API] Token refresh failed:", refreshError)
         }
+      } catch (sessionError) {
+        console.error("[API] Failed to get session for token refresh:", sessionError)
       }
 
       redirect("/auth/signin?error=session_expired")
     }
 
-    if (!response.ok) {
-      // For 403 errors (permission/context errors), return the error instead of redirecting
-      if (response.status === 403) {
-        return {
-          success: false,
-          message: data?.message || `HTTP ${response.status}: Forbidden`,
-          data: null,
-        } as ApiResponse<D>
-      }
-      
-      return {
-        success: false,
-        message: data?.message || `HTTP ${response.status}`,
-        data: null,
-      } as ApiResponse<D>
-    }
-
-    return {
-      success: true,
-      data: data?.data,
-      message: data?.message,
-      meta: data?.meta,
-    } as ApiResponse<D>
+    return data
   } catch (error: any) {
+    // Re-throw Next.js special errors (redirect, notFound, etc.)
+    if (error?.message === 'NEXT_REDIRECT' || error?.digest?.includes('NEXT_REDIRECT')) {
+      throw error
+    }
+    
     console.error("[API] Request failed:", {
       url: url.toString(),
       method,
@@ -222,10 +196,17 @@ async function serverFetch<D = any>({
       cause: error?.cause || undefined,
     })
     console.error("[API] Full error:", error)
+    
     return {
       success: false,
-      message: `${error?.message || "Request failed"} (${method} ${requestConfig.url})`,
-      data: null,
+      message: error?.message || "Request failed",
+      error: {
+        code: error?.code,
+        name: error?.name,
+      },
+      timestamp: new Date().toISOString(),
+      path: url.pathname,
+      statusCode: 0,
     } as ApiResponse<D>
   }
 }

@@ -1,30 +1,25 @@
-'use client'
+import { getDashboardStats } from '@/actions/dashboard'
 
-import { useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
-
-interface DashboardStats {
-  totalMembers: number
-  activeZones: number
-  pendingVisitors: number
-  recentActivities: any[]
+interface DashboardHomeProps {
+  params: {
+    churchId: string
+  }
 }
 
-export default function DashboardHome() {
-  const params = useParams()
-  const churchId = params.churchId as string
-  const [stats, setStats] = useState<DashboardStats>({
+export default async function DashboardHome({ params }: DashboardHomeProps) {
+  const { churchId } = params
+  let stats = {
     totalMembers: 0,
     activeZones: 0,
     pendingVisitors: 0,
-    recentActivities: [],
-  })
-  const [isLoading, setIsLoading] = useState(true)
+    recentActivities: [] as any[],
+  }
 
-  useEffect(() => {
-    // TODO: Fetch stats from API
-    setIsLoading(false)
-  }, [churchId])
+  try {
+    stats = await getDashboardStats(churchId)
+  } catch (error) {
+    console.error('Failed to fetch dashboard stats:', error)
+  }
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

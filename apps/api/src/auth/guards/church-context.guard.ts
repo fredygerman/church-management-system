@@ -51,7 +51,8 @@ export class ChurchContextGuard implements CanActivate {
     if (!requestedChurchId) {
       // Allow profile endpoints and GET /churches without churchId (for new users)
       const safePaths = ['/profile', '/users/me']
-      const safeGetPaths = {
+      const safeEndpoints = {
+        '/auth/setup': ['POST'],
         '/churches': ['GET'],
         '/auth/profile': ['GET'],
       }
@@ -60,8 +61,8 @@ export class ChurchContextGuard implements CanActivate {
         return true
       }
       
-      // Check if this is a safe GET endpoint
-      for (const [path, methods] of Object.entries(safeGetPaths)) {
+      // Check if this is a safe endpoint
+      for (const [path, methods] of Object.entries(safeEndpoints)) {
         if (request.path.includes(path) && methods.includes(request.method)) {
           return true
         }

@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { createMember } from "@/actions/member"
-import { uuid } from "drizzle-orm/pg-core"
 import { toast } from "sonner"
 
 import { memberFormSchema, type MemberFormData } from "@/types/member"
@@ -67,10 +66,7 @@ export function MemberForm({
       }
 
       // if no_zone is selected, set zoneId to null
-      if (
-        sanitizedData.contactInfo.zoneId === "no_zone" ||
-        typeof sanitizedData.contactInfo.zoneId !== typeof uuid()
-      ) {
+      if (sanitizedData.contactInfo.zoneId === "no_zone") {
         sanitizedData.contactInfo.zoneId = null
       }
 

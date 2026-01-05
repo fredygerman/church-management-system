@@ -32,7 +32,7 @@ export function ChurchInfoStep({
     formState: { errors },
     control,
   } = useForm<ChurchInfoData>({
-    resolver: zodResolver(churchInfoSchema),
+    resolver: zodResolver(churchInfoSchema as any),
     defaultValues: data,
   })
 

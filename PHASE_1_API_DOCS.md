@@ -75,7 +75,7 @@ Content-Type: application/json
   "dateOfSalvation": "Date (optional)",
   "baptismStatus": "none | maji | roho_mtakatifu | both (default: none)",
   "maritalStatus": "single | married | divorced | widowed",
-  "jumuiyaId": "string (optional)",
+  "zoneId": "string (optional)",
   "familyId": "string (optional)",
   "notes": "string (optional)"
 }
@@ -120,9 +120,9 @@ DELETE /members/{id}
 GET /members/search?churchId={churchId}&q={searchQuery}
 ```
 
-### Get Members by Jumuiya
+### Get Members by Zone
 ```
-GET /members/jumuiya/{jumuiyaId}
+GET /members/zone/{zoneId}
 ```
 
 ### Get Members by Family
@@ -130,13 +130,13 @@ GET /members/jumuiya/{jumuiyaId}
 GET /members/family/{familyId}
 ```
 
-### Assign Member to Jumuiya
+### Assign Member to Zone
 ```
-POST /members/{id}/assign-jumuiya
+POST /members/{id}/assign-zone
 Content-Type: application/json
 
 {
-  "jumuiyaId": "string"
+  "zoneId": "string"
 }
 ```
 
@@ -152,7 +152,7 @@ Content-Type: application/json
 
 ---
 
-## Zones/Jumuiya Management
+## Zones/Zone Management
 
 ### Create Zone
 ```

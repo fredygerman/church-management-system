@@ -14,7 +14,7 @@ export type CreateZoneInput = {
 @Injectable()
 export class ZonesService {
   /**
-   * Create a new zone (Jumuiya)
+   * Create a new zone (Zone)
    */
   async createZone(data: CreateZoneInput): Promise<Zone> {
     const [zone] = await db.insert(zones).values(data).returning()

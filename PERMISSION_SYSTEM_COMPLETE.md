@@ -11,7 +11,7 @@
 Successfully implemented a comprehensive Role-Based Access Control (RBAC) permission system for the Mito ya Baraka Church Management System that:
 
 ✅ Enforces church context isolation across all operations  
-✅ Validates user roles (4 levels: SUPER_ADMIN, BRANCH_ADMIN, JUMUIYA_LEADER, MEMBER)  
+✅ Validates user roles (4 levels: SUPER_ADMIN, BRANCH_ADMIN, ZONE_LEADER, MEMBER)  
 ✅ Manages zone-level access for group leaders  
 ✅ Scales cleanly into Phase 2-3 without redesign  
 ✅ Provides 14 granular permission actions for fine-grained control  
@@ -26,12 +26,12 @@ Successfully implemented a comprehensive Role-Based Access Control (RBAC) permis
 **User Table Enhancements:**
 - Added `church_id` field for church context
 - Added `assigned_zone_id` field for zone-level leaders
-- Updated role enum to support 4 roles: SUPER_ADMIN, BRANCH_ADMIN, JUMUIYA_LEADER, MEMBER
+- Updated role enum to support 4 roles: SUPER_ADMIN, BRANCH_ADMIN, ZONE_LEADER, MEMBER
 
 **Phase 1 Tables Created:**
 - `churches` - Multi-church support
 - `members` - Member directory with baptism tracking
-- `zones` - Cell group/Jumuiya management
+- `zones` - Cell group/Zone management
 - `families` - Household grouping
 - `visitors` - Guest tracking
 - `visitor_followups` - Visitor pastoral care pipeline
@@ -48,7 +48,7 @@ Successfully implemented a comprehensive Role-Based Access Control (RBAC) permis
 ```
 SUPER_ADMIN      - Full system access across all churches
 BRANCH_ADMIN     - Full access to own church only
-JUMUIYA_LEADER   - Limited access to own zone and members
+ZONE_LEADER   - Limited access to own zone and members
 MEMBER           - Read-only access to own church data
 ```
 
@@ -59,14 +59,14 @@ MEMBER           - Read-only access to own church data
   email: string                 // User email
   role: UserRole               // One of 4 roles
   churchId: string             // Required: church context
-  assignedZoneId?: string      // Optional: for jumuiya leaders
+  assignedZoneId?: string      // Optional: for zone leaders
   workspaceId: string          // Workspace context
   isActive: boolean            // Account status
 }
 ```
 
 **Permission Matrix (14 Actions):**
-| Action | Super Admin | Branch Admin | Jumuiya Leader | Member |
+| Action | Super Admin | Branch Admin | Zone Leader | Member |
 |--------|-----------|-------------|-----------------|--------|
 | create:member | ✓ | ✓ | ✓ | ✗ |
 | read:member | ✓ | ✓ | ✓ | ✓ |
@@ -97,7 +97,7 @@ MEMBER           - Read-only access to own church data
 - Supports granular permission checking
 
 **Layer 3: ZoneContextGuard**
-- Applies only to `JUMUIYA_LEADER` role
+- Applies only to `ZONE_LEADER` role
 - Restricts access to `assignedZoneId`
 - Prevents leader from accessing other zones
 - Auto-filters requests to assigned zone
@@ -265,7 +265,7 @@ export type { MemberZone, NewMemberZone }
    - Throws 403 if permission denied
 
 5. **ZoneContextGuard runs (if applicable)**
-   - Only enforces for JUMUIYA_LEADER role
+   - Only enforces for ZONE_LEADER role
    - Other roles pass through
    - Verifies leader accessing only their zone
    - Throws 403 if accessing other zone
@@ -298,7 +298,7 @@ Content-Type: application/json
 ✓ JWT Valid → User is branch_admin for church-123
 ✓ ChurchContextGuard → churchId matches user's church
 ✓ PermissionGuard → branch_admin has create:member ✓
-✓ ZoneContextGuard → Not applicable (not a jumuiya_leader)
+✓ ZoneContextGuard → Not applicable (not a ZONE_LEADER)
 → Controller executes → Member created
 ```
 
@@ -317,7 +317,7 @@ Content-Type: application/json
 - Easy to add new permissions
 
 ### Zone-Level Restrictions
-- Jumuiya leaders restricted to assigned zone
+- Zone leaders restricted to assigned zone
 - Automatic filtering of zone_id parameters
 - Prevents accidental cross-zone member assignment
 

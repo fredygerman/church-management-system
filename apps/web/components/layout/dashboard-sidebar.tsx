@@ -47,8 +47,8 @@ export function DashboardSidebar({
   const { churchId } = useParams()
   const { isMobile, open, setOpen } = useSidebar()
   const pathname = usePathname()
-  const hoverRef = React.useRef(null)
-  const isHover = useHover(hoverRef)
+  const hoverRef = React.useRef<HTMLDivElement>(null)
+  const isHover = useHover(hoverRef as React.RefObject<HTMLDivElement>)
 
   React.useEffect(() => {
     if (isHover && !isMobile) {

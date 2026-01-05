@@ -7,7 +7,7 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-export interface ApiResponse<T> {
+export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
   data?: T;
@@ -29,14 +29,34 @@ export class ResponseInterceptor<T>
     const response = context.switchToHttp().getResponse();
 
     return next.handle().pipe(
-      map(data => ({
-        success: true,
-        message: 'Request successful',
-        data,
-        timestamp: new Date().toISOString(),
-        path: request.url,
-        statusCode: response.statusCode,
-      }))
+      map(data => {
+        // Check if the controller already returned a properly formatted response
+        if (
+          data &&
+          typeof data === 'object' &&
+          'success' in data &&
+          'data' in data &&
+          'message' in data
+        ) {
+          // Already formatted, just add metadata if missing
+          return {
+            ...data,
+            timestamp: data.timestamp || new Date().toISOString(),
+            path: data.path || request.url,
+            statusCode: data.statusCode || response.statusCode,
+          };
+        }
+
+        // Format new response
+        return {
+          success: true,
+          message: 'Request successful',
+          data,
+          timestamp: new Date().toISOString(),
+          path: request.url,
+          statusCode: response.statusCode,
+        };
+      })
     );
   }
 }

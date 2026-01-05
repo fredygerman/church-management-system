@@ -36,7 +36,7 @@ export function PersonalInfoStep({ data, onSubmit }: PersonalInfoStepProps) {
     formState: { errors },
     control,
   } = useForm<PersonalInfoData>({
-    resolver: zodResolver(personalInfoSchema),
+    resolver: zodResolver(personalInfoSchema as any),
     defaultValues: data,
   })
 

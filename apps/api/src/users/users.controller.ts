@@ -74,10 +74,7 @@ export class UsersController {
     const userId = req.user.id;
     const account = await this.usersService.getAccount(userId);
 
-    return {
-      success: true,
-      data: account,
-    };
+    return account;
   }
 
   /**
@@ -165,10 +162,7 @@ export class UsersController {
       offset,
     });
 
-    return {
-      success: true,
-      data: result,
-    };
+    return result;
   }
 
   /**

@@ -28,7 +28,7 @@ Request → JWT Guard (Authenticate)
 enum UserRole {
   SUPER_ADMIN = 'super_admin',         // HQ - God's eye view
   BRANCH_ADMIN = 'branch_admin',       // Local pastor/secretary
-  JUMUIYA_LEADER = 'jumuiya_leader',   // Small group leader
+  ZONE_LEADER = 'ZONE_LEADER',   // Small group leader
   MEMBER = 'member',                   // Regular member
 }
 ```
@@ -39,7 +39,7 @@ enum UserRole {
 |------|---|---|---|---|---|
 | super_admin | ✓ All | ✓ All | ✓ All | ✓ All | ✓ All |
 | branch_admin | ✓ Own church | ✓ Own church | ✓ Own church | ✗ | ✓ Own church |
-| jumuiya_leader | ✗ | ✓ Own zone | ✗ | ✗ | ✗ |
+| ZONE_LEADER | ✗ | ✓ Own zone | ✗ | ✗ | ✗ |
 | member | ✗ | ✓ Own profile | ✓ Own profile | ✗ | ✗ |
 
 ---
@@ -54,7 +54,7 @@ interface UserContext {
   email: string                 // Email
   role: UserRole               // One of the 4 roles
   churchId: string             // Church they belong to (mandatory)
-  assignedZoneId?: string      // Zone they manage (jumuiya_leader only)
+  assignedZoneId?: string      // Zone they manage (ZONE_LEADER only)
   workspaceId: string          // Workspace/organization
   isActive: boolean            // Account active status
 }
@@ -109,16 +109,16 @@ createMember(@Body() dto: CreateMemberDto) { ... }
 **File:** `apps/api/src/auth/guards/zone-context.guard.ts`
 
 **What it does:**
-- Only enforces for `JUMUIYA_LEADER` role
+- Only enforces for `ZONE_LEADER` role
 - Ensures leader only accesses their assigned zone
 - Automatically injects `user.assignedZoneId` if not specified
 
 **Example:**
 ```typescript
-// Jumuiya Leader trying to view own zone members
+// Zone Leader trying to view own zone members
 GET /api/zones/zone-001/members  // ALLOWED (matches assignedZoneId)
 
-// Jumuiya Leader trying to access another zone
+// Zone Leader trying to access another zone
 GET /api/zones/zone-002/members  // FORBIDDEN
 ```
 
@@ -209,7 +209,7 @@ deleteMember(@Param('id') id: string) { ... }
 
 4. **For zone-specific endpoints, pass zoneId**
    ```typescript
-   // For jumuiya_leader, ensure zoneId validation
+   // For ZONE_LEADER, ensure zoneId validation
    GET /zones/:zoneId/members
    ```
 
@@ -237,12 +237,12 @@ Result: ✓ ALLOWED
 
 ```typescript
 Request: GET /api/zones/zone-001/members
-User: jumuiya_leader with assignedZoneId: "zone-001"
+User: ZONE_LEADER with assignedZoneId: "zone-001"
 
 Guards check:
 1. JWT Valid? ✓
 2. churchId matches? ✓ (from user token)
-3. jumuiya_leader has 'read:member'? ✓
+3. ZONE_LEADER has 'read:member'? ✓
 4. assignedZoneId (zone-001) == requested zoneId (zone-001)? ✓
 
 Result: ✓ ALLOWED
@@ -301,7 +301,7 @@ Caused by: Role lacks permission
   "message": "You can only access members from your assigned zone"
 }
 ```
-Caused by: Jumuiya leader accessing wrong zone
+Caused by: Zone leader accessing wrong zone
 
 ---
 
@@ -363,10 +363,10 @@ describe('PermissionGuard', () => {
     expect(canActivate).toBe(true)
   })
 
-  it('should deny jumuiya_leader from creating members', () => {
+  it('should deny ZONE_LEADER from creating members', () => {
     const user = {
       id: '456',
-      role: UserRole.JUMUIYA_LEADER,
+      role: UserRole.ZONE_LEADER,
       churchId: 'dar-es-salaam',
       assignedZoneId: 'zone-001',
     }

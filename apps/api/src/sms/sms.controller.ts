@@ -8,6 +8,7 @@ import {
   HttpCode,
   HttpStatus,
   Logger,
+  NotFoundException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { SmsService } from './sms.service';
@@ -95,16 +96,10 @@ export class SmsController {
       await this.smsService.getNotificationByReference(reference);
 
     if (!notification) {
-      return {
-        success: false,
-        message: 'Notification not found',
-      };
+      throw new NotFoundException('Notification not found');
     }
 
-    return {
-      success: true,
-      data: notification,
-    };
+    return notification;
   }
 
   @Get('notifications')
@@ -122,8 +117,7 @@ export class SmsController {
     );
 
     return {
-      success: true,
-      data: notifications,
+      items: notifications,
       count: notifications.length,
     };
   }
@@ -145,8 +139,7 @@ export class SmsController {
     );
 
     return {
-      success: true,
-      data: notifications,
+      items: notifications,
       count: notifications.length,
     };
   }
@@ -168,8 +161,7 @@ export class SmsController {
     );
 
     return {
-      success: true,
-      data: notifications,
+      items: notifications,
       count: notifications.length,
     };
   }

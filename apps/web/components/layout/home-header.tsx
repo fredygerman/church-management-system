@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import Link from "next/link"
-import { redirect } from "next/navigation"
 import { LogOut } from "lucide-react"
 import { useSession } from "next-auth/react"
 
@@ -30,14 +29,14 @@ export default function HomeHeader() {
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
 
   if (status === "loading") return <div>Loading...</div>
-  if (status === "unauthenticated") redirect("/auth/signin")
+  if (status === "unauthenticated") return null
 
   const user = session?.user
 
   if (!user) return <div>Error</div>
 
   return (
-    <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border/40 px-6 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border/40 px-6 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="flex items-center gap-4">
         <div className="text-sm font-semibold">Church Management System</div>
       </div>

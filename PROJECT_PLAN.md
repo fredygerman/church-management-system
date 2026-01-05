@@ -17,8 +17,8 @@ Multi-branch church management system with phased rollout focusing on People & S
 - [ ] Spiritual data: Salvation date, Baptism status (Maji & Roho Mtakatifu), Marriage status
 - [ ] Family linking: Link households (spouses, children)
 
-### 1.3 Zone & Cell Group (Jumuiya) Management
-- [ ] Assign members to Zones/Jumuiyas by residence
+### 1.3 Zone & Cell Group (Zone) Management
+- [ ] Assign members to Zones by residence
 - [ ] Designate group leaders
 - [ ] Track leader-to-member responsibility
 
@@ -37,10 +37,10 @@ Multi-branch church management system with phased rollout focusing on People & S
 
 ### 2.2 Pastoral Care & Visitation Tracking
 - [ ] Visitation logs (Date, Reason, Notes)
-- [ ] Red flags dashboard (No visit in 3+ months, Inactive Jumuiya)
+- [ ] Red flags dashboard (No visit in 3+ months, Inactive Zone)
 
 ### 2.3 Communication Hub (SMS)
-- [ ] Bulk SMS by group (Choir, Jumuiya Leaders, etc.)
+- [ ] Bulk SMS by group (Choir, Zone Leaders, etc.)
 - [ ] Automated birthday SMS
 
 ### 2.4 Department/Ministry Management
@@ -92,7 +92,7 @@ Multi-branch church management system with phased rollout focusing on People & S
 - Church
 - Member
 - Family (links to members)
-- Zone / Jumuiya
+- Zone / Zone
 - User (with role & church assignment)
 - Visitor (Wageni tracking)
 

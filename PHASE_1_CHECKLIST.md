@@ -108,7 +108,7 @@
 - [ ] Add `useUser()` hook to get current user in client components
 - [ ] Hide add/edit/delete buttons for read-only users
 - [ ] Show admin-only sections only for SUPER_ADMIN/BRANCH_ADMIN
-- [ ] Zone-specific filtering for JUMUIYA_LEADER role
+- [ ] Zone-specific filtering for ZONE_LEADER role
 - [ ] Create PermissionGuard wrapper component
 
 ### 4. Data Tables & Components (Priority: MEDIUM)
@@ -123,7 +123,7 @@
 - [ ] Test church selection: List churches → click → navigate to churchId
 - [ ] Test member creation with churchId context
 - [ ] Test permission guards reject unauthorized access
-- [ ] Test zone filtering for jumuiya_leader role
+- [ ] Test zone filtering for ZONE_LEADER role
 - [ ] Test visitor tracking workflow
 - [ ] Test cross-church data isolation
 

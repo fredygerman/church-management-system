@@ -2,7 +2,6 @@ import NextAuth, {
   getServerSession,
   type NextAuthOptions,
   type Session,
-  type JWT,
 } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { env } from "./env.mjs"
@@ -81,7 +80,7 @@ export const authOptions: NextAuthOptions = {
     error: "/auth/signin?error=auth_error",
   },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user }) {
       // Called when user is logged in or token is refreshed
       if (user) {
         const userData = user as any

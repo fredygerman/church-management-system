@@ -1,12 +1,12 @@
 "use client"
 
 import * as React from "react"
-import { members } from "@/db/tables/members"
 import { DownloadIcon } from "@radix-ui/react-icons"
 import { type Table } from "@tanstack/react-table"
 
 import { exportTableToCSV } from "@/lib/export"
 import { Button } from "@/components/ui/button"
+import { members } from "@church/db"
 
 interface MemberTableToolbarActionsProps {
   table: Table<typeof members.$inferSelect>

@@ -166,11 +166,11 @@ export async function getMemberById(id: string): Promise<any> {
 export async function updateMember(
   id: string,
   data: {
-    fullName?: string
-    birthDate?: string
-    gender?: "Male" | "Female"
-    maritalStatus?: "Single" | "Married" | "Divorced" | "Widowed"
-    joinedDate?: string
+    firstName?: string
+    lastName?: string
+    dateOfBirth?: string
+    gender?: "male" | "female" | "others"
+    maritalStatus?: "single" | "married" | "divorced" | "widowed"
   }
 ) {
   const session = await getSession()

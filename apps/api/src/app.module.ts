@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
-import { APP_GUARD } from '@nestjs/core'
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
 import { AppService } from './app.service'
+import { ResponseInterceptor, ErrorInterceptor } from './common/interceptors'
 import { SmsModule } from './sms/sms.module'
 import { JwtAuthGuard } from './auth/guards'
 import { ChurchContextGuard } from './auth/guards/church-context.guard'
@@ -42,6 +43,14 @@ import { VisitorsModule } from './visitors/visitors.module'
   providers: [
     AppService,
     ServiceStatusUtil,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ErrorInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

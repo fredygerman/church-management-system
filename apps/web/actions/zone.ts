@@ -33,3 +33,120 @@ export async function getZones(churchId?: string): Promise<any[]> {
     return []
   }
 }
+
+// Function to get a single zone by ID
+export async function getZoneById(zoneId: string): Promise<any> {
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/zones/${zoneId}`, {
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch zone')
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error('Error fetching zone:', error)
+    throw error
+  }
+}
+
+// Function to create a new zone
+export async function createZone(data: {
+  churchId: string
+  name: string
+  leader?: string
+  description?: string
+}): Promise<any> {
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/zones`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to create zone')
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error('Error creating zone:', error)
+    throw error
+  }
+}
+
+// Function to update a zone
+export async function updateZone(zoneId: string, data: {
+  name?: string
+  leader?: string
+  description?: string
+}): Promise<any> {
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/zones/${zoneId}`, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to update zone')
+    }
+
+    return response.json()
+  } catch (error) {
+    console.error('Error updating zone:', error)
+    throw error
+  }
+}
+
+// Function to delete a zone
+export async function deleteZone(zoneId: string): Promise<void> {
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/zones/${zoneId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to delete zone')
+    }
+  } catch (error) {
+    console.error('Error deleting zone:', error)
+    throw error
+  }
+}

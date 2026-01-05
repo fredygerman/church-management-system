@@ -1,9 +1,8 @@
 "use client"
 
-import * as React from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { ChevronsUpDown, HomeIcon, Settings } from "lucide-react"
+import { ChevronsUpDown, HomeIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"

@@ -41,7 +41,7 @@ export function EmergencyContactsStep({
       z.object({
         emergencyContact1: emergencyContactSchema.optional(),
         emergencyContact2: emergencyContactSchema.optional(),
-      })
+      }) as any
     ),
     defaultValues: data,
   })

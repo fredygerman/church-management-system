@@ -15,7 +15,7 @@ export const zones = pgTable(
       .notNull(),
     name: varchar("name", { length: 255 }).notNull(),
     description: text("description"),
-    leaderId: uuid("leader_id"), // Reference to Member (leader of this zone/jumuiya)
+    leaderId: uuid("leader_id"), // Reference to Member (leader of this zone)
     meetingDay: varchar("meeting_day", { length: 50 }), // e.g., "Monday", "Wednesday"
     createdAt: date("created_at").defaultNow(),
     updatedAt: date("updated_at").defaultNow(),

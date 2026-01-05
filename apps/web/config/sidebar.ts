@@ -3,11 +3,10 @@ import {
   HelpCircle,
   MessageSquare,
   Settings,
-  Users,
-  Users2,
   MapPin,
   Home,
-  Users3,
+  Users,
+  Users2,
   type LucideIcon,
 } from "lucide-react"
 
@@ -61,7 +60,7 @@ export const sidebarConfig: SidebarSection[] = [
       {
         title: "Families",
         href: "/dashboard/families",
-        icon: Users3,
+        icon: Users2,
       },
       {
         title: "Visitors",

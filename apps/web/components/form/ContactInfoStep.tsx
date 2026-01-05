@@ -42,7 +42,7 @@ export function ContactInfoStep({
     formState: { errors },
     control,
   } = useForm<ContactInfoData>({
-    resolver: zodResolver(contactInfoSchema),
+    resolver: zodResolver(contactInfoSchema as any),
     defaultValues: data,
   })
 

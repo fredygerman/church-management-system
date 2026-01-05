@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { getVisitors } from '@/actions/visitor'
 
 interface PageProps {
   params: {
@@ -9,10 +10,7 @@ interface PageProps {
 
 export default async function VisitorsPage({ params }: PageProps) {
   const { churchId } = params
-  let visitors = []
-  
-  // TODO: Fetch visitors from API
-  // const visitors = await getVisitors()
+  const visitors = await getVisitors(churchId)
 
   return (
     <div className="flex min-h-screen w-full flex-col p-2">
