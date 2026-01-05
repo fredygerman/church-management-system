@@ -11,6 +11,8 @@ dist/
 .next/
 .turbo/
 .swc/
+*.js
+*.js.map
 *.tsbuildinfo
 
 # Specific exceptions (if needed)
