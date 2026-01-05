@@ -1,12 +1,15 @@
 "use client"
 
 import { useEffect } from "react"
-import Image from "next/image"
 import { useSearchParams } from "next/navigation"
-import { signIn } from "next-auth/react"
 import { toast } from "sonner"
+import Cookies from "js-cookie"
 
 import { Button } from "@/components/ui/button"
+
+const getApiBaseUrl = (): string => {
+  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001"
+}
 
 export default function SignInPage() {
   const searchParams = useSearchParams()
@@ -16,7 +19,29 @@ export default function SignInPage() {
     if (callbackUrl) {
       toast.error(`You need to be signed in to access ${callbackUrl}`)
     }
+
+    // Store redirect URL in cookie if present so it survives OAuth round-trips
+    if (callbackUrl) {
+      Cookies.set("returnTo", callbackUrl, { expires: 1 / 24 }) // expires in 1 hour
+    }
   }, [callbackUrl])
+
+  const handleGoogleSignIn = () => {
+    try {
+      const apiBase = getApiBaseUrl()
+      const redirectUrl = callbackUrl || "/"
+      
+      // Store the return URL in a cookie so it survives the OAuth redirect
+      Cookies.set("returnTo", redirectUrl, { expires: 1 / 24 })
+      
+      // Redirect to backend Google OAuth endpoint
+      // The backend will handle the redirect to Google's OAuth consent screen
+      window.location.href = `${apiBase}/auth/google`
+    } catch (error) {
+      console.error("Sign-in error:", error)
+      toast.error("Failed to initiate sign-in. Please try again.")
+    }
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
@@ -27,15 +52,33 @@ export default function SignInPage() {
           </p>
         )}
         <div className="mb-8 flex justify-center">
-          <Image
-            src="/logos/google-logo.png"
-            alt="Google Logo"
-            width={50}
-            height={50}
-          />
+          <svg
+            width="50"
+            height="50"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              fill="#4285F4"
+            />
+            <path
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              fill="#34A853"
+            />
+            <path
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              fill="#FBBC05"
+            />
+            <path
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              fill="#EA4335"
+            />
+          </svg>
         </div>
         <Button
-          onClick={() => signIn("google", { callbackUrl: callbackUrl || "/" })}
+          onClick={handleGoogleSignIn}
           className="w-full"
         >
           Sign in with Google

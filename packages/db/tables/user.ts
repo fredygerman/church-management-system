@@ -6,12 +6,14 @@ import {
   pgTable,
   uuid,
   varchar,
+  index,
 } from "drizzle-orm/pg-core"
 
 export const roleEnum = pgEnum("role", [
   "super_admin",
+  "admin",
   "branch_admin",
-  "jumuiya_leader",
+  "zone_leader",
   "member",
 ])
 
@@ -34,7 +36,13 @@ export const users = pgTable(
     createdAt: date("created_at").defaultNow(),
     updatedAt: date("updated_at").defaultNow(),
     deletedAt: date("deleted_at"),
-  }
+  },
+  (table) => ({
+    emailIdx: index("idx_users_email").on(table.email),
+    churchIdx: index("idx_users_church").on(table.churchId),
+    roleIdx: index("idx_users_role").on(table.role),
+    zoneIdx: index("idx_users_zone").on(table.assignedZoneId),
+  })
 )
 
 export type User = typeof users.$inferSelect

@@ -13,25 +13,12 @@ export default async function HomePage() {
   }
 
   // Get churches for current user
-  let churches = []
-  try {
-    churches = await getChurches()
-  } catch (error) {
-    console.error('Failed to fetch churches:', error)
-  }
+  const churches = await getChurches()
 
-  // If HQ user with no churches, redirect to setup
-  if (churches.length === 0 && session.user.role === 'SUPER_ADMIN') {
+  // If user has no churches, redirect to setup to create one
+  if (!churches || churches.length === 0) {
     redirect('/setup')
   }
-
-  // Get member counts for each church
-  const churchesWithMembersCount = await Promise.all(
-    churches.map(async (church) => {
-      const totalMembers = await getChurchMembersCount(church.id)
-      return { church, totalMembers }
-    })
-  )
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-start gap-4 p-8">
@@ -48,24 +35,16 @@ export default async function HomePage() {
           <CreateChurchDialog />
         </div>
       </div>
-      {churchesWithMembersCount.length === 0 ? (
-        <div className="text-center">
-          <p className="text-xl text-muted-foreground">
-            You have no church. Create a new church to get started.
-          </p>
-        </div>
-      ) : (
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {churchesWithMembersCount.map(({ church, totalMembers }) => (
-            <ChurchCard
-              key={church.id}
-              church={church}
-              totalMembers={totalMembers}
-              className="w-full sm:w-80 lg:w-96"
-            />
-          ))}
-        </div>
-      )}
+      <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {churches.map((church: any) => (
+          <ChurchCard
+            key={church.id}
+            church={church}
+            totalMembers={0}
+            className="w-full sm:w-80 lg:w-96"
+          />
+        ))}
+      </div>
     </div>
   )
 }

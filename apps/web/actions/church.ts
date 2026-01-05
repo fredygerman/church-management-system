@@ -1,26 +1,26 @@
 'use server'
 
-import { getSession } from '@/auth'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+import { apiRequest } from '@/lib/api-client'
 
 export async function getChurches() {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
+  try {
+    const response = await apiRequest({
+      requestConfig: {
+        method: 'GET',
+        url: '/churches',
+      },
+    })
+
+    if (!response.success) {
+      console.error('Failed to fetch churches:', response.message)
+      return []
+    }
+
+    return response.data || []
+  } catch (error) {
+    console.error('Error fetching churches:', error)
+    return []
   }
-
-  const response = await fetch(`${API_BASE_URL}/churches`, {
-    headers: {
-      Authorization: `Bearer ${session.accessToken}`,
-    },
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch churches')
-  }
-
-  return response.json()
 }
 
 export async function createChurch(data: {
@@ -31,26 +31,19 @@ export async function createChurch(data: {
   email?: string
   description?: string
 }) {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
-  const response = await fetch(`${API_BASE_URL}/churches`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${session.accessToken}`,
-      'Content-Type': 'application/json',
+  const response = await apiRequest({
+    requestConfig: {
+      method: 'POST',
+      url: '/churches',
+      data,
     },
-    body: JSON.stringify(data),
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || 'Failed to create church')
+  if (!response.success) {
+    throw new Error(response.message || 'Failed to create church')
   }
 
-  return response.json()
+  return response.data
 }
 
 export async function updateChurch(
@@ -64,45 +57,33 @@ export async function updateChurch(
     description?: string
   }
 ) {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
-  const response = await fetch(`${API_BASE_URL}/churches/${id}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${session.accessToken}`,
-      'Content-Type': 'application/json',
+  const response = await apiRequest({
+    requestConfig: {
+      method: 'PUT',
+      url: `/churches/${id}`,
+      data,
     },
-    body: JSON.stringify(data),
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || 'Failed to update church')
+  if (!response.success) {
+    throw new Error(response.message || 'Failed to update church')
   }
 
-  return response.json()
+  return response.data
 }
 
 export async function deleteChurch(id: string) {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
-  const response = await fetch(`${API_BASE_URL}/churches/${id}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${session.accessToken}`,
+  const response = await apiRequest({
+    requestConfig: {
+      method: 'DELETE',
+      url: `/churches/${id}`,
     },
   })
 
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || 'Failed to delete church')
+  if (!response.success) {
+    throw new Error(response.message || 'Failed to delete church')
   }
 
-  return response.json()
+  return response.data
 }
+

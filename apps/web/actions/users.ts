@@ -1,38 +1,79 @@
 "use server"
 
-import { db, users, eq } from "@church/db"
+import { apiRequest } from "@/lib/api-client"
 
 export async function createUser(data: {
   email: string
-  fullName: string
-  picture: string
+  name: string
+  picture?: string
 }) {
-  const createdUser = await db
-    .insert(users)
-    .values({
-      email: data.email,
-      name: data.fullName,
-      picture: data.picture,
-      role: "user",
-      isActive: true,
+  try {
+    const response = await apiRequest({
+      requestConfig: {
+        method: "POST",
+        url: "/users",
+        data: {
+          email: data.email,
+          name: data.name,
+          picture: data.picture,
+        },
+      },
+      skipAuth: true,
     })
-    .returning()
-    .execute()
-  return createdUser[0]
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to create user")
+    }
+
+    return response.data
+  } catch (error) {
+    console.error("Error creating user:", error)
+    throw error
+  }
 }
 
 export async function getUserByEmail(email: string) {
-  const user = await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .execute()
-  return user[0]
+  try {
+    const response = await apiRequest({
+      requestConfig: {
+        method: "GET",
+        url: "/users",
+        params: { email },
+      },
+      skipAuth: true,
+    })
+
+    if (!response.success) {
+      // User not found is not an error - return null
+      return null
+    }
+
+    return response.data
+  } catch (error) {
+    console.error("Error fetching user:", error)
+    return null
+  }
 }
 
 export async function updateUserProfile(
-  email: string,
-  data: { picture: string; name: string }
+  data: { picture?: string; name?: string; email?: string }
 ) {
-  await db.update(users).set(data).where(eq(users.email, email)).execute()
+  try {
+    const response = await apiRequest({
+      requestConfig: {
+        method: "PATCH",
+        url: "/users/account",
+        data,
+      },
+    })
+
+    if (!response.success) {
+      throw new Error(response.message || "Failed to update user")
+    }
+
+    return response.data
+  } catch (error) {
+    console.error("Error updating user:", error)
+    throw error
+  }
 }

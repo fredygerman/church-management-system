@@ -4,12 +4,26 @@ import {
   ExecutionContext,
   ForbiddenException,
 } from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
 import { Request } from 'express'
 import { UserContext, UserRole } from '../types/permission.types'
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator'
 
 @Injectable()
 export class ZoneContextGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
   canActivate(context: ExecutionContext): boolean {
+    // Check if route is marked as public
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ])
+
+    if (isPublic) {
+      return true
+    }
+
     const request = context.switchToHttp().getRequest<Request>()
     const user = request.user as UserContext
 
@@ -17,15 +31,15 @@ export class ZoneContextGuard implements CanActivate {
       throw new ForbiddenException('User context not found')
     }
 
-    // Only enforce zone context for jumuiya leaders
-    if (user.role !== UserRole.JUMUIYA_LEADER) {
+    // Only enforce zone context for zone leaders
+    if (user.role !== UserRole.ZONE_LEADER) {
       return true
     }
 
-    // Jumuiya leader must have assignedZoneId
+    // Zone leader must have assignedZoneId
     if (!user.assignedZoneId) {
       throw new ForbiddenException(
-        'Jumuiya leader must have an assigned zone'
+        'Zone leader must have an assigned zone'
       )
     }
 

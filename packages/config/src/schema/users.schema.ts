@@ -5,29 +5,27 @@ import {
   varchar,
   boolean,
   uuid,
-  integer,
-  date,
   pgEnum,
+  index,
 } from 'drizzle-orm/pg-core';
 
 /**
- * User role enum
+ * User role enum - Church Management System roles
  */
 export const userRoleEnum = pgEnum('user_role', [
-  'CUSTOMER',
-  'DRIVER',
-  'ADMIN',
-  'SUPER_ADMIN',
+  'MEMBER',              // Regular church member
+  'BRANCH_ADMIN',        // Local branch administrator
+  'SUPER_ADMIN',         // HQ administrator with full access
 ]);
 
 /**
  * User status enum
  */
 export const userStatusEnum = pgEnum('user_status', [
-  'PENDING',
-  'ACTIVE',
-  'SUSPENDED',
-  'INACTIVE',
+  'PENDING',             // User created but not yet active
+  'ACTIVE',              // Active user
+  'SUSPENDED',           // Temporarily disabled
+  'INACTIVE',            // Inactive/archived
 ]);
 
 /**
@@ -37,47 +35,40 @@ export const preferredLanguageEnum = pgEnum('preferred_language', ['EN', 'SW']);
 
 /**
  * Users table - stores user account information
+ * Soft delete: filter by deletedAt IS NULL
  */
-export const users = pgTable('users', {
-  id: uuid('id').defaultRandom().primaryKey(),
-  email: varchar('email', { length: 255 }).unique(),
-  phone: varchar('phone', { length: 20 }).unique(),
-  password: text('password').notNull(),
+export const users = pgTable(
+  'users',
+  {
+    id: uuid('id').defaultRandom().primaryKey(),
+    email: varchar('email', { length: 255 }).notNull().unique(),
+    phone: varchar('phone', { length: 20 }).unique(),
+    password: text('password').notNull(),
 
-  // Basic information
-  firstName: varchar('first_name', { length: 100 }),
-  lastName: varchar('last_name', { length: 100 }),
-  fullName: varchar('full_name', { length: 255 }),
+    // Basic information
+    firstName: varchar('first_name', { length: 100 }),
+    lastName: varchar('last_name', { length: 100 }),
+    profilePictureUrl: varchar('profile_picture_url', { length: 500 }),
 
-  // Additional identity information
-  dateOfBirth: date('date_of_birth'),
-  tinNumber: varchar('tin_number', { length: 50 }).unique(),
-  nidaNumber: varchar('nida_number', { length: 50 }).unique(),
+    // Preferences
+    preferredLanguage: preferredLanguageEnum('preferred_language')
+      .default('EN')
+      .notNull(),
 
-  // Profile and preferences
-  profilePictureUrl: varchar('profile_picture_url', { length: 500 }),
-  preferredLanguage: preferredLanguageEnum('preferred_language')
-    .default('EN')
-    .notNull(),
+    // Status
+    status: userStatusEnum('status').default('PENDING').notNull(),
+    isVerified: boolean('is_verified').default(false).notNull(),
 
-  // User role and status
-  role: userRoleEnum('role').default('CUSTOMER').notNull(),
-  status: userStatusEnum('status').default('PENDING').notNull(),
-
-  // Multi-step registration tracking
-  registrationStep: integer('registration_step').default(1).notNull(),
-  registrationCompleted: boolean('registration_completed')
-    .default(false)
-    .notNull(),
-
-  // Account verification
-  isActive: boolean('is_active').default(false).notNull(),
-  isVerified: boolean('is_verified').default(false).notNull(),
-
-  // Timestamps
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+    // Timestamps
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    deletedAt: timestamp('deleted_at'),
+  },
+  (table) => ({
+    emailIdx: index('idx_users_email').on(table.email),
+    phoneIdx: index('idx_users_phone').on(table.phone),
+    statusIdx: index('idx_users_status').on(table.status),
+  })
+);
 
 // Export types
 export type User = typeof users.$inferSelect;
@@ -85,9 +76,8 @@ export type NewUser = typeof users.$inferInsert;
 
 // Export enums
 export const UserRole = {
-  CUSTOMER: 'CUSTOMER',
-  DRIVER: 'DRIVER',
-  ADMIN: 'ADMIN',
+  MEMBER: 'MEMBER',
+  BRANCH_ADMIN: 'BRANCH_ADMIN',
   SUPER_ADMIN: 'SUPER_ADMIN',
 } as const;
 

@@ -7,6 +7,9 @@ import {
   HttpStatus,
   UseGuards,
   Logger,
+  Query,
+  Res,
+  BadRequestException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -267,6 +270,42 @@ export class AuthController {
   }
 
   /**
+   * OAuth login/signup
+   * POST /auth/oauth-login
+   */
+  @Public()
+  @Post('oauth-login')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'OAuth login/signup',
+    description:
+      'Login or register user via OAuth (Google, etc). If user does not exist, creates new user.',
+  })
+  @ApiBody({
+    schema: {
+      example: {
+        email: 'user@example.com',
+        name: 'John Doe',
+        picture: 'https://example.com/photo.jpg',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'OAuth login successful',
+  })
+  async oauthLogin(
+    @Body()
+    body: {
+      email: string;
+      name: string;
+      picture?: string;
+    }
+  ) {
+    return this.authService.oauthLogin(body.email, body.name, body.picture);
+  }
+
+  /**
    * Logout (client-side token removal)
    * POST /auth/logout
    */
@@ -303,5 +342,117 @@ export class AuthController {
     return {
       message: 'Logged out successfully',
     };
+  }
+
+  /**
+   * Initiate Google OAuth flow
+   * GET /auth/google
+   */
+  @Public()
+  @Get('google')
+  @ApiOperation({
+    summary: 'Initiate Google OAuth',
+    description:
+      'Redirect user to Google OAuth consent screen. After user authorizes, Google redirects back to /auth/google/callback',
+  })
+  @ApiResponse({
+    status: 302,
+    description: 'Redirect to Google OAuth',
+  })
+  async googleAuth(@Res() res: any) {
+    try {
+      const clientId = process.env.GOOGLE_CLIENT_ID;
+      const redirectUri = `${process.env.API_BASE_URL || 'http://localhost:3001'}/auth/google/callback`;
+      const scope = 'openid profile email';
+      
+      if (!clientId) {
+        throw new BadRequestException('Google OAuth is not configured (missing GOOGLE_CLIENT_ID)');
+      }
+
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
+      
+      this.logger.debug(`Redirecting to Google OAuth URL: ${googleAuthUrl}`);
+      return res.redirect(googleAuthUrl);
+    } catch (error) {
+      this.logger.error('Google Auth initiation error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Google OAuth callback
+   * GET /auth/google/callback
+   */
+  @Public()
+  @Get('google/callback')
+  async googleCallback(
+    @Query('code') code: string,
+    @Query('state') state?: string,
+    @Res() res?: any
+  ) {
+    try {
+      if (!code) {
+        throw new BadRequestException('Authorization code is required');
+      }
+
+      // Exchange code for tokens with Google
+      const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: process.env.GOOGLE_CLIENT_ID,
+          client_secret: process.env.GOOGLE_CLIENT_SECRET,
+          code,
+          grant_type: 'authorization_code',
+          redirect_uri: `${process.env.API_BASE_URL || 'http://localhost:3001'}/auth/google/callback`,
+        }),
+      });
+
+      if (!tokenResponse.ok) {
+        throw new BadRequestException('Failed to exchange authorization code');
+      }
+
+      const tokenData = await tokenResponse.json();
+
+      // Get user info from Google
+      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+        headers: {
+          Authorization: `Bearer ${tokenData.access_token}`,
+        },
+      });
+
+      if (!userInfoResponse.ok) {
+        throw new BadRequestException('Failed to fetch user info from Google');
+      }
+
+      const userInfo = await userInfoResponse.json();
+
+      // Login/create user
+      const authResponse = await this.authService.oauthLogin(
+        userInfo.email,
+        userInfo.name || userInfo.email,
+        userInfo.picture
+      );
+
+      // Redirect to frontend with tokens in query params
+      // Frontend will extract these and store in cookies/localStorage
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const redirectUrl = new URL(`${frontendUrl}/auth/callback`);
+      redirectUrl.searchParams.set('accessToken', authResponse.accessToken);
+      redirectUrl.searchParams.set('refreshToken', authResponse.refreshToken);
+
+      this.logger.log(`Google OAuth successful for user: ${authResponse.user.id}`);
+      
+      return res.redirect(redirectUrl.toString());
+    } catch (error) {
+      this.logger.error('Google OAuth callback error:', error);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const errorUrl = new URL(`${frontendUrl}/auth/signin`);
+      errorUrl.searchParams.set('error', error instanceof Error ? error.message : 'OAuth failed');
+
+      return res.redirect(errorUrl.toString());
+    }
   }
 }

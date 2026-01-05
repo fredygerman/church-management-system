@@ -431,6 +431,8 @@ export class AuthService {
     };
   }
 
+
+
   /**
    * Refresh access token
    */
@@ -635,6 +637,81 @@ export class AuthService {
 
     return {
       message: `A new verification code has been sent to your ${this.notificationMethod === 'EMAIL' ? 'email' : 'phone'}.`,
+    };
+  }
+
+  /**
+   * OAuth login/signup - Creates or updates user and returns JWT tokens
+   */
+  async oauthLogin(
+    email: string,
+    name: string,
+    picture?: string
+  ): Promise<AuthResponse> {
+    // Check if user exists
+    const [existingUser] = await this.db
+      .getDb()
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    let user: Omit<User, 'password'>;
+
+    if (existingUser) {
+      // Update existing user with latest picture if provided
+      if (picture && existingUser.profilePictureUrl !== picture) {
+        await this.db
+          .getDb()
+          .update(users)
+          .set({ profilePictureUrl: picture })
+          .where(eq(users.id, existingUser.id));
+      }
+      const { password, ...userWithoutPassword } = existingUser;
+      user = userWithoutPassword;
+    } else {
+      // Create new user from OAuth info
+      const nameParts = name.split(' ');
+      const firstName = nameParts[0] || name;
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      const newUser: NewUser = {
+        email,
+        firstName,
+        lastName,
+        fullName: name,
+        profilePictureUrl: picture || undefined,
+        phone: undefined,
+        password: '', // OAuth users don't have passwords initially
+        role: 'MEMBER', // New OAuth users are MEMBER by default
+        status: 'ACTIVE',
+        isActive: true,
+        isVerified: true, // OAuth users are pre-verified
+      };
+
+      const [createdUser] = await this.db
+        .getDb()
+        .insert(users)
+        .values(newUser)
+        .returning();
+
+      if (!createdUser) {
+        throw new BadRequestException('Failed to create user');
+      }
+
+      const { password, ...userWithoutPassword } = createdUser;
+      user = userWithoutPassword;
+
+      this.logger.log(`New OAuth user created: ${user.id}`);
+    }
+
+    const tokens = this.generateTokens(user);
+
+    this.logger.log(`User logged in via OAuth: ${user.id}`);
+
+    return {
+      ...tokens,
+      user,
     };
   }
 }

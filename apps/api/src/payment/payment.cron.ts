@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { PaymentService } from './payment.service';
 import config from '../config';
-import { CronJob } from 'cron';
 import { minutesToCronExpression } from '../helpers/util';
 
 @Injectable()

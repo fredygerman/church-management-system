@@ -1,7 +1,8 @@
 export enum UserRole {
   SUPER_ADMIN = 'super_admin',
+  ADMIN = 'admin',
   BRANCH_ADMIN = 'branch_admin',
-  JUMUIYA_LEADER = 'jumuiya_leader',
+  ZONE_LEADER = 'zone_leader',
   MEMBER = 'member',
 }
 
@@ -46,6 +47,22 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'read:visitation',
   ],
 
+  [UserRole.ADMIN]: [
+    'create:member',
+    'read:member',
+    'update:member',
+    'delete:member',
+    'manage:zones',
+    'manage:families',
+    'view:families',
+    'view:visitors',
+    'create:visitor',
+    'update:visitor',
+    'manage:departments',
+    'create:visitation',
+    'read:visitation',
+  ],
+
   [UserRole.BRANCH_ADMIN]: [
     'create:member',
     'read:member',
@@ -60,7 +77,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'read:visitation',
   ],
 
-  [UserRole.JUMUIYA_LEADER]: [
+  [UserRole.ZONE_LEADER]: [
     'read:member',
     'view:families',
     'create:visitation',
