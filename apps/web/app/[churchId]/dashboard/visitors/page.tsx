@@ -3,13 +3,13 @@ import Link from 'next/link'
 import { getVisitors } from '@/actions/visitor'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     churchId: string
-  }
+  }>
 }
 
 export default async function VisitorsPage({ params }: PageProps) {
-  const { churchId } = params
+  const { churchId } = await params
   const visitors = await getVisitors(churchId)
 
   return (

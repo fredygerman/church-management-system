@@ -15,8 +15,7 @@ export default async function HomePage() {
   // Get churches for current user
   const churchesResult = await getChurches()
   
-  // Handle errors - if churches endpoint fails (403 Church context required), redirect to setup
-  // If no churches returned, also redirect to setup
+  // If no churches returned, redirect to setup
   if (!churchesResult || churchesResult.length === 0) {
     redirect('/setup')
   }

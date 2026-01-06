@@ -1,26 +1,21 @@
 'use server'
 
 import { apiRequest } from '@/lib/api-client'
+import { handleApiError } from '@/lib/error-handler'
 
 export async function getChurches() {
-  try {
-    const response = await apiRequest({
-      requestConfig: {
-        method: 'GET',
-        url: '/churches',
-      },
-    })
+  const response = await apiRequest({
+    requestConfig: {
+      method: 'GET',
+      url: '/churches',
+    },
+  })
 
-    if (!response.success) {
-      console.error('Failed to fetch churches:', response.message)
-      return []
-    }
-
-    return response.data || []
-  } catch (error) {
-    console.error('Error fetching churches:', error)
-    return []
+  if (!response.success) {
+    handleApiError(response)
   }
+
+  return response.data || []
 }
 
 export async function setupChurch(data: {

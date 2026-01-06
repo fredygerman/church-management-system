@@ -23,6 +23,8 @@ declare module "next-auth" {
     accessToken?: string
     refreshToken?: string
     expiresAt?: number
+    role?: string
+    churchId?: string
   }
 }
 
@@ -60,6 +62,8 @@ export const authOptions: NextAuthOptions = {
             email: payload.email,
             name: payload.name,
             image: payload.picture,
+            role: payload.role,
+            churchId: payload.churchId,
             accessToken: credentials.accessToken,
             refreshToken: credentials.refreshToken,
           }
@@ -88,6 +92,8 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = userData.accessToken
         token.refreshToken = userData.refreshToken
         token.email = userData.email
+        token.role = userData.role
+        token.churchId = userData.churchId
         
         // Store token expiration time (1 hour from now)
         token.expiresAt = Math.floor(Date.now() / 1000) + 3600
@@ -116,6 +122,23 @@ export const authOptions: NextAuthOptions = {
           const data = await response.json()
           const tokens = data.data || data
 
+          // Decode the new access token to get updated user info
+          const tokenParts = tokens.accessToken.split(".")
+          if (tokenParts.length === 3) {
+            const payload = JSON.parse(
+              Buffer.from(tokenParts[1], "base64").toString()
+            )
+            
+            return {
+              ...token,
+              accessToken: tokens.accessToken,
+              refreshToken: tokens.refreshToken,
+              expiresAt: Math.floor(Date.now() / 1000) + 3600,
+              role: payload.role,
+              churchId: payload.churchId,
+            }
+          }
+
           return {
             ...token,
             accessToken: tokens.accessToken,
@@ -141,9 +164,11 @@ export const authOptions: NextAuthOptions = {
       // Add tokens and user info to session from JWT
       if (token.sub) {
         session.user.id = token.sub
+        session.user.role = token.role as string
         session.accessToken = token.accessToken as string
         session.refreshToken = token.refreshToken as string
         console.log("[Auth] Session token (first 50 chars):", (token.accessToken as string)?.substring(0, 50))
+        console.log("[Auth] Session role:", token.role)
       } else {
         // User is not authenticated, clear the session
         return { ...session, user: { email: null, name: null, image: null } }

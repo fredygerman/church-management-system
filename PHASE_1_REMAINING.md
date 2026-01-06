@@ -95,7 +95,7 @@ Hide/show UI elements based on user role:
 - [ ] Add `useUser()` hook to client components
 - [ ] Hide add/edit/delete buttons for read-only users
 - [ ] Show admin-only sections only for SUPER_ADMIN/BRANCH_ADMIN
-- [ ] Zone-specific filtering for JUMUIYA_LEADER role
+- [ ] Zone-specific filtering for ZONE_LEADER role
 
 ### 5. Frontend Pages Completion - Priority: MEDIUM
 
@@ -149,7 +149,7 @@ Ensure API database schema matches frontend expectations:
 ### 8. Testing - Priority: MEDIUM
 - [ ] Test member creation for church isolation
 - [ ] Test permission guards reject unauthorized access
-- [ ] Test zone filtering for jumuiya_leader role
+- [ ] Test zone filtering for ZONE_LEADER role
 - [ ] Test visitor tracking workflow
 - [ ] Test cross-church data isolation
 

@@ -1,19 +1,12 @@
 import type { Metadata } from "next"
-
 import { cn } from "@/lib/utils"
 import Providers from "@/components/providers/providers"
-
-import "./globals.css"
-
 import { getSession } from "@/auth"
+import "./globals.css"
+import { Red_Hat_Display } from "next/font/google"
 
-import { Toaster } from "@/components/ui/sonner"
-import { fontMono, fontSans } from "@/styles/fonts"
+const redHatDisplay = Red_Hat_Display({ subsets: ["latin"] })
 
-export const metadata: Metadata = {
-  title: "Church Management System",
-  description: "A church management system",
-}
 
 export default async function RootLayout({
   children,
@@ -23,25 +16,24 @@ export default async function RootLayout({
   const session = await getSession()
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className="h-full">
       <head />
       <body
-        className={cn(
-          "min-h-screen bg-background font-sans text-foreground antialiased",
-          fontSans.variable,
-          fontMono.variable
+        suppressHydrationWarning
+        className={cn( 
+          "h-full bg-background font-sans text-foreground antialiased",
+          redHatDisplay.className
         )}
       >
         <Providers
+          session={session}
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
-          session={session}
         >
-          <div className="relative flex min-h-screen flex-col">{children}</div>
+          {children}
         </Providers>
-        <Toaster richColors />
       </body>
     </html>
   )

@@ -1,2 +1,2 @@
-export { ResponseInterceptor, type ApiResponse } from './response.interceptor';
+export { ResponseInterceptor, type ApiResponse, type PaginationMeta } from './response.interceptor';
 export { ErrorInterceptor } from './error.interceptor';

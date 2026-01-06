@@ -1,13 +1,10 @@
 import { getChurches } from "@/actions/church"
-
-import { SidebarProvider } from "@/components/ui/sidebar"
-import { DashboardSidebar } from "@/components/layout/dashboard-sidebar"
-import Header from "@/components/layout/header"
+import { DashboardLayout } from "@/components/layout/dashboard-layout"
 
 interface PageProps {
-  params: {
+  params: Promise<{
     churchId: string
-  }
+  }>
 }
 
 interface Church {
@@ -21,7 +18,7 @@ export default async function Layout({
   params,
   children,
 }: PageProps & { children: React.ReactNode }) {
-  const { churchId } = params
+  const { churchId } = await params
 
   let churches: Church[] = []
   let currentChurch: Church | null = null
@@ -43,15 +40,8 @@ export default async function Layout({
   }
 
   return (
-    <SidebarProvider>
-      <DashboardSidebar
-        churches={churches}
-        currentChurch={currentChurch}
-      />
-      <div className="flex flex-1 flex-col">
-        <Header />
-        <main>{children}</main>
-      </div>
-    </SidebarProvider>
+    <DashboardLayout churches={churches} currentChurch={currentChurch}>
+      {children}
+    </DashboardLayout>
   )
 }

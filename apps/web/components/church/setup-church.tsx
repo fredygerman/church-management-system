@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { signIn } from 'next-auth/react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
@@ -67,17 +68,28 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
         description: data.description || undefined,
       })
 
-      // After successful setup, redirect to the church dashboard
-      toast.success('Church setup completed! Redirecting to dashboard...')
+      // After successful setup, authenticate with NextAuth using the returned tokens
+      toast.success('Church setup completed! Signing you in...')
       
+      // Sign in with the tokens returned from setup endpoint
+      const signInResult = await signIn('credentials', {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        redirect: false,
+      })
+
+      if (!signInResult?.ok) {
+        throw new Error('Failed to sign in after setup')
+      }
+
       if (onSuccess) {
         onSuccess(result.church.id)
       }
       
-      // Use setTimeout to ensure user sees the success message
+      // Redirect to the church dashboard
       setTimeout(() => {
         router.push(`/${result.church.id}/dashboard`)
-      }, 1000)
+      }, 500)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to setup church'
       console.error('Church setup error:', error)

@@ -3,13 +3,13 @@ import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     churchId: string
-  }
+  }>
 }
 
 export default async function ZonesPage({ params }: PageProps) {
-  const { churchId } = params
+  const { churchId } = await params
   let zones = []
   
   try {

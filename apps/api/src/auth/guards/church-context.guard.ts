@@ -31,21 +31,35 @@ export class ChurchContextGuard implements CanActivate {
       throw new ForbiddenException('User context not found')
     }
 
-    // Super admin can view all churches
-    if (user.role === UserRole.SUPER_ADMIN) {
-      return true
-    }
+    console.log('[ChurchContextGuard] User role:', user.role, 'User churchId:', user.churchId, 'Request path:', request.path)
 
     // Get churchId from:
     // 1. Request params (/churches/:churchId/members)
     // 2. Query string (?churchId=xxx)
     // 3. Request body (POST/PUT)
+    // 4. User's assigned church (for regular users)
     const churchIdFromParams = request.params.churchId
     const churchIdFromQuery = request.query.churchId
     const churchIdFromBody = (request.body as any)?.churchId
 
-    const requestedChurchId =
+    let requestedChurchId =
       churchIdFromParams || churchIdFromQuery || churchIdFromBody
+
+    console.log('[ChurchContextGuard] Query params:', request.query, 'churchIdFromQuery:', churchIdFromQuery)
+
+    // Super admin can view all churches
+    if (user.role === UserRole.SUPER_ADMIN) {
+      // For super admin, if no churchId specified in request, use their assigned church if available
+      if (!requestedChurchId && user.churchId) {
+        requestedChurchId = user.churchId
+      }
+      // Set the churchId on request for controllers to use
+      if (requestedChurchId) {
+        request['churchId'] = requestedChurchId
+        console.log('[ChurchContextGuard] Super admin, set churchId:', requestedChurchId)
+      }
+      return true
+    }
 
     // If no churchId in request, check if it's a safe endpoint
     if (!requestedChurchId) {

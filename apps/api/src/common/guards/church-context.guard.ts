@@ -16,16 +16,23 @@ export class ChurchContextGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>()
 
-    // Extract church_id from query params, body, or user's default church
-    const churchIdFromQuery = request.query.church_id as string
-    const churchIdFromBody = request.body?.churchId as string
+    // Extract churchId from query params, body, or user's default church
+    // Support both church_id and churchId
+    const churchIdFromQuery = (request.query.churchId || request.query.church_id) as string
+    const churchIdFromBody = request.body?.churchId
     const churchIdFromUser = request.user?.churchId
 
     // Priority: query params > body > user's default church
     const churchId = churchIdFromQuery || churchIdFromBody || churchIdFromUser
 
     if (!churchId) {
-      throw new BadRequestException('Church context is required. Provide church_id in query or body.')
+      throw new BadRequestException('Church context is required. Provide churchId in query or body.')
+    }
+
+    // Super admin can access any church
+    if (request.user?.role === 'super_admin') {
+      request.churchId = churchId
+      return true
     }
 
     // If user is a branch admin, they can only access their own church

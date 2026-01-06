@@ -129,8 +129,15 @@ export async function getMembers(
       throw new Error('Failed to fetch members')
     }
 
-    const data = await response.json()
-    return data
+    const result = await response.json()
+    // Handle both wrapped and unwrapped responses
+    const members = result.data || result.members || result || []
+    const pageCount = result.meta?.pageCount || 0
+    
+    return { 
+      members: Array.isArray(members) ? members : [], 
+      pageCount 
+    }
   } catch (error) {
     console.error('Error fetching members:', error)
     return { members: [], pageCount: 0 }

@@ -7,7 +7,7 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
+import { Observable } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ApiResponse } from './response.interceptor';
 
@@ -64,10 +64,13 @@ export class ErrorInterceptor implements NestInterceptor {
           statusCode: status,
         };
 
-        // Set response status
-        response.status(status);
+        // Set response status and send the error response
+        response.status(status).json(apiResponse);
 
-        return throwError(() => apiResponse);
+        // Return empty observable since we already sent the response
+        return new Observable((subscriber) => {
+          subscriber.complete();
+        });
       })
     );
   }

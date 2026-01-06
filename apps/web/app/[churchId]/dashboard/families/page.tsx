@@ -3,13 +3,13 @@ import Link from 'next/link'
 import { getFamilies } from '@/actions/family'
 
 interface PageProps {
-  params: {
+  params: Promise<{
     churchId: string
-  }
+  }>
 }
 
 export default async function FamiliesPage({ params }: PageProps) {
-  const { churchId } = params
+  const { churchId } = await params
   const families = await getFamilies(churchId)
 
   return (

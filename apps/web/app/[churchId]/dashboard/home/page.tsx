@@ -1,13 +1,13 @@
 import { getDashboardStats } from '@/actions/dashboard'
 
 interface DashboardHomeProps {
-  params: {
+  params: Promise<{
     churchId: string
-  }
+  }>
 }
 
 export default async function DashboardHome({ params }: DashboardHomeProps) {
-  const { churchId } = params
+  const { churchId } = await params
   let stats = {
     totalMembers: 0,
     activeZones: 0,

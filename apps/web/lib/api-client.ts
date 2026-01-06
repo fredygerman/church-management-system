@@ -3,11 +3,21 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
+export interface PaginationMeta {
+  page?: number
+  per_page?: number
+  total_count?: number
+  total_pages?: number
+  has_previous_page?: boolean
+  has_next_page?: boolean
+}
+
 export interface ApiResponse<D = any> {
   success: boolean
   message: string
   data?: D
   error?: any
+  meta?: PaginationMeta
   timestamp: string
   path: string
   statusCode: number

@@ -7,11 +7,21 @@ import {
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+export interface PaginationMeta {
+  page?: number;
+  per_page?: number;
+  total_count?: number;
+  total_pages?: number;
+  has_previous_page?: boolean;
+  has_next_page?: boolean;
+}
+
 export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
   data?: T;
   error?: any;
+  meta?: PaginationMeta;
   timestamp: string;
   path: string;
   statusCode: number;
@@ -47,11 +57,16 @@ export class ResponseInterceptor<T>
           };
         }
 
+        // Check if response contains pagination metadata
+        const hasMeta = data && typeof data === 'object' && 'meta' in data;
+        const meta = hasMeta ? (data as any).meta : undefined;
+
         // Format new response
         return {
           success: true,
           message: 'Request successful',
-          data,
+          data: hasMeta && data?.data ? data.data : data,
+          ...(meta && { meta }),
           timestamp: new Date().toISOString(),
           path: request.url,
           statusCode: response.statusCode,

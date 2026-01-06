@@ -4,13 +4,13 @@ import { ArrowLeft } from 'lucide-react'
 import { ZoneCreateForm } from '@/components/zone/zone-create-form'
 
 interface ZoneAddPageProps {
-  params: {
+  params: Promise<{
     churchId: string
-  }
+  }>
 }
 
 export default async function ZoneAddPage({ params }: ZoneAddPageProps) {
-  const { churchId } = params
+  const { churchId } = await params
 
   return (
     <div className="flex min-h-screen w-full flex-col p-4">

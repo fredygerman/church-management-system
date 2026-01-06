@@ -3,8 +3,8 @@ import { redirect } from "next/navigation"
 export default async function DashboardPage({
   params,
 }: {
-  params: { churchId: string }
+  params: Promise<{ churchId: string }>
 }) {
-  const { churchId } = params
+  const { churchId } = await params
   redirect(`/${churchId}/dashboard`)
 }
