@@ -12,7 +12,6 @@ import { AuthModule } from './auth/auth.module'
 import { UsersModule } from './users/users.module'
 import { AppController } from './app.controller'
 import { ScheduleModule } from '@nestjs/schedule'
-import { PaymentModule } from './payment/payment.module'
 import { DatabaseModule } from './database/database.module'
 import { FileUploadModule } from './file-upload/file-upload.module'
 import { HealthController } from './health/health.controller'
@@ -22,16 +21,19 @@ import { MembersModule } from './members/members.module'
 import { ZonesModule } from './zones/zones.module'
 import { FamiliesModule } from './families/families.module'
 import { VisitorsModule } from './visitors/visitors.module'
+import config from './config'
 
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    DatabaseModule,
+    DatabaseModule.forRoot({
+      driver: 'node-postgres',
+      url: config.databaseURL,
+    }),
     AuthModule,
     UsersModule,
     MailModule,
     SmsModule,
-    PaymentModule,
     FileUploadModule,
     ChurchModule,
     MembersModule,

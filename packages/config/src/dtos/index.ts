@@ -1,25 +1,14 @@
 /**
- * Central export file for all DTOs
- * Organized by feature/domain
+ * Data Transfer Objects (DTOs)
+ * 
+ * These are application-level contracts for API requests and responses.
+ * They may differ from database types for validation, transformation, or security purposes.
+ * 
+ * For database type definitions, see @church/config/schema (re-exported from @church/db)
  */
-
-// Authentication DTOs
-export * from './auth';
-
-// Registration DTOs
-export * from './registration';
-
-// User Management DTOs
-export * from './users';
 
 // Mail DTOs
 export * from './mail';
 
 // SMS DTOs
 export * from './sms';
-
-// Notification DTOs
-export * from './notifications';
-
-// Payment DTOs
-export * from './payments.dto';

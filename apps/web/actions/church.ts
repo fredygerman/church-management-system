@@ -18,6 +18,21 @@ export async function getChurches() {
   return response.data || []
 }
 
+export async function getChurchById(churchId: string) {
+  const response = await apiRequest({
+    requestConfig: {
+      method: 'GET',
+      url: `/churches/${churchId}`,
+    },
+  })
+
+  if (!response.success) {
+    handleApiError(response)
+  }
+
+  return response.data || null
+}
+
 export async function setupChurch(data: {
   name: string
   location: string

@@ -5,9 +5,9 @@ import { MemberForm } from "@/components/form/MemberForm"
 export default async function NewMemberPage({
   params,
 }: {
-  params: { churchId: string }
+  params: Promise<{ churchId: string }>
 }) {
-  const { churchId } = params
+  const { churchId } = await params
   const zones = await getZones()
 
   return (

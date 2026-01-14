@@ -1,0 +1,2 @@
+export const DATABASE_OPTIONS = 'DATABASE_OPTIONS';
+export const DATABASE_ORM = 'DATABASE_ORM';

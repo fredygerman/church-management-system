@@ -1,10 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, OnModuleInit } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { DatabaseService } from '../../database/database.service';
 import { eq, isNull } from 'drizzle-orm';
 import config from '../../config';
 import { users } from '@church/db';
+import { Database } from '../../database/interfaces/database.interfaces';
 
 export interface JwtPayload {
   sub: string; // user id
@@ -15,8 +16,10 @@ export interface JwtPayload {
 }
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
-  constructor(private readonly db: DatabaseService) {
+export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') implements OnModuleInit {
+  private db: Database;
+
+  constructor(private readonly databaseService: DatabaseService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
@@ -24,9 +27,12 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
+  async onModuleInit() {
+    this.db = await this.databaseService.getDatabase();
+  }
+
   async validate(payload: JwtPayload) {
     const [user] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(eq(users.id, payload.sub))

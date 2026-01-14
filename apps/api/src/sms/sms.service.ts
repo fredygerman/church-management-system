@@ -1,29 +1,29 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
+import { notifications, type NewNotification } from '../database/schema';
 import {
-  notifications,
-  type NewNotification,
   NotificationCategory,
   NotificationStatus,
   NotificationType,
-} from '../../../../packages/config/src/schema/notifications.schema';
+} from '../../../../packages/config/src/types/notifications';
 import config from '../config';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and } from 'drizzle-orm';
+import { Database } from '../database/interfaces/database.interfaces';
 
 export interface SmsResponse {
   success: boolean;
   reference: string;
-  notificationId?: string; // Changed from number to string (UUID)
+  notificationId?: number;
   message?: string;
   error?: string;
   response?: any;
 }
 
 export interface SendSmsOptions {
-  userId: string; // Changed from number to string (UUID)
+  userId: string;
   to: string;
   message: string;
-  category: keyof typeof NotificationCategory;
+  category: 'AUTH' | 'ACCOUNT' | 'PAYMENT' | 'SYSTEM' | 'MARKETING';
   purpose: string;
   showInApp?: boolean;
   subject?: string;
@@ -32,14 +32,15 @@ export interface SendSmsOptions {
 }
 
 @Injectable()
-export class SmsService {
+export class SmsService implements OnModuleInit {
   private readonly logger = new Logger(SmsService.name);
   private readonly smsApiUrl: string;
   private readonly smsUsername: string;
   private readonly smsPassword: string;
   private readonly smsSenderId: string;
+  private db: Database;
 
-  constructor(private readonly db: DatabaseService) {
+  constructor(private readonly databaseService: DatabaseService) {
     this.smsApiUrl = config.sms.apiUrl;
     this.smsUsername = config.sms.username;
     this.smsPassword = config.sms.password;
@@ -48,6 +49,10 @@ export class SmsService {
     if (!this.smsApiUrl || !this.smsUsername || !this.smsPassword) {
       this.logger.warn('SMS service not configured properly');
     }
+  }
+
+  async onModuleInit() {
+    this.db = await this.databaseService.getDatabase();
   }
 
   /**
@@ -115,13 +120,11 @@ export class SmsService {
       isRead: false,
       reference,
       status: NotificationStatus.PENDING,
-      metadata: metadata || null,
     };
 
     try {
       // Save to database
       const [savedNotification] = await this.db
-        .getDb()
         .insert(notifications)
         .values(notification)
         .returning();
@@ -155,7 +158,6 @@ export class SmsService {
       if (response.ok) {
         // Update notification as sent
         await this.db
-          .getDb()
           .update(notifications)
           .set({
             status: NotificationStatus.SENT,
@@ -179,7 +181,6 @@ export class SmsService {
       } else {
         // Update notification as failed
         await this.db
-          .getDb()
           .update(notifications)
           .set({
             status: NotificationStatus.FAILED,
@@ -208,7 +209,6 @@ export class SmsService {
       // Try to update notification status if we have the reference
       try {
         await this.db
-          .getDb()
           .update(notifications)
           .set({
             status: NotificationStatus.FAILED,
@@ -233,7 +233,6 @@ export class SmsService {
    */
   async getNotificationByReference(reference: string) {
     const [notification] = await this.db
-      .getDb()
       .select()
       .from(notifications)
       .where(eq(notifications.reference, reference))
@@ -243,98 +242,10 @@ export class SmsService {
   }
 
   /**
-   * Get notifications by user ID
-   */
-  async getUserNotifications(
-    userId: string, // Changed from number to string (UUID)
-    options: {
-      category?: keyof typeof NotificationCategory;
-      purpose?: string;
-      showInApp?: boolean;
-      isRead?: boolean;
-      limit?: number;
-      offset?: number;
-    } = {}
-  ) {
-    const {
-      category,
-      purpose,
-      showInApp,
-      isRead,
-      limit = 50,
-      offset = 0,
-    } = options;
-
-    const conditions = [eq(notifications.userId, userId)];
-
-    if (category && NotificationCategory[category]) {
-      conditions.push(
-        eq(notifications.category, NotificationCategory[category])
-      );
-    }
-
-    if (purpose) {
-      conditions.push(eq(notifications.purpose, purpose));
-    }
-
-    if (showInApp !== undefined) {
-      conditions.push(eq(notifications.showInApp, showInApp));
-    }
-
-    if (isRead !== undefined) {
-      conditions.push(eq(notifications.isRead, isRead));
-    }
-
-    return this.db
-      .getDb()
-      .select()
-      .from(notifications)
-      .where(and(...conditions))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit)
-      .offset(offset);
-  }
-
-  /**
-   * Get unread notification count for a user
-   */
-  async getUnreadCount(
-    userId: string, // Changed from number to string (UUID)
-    options: {
-      category?: keyof typeof NotificationCategory;
-      showInApp?: boolean;
-    } = {}
-  ) {
-    const { category, showInApp = true } = options;
-
-    const conditions = [
-      eq(notifications.userId, userId),
-      eq(notifications.isRead, false),
-      eq(notifications.showInApp, showInApp),
-    ];
-
-    if (category && NotificationCategory[category]) {
-      conditions.push(
-        eq(notifications.category, NotificationCategory[category])
-      );
-    }
-
-    const result = await this.db
-      .getDb()
-      .select()
-      .from(notifications)
-      .where(and(...conditions));
-
-    return result.length;
-  }
-
-  /**
    * Mark notification as read
    */
-  async markAsRead(notificationId: string, userId: string) {
-    // Changed from number to string (UUID)
+  async markAsRead(notificationId: number, userId: string) {
     const [updated] = await this.db
-      .getDb()
       .update(notifications)
       .set({
         isRead: true,
@@ -350,104 +261,5 @@ export class SmsService {
       .returning();
 
     return updated;
-  }
-
-  /**
-   * Mark all notifications as read for a user
-   */
-  async markAllAsRead(
-    userId: string, // Changed from number to string (UUID)
-    category?: keyof typeof NotificationCategory
-  ) {
-    const conditions = [
-      eq(notifications.userId, userId),
-      eq(notifications.isRead, false),
-    ];
-
-    if (category && NotificationCategory[category]) {
-      conditions.push(
-        eq(notifications.category, NotificationCategory[category])
-      );
-    }
-
-    const updated = await this.db
-      .getDb()
-      .update(notifications)
-      .set({
-        isRead: true,
-        readAt: new Date(),
-        updatedAt: new Date(),
-      })
-      .where(and(...conditions))
-      .returning();
-
-    return updated;
-  }
-
-  /**
-   * Get all notifications with pagination (admin)
-   */
-  async getAllNotifications(limit = 50, offset = 0) {
-    return this.db
-      .getDb()
-      .select()
-      .from(notifications)
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit)
-      .offset(offset);
-  }
-
-  /**
-   * Get notifications by type
-   */
-  async getNotificationsByType(
-    type: keyof typeof NotificationType,
-    limit = 50,
-    offset = 0
-  ) {
-    return this.db
-      .getDb()
-      .select()
-      .from(notifications)
-      .where(eq(notifications.type, NotificationType[type]))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit)
-      .offset(offset);
-  }
-
-  /**
-   * Get notifications by status
-   */
-  async getNotificationsByStatus(
-    status: keyof typeof NotificationStatus,
-    limit = 50,
-    offset = 0
-  ) {
-    return this.db
-      .getDb()
-      .select()
-      .from(notifications)
-      .where(eq(notifications.status, NotificationStatus[status]))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit)
-      .offset(offset);
-  }
-
-  /**
-   * Get notifications by category
-   */
-  async getNotificationsByCategory(
-    category: keyof typeof NotificationCategory,
-    limit = 50,
-    offset = 0
-  ) {
-    return this.db
-      .getDb()
-      .select()
-      .from(notifications)
-      .where(eq(notifications.category, NotificationCategory[category]))
-      .orderBy(desc(notifications.createdAt))
-      .limit(limit)
-      .offset(offset);
   }
 }

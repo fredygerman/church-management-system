@@ -121,6 +121,15 @@ export class MembersController {
   }
 
   /**
+   * GET /members/:id/zones - Get zones for a member
+   */
+  @Get(':id/zones')
+  @RequirePermission('read:member')
+  async getMemberZones(@Param('id') id: string) {
+    return this.membersService.getMemberZones(id)
+  }
+
+  /**
    * POST /members/:id/assign-zone - Assign to Zone
    */
   @Post(':id/assign-zone')

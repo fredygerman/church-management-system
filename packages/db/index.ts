@@ -3,13 +3,49 @@ import postgres from "postgres";
 import * as schema from "./schema.js";
 
 let dbInstance: ReturnType<typeof drizzle> | null = null;
+let clientInstance: ReturnType<typeof postgres> | null = null;
 
 function initDb() {
   if (!dbInstance && process.env.DATABASE_URL) {
-    const client = postgres(process.env.DATABASE_URL);
-    dbInstance = drizzle(client, { schema });
+    try {
+      // Create client with connection pooling
+      clientInstance = postgres(process.env.DATABASE_URL, {
+        max: 20, // Maximum pool size
+        idle_timeout: 30, // Close idle connections after 30 seconds
+        connect_timeout: 5, // Connection timeout in seconds
+        // Enable automatic reconnection
+        onnotice: (notice) => {
+          if (notice.message) {
+            console.warn('PostgreSQL Notice:', notice.message);
+          }
+        },
+      });
+
+      dbInstance = drizzle(clientInstance, { schema });
+      
+      // Handle connection errors - postgres client doesn't have .on method
+      // Connection error handling is built into the postgres client
+    } catch (error) {
+      console.error('Failed to initialize database:', error);
+      clientInstance = null;
+      dbInstance = null;
+    }
   }
   return dbInstance;
+}
+
+// Graceful shutdown function
+export async function closeDb() {
+  if (clientInstance) {
+    try {
+      await clientInstance.end();
+      clientInstance = null;
+      dbInstance = null;
+      console.log('Database connection closed');
+    } catch (error) {
+      console.error('Error closing database:', error);
+    }
+  }
 }
 
 // For backward compatibility, export a lazy-loaded db proxy

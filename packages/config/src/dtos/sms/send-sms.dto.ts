@@ -46,20 +46,16 @@ export class SendSmsDto {
     enum: [
       'AUTH',
       'ACCOUNT',
-      'ORDER',
-      'SHIPMENT',
       'PAYMENT',
       'SYSTEM',
       'MARKETING',
     ],
-    example: 'ORDER',
+    example: 'PAYMENT',
   })
   @IsNotEmpty()
   @IsEnum([
     'AUTH',
     'ACCOUNT',
-    'ORDER',
-    'SHIPMENT',
     'PAYMENT',
     'SYSTEM',
     'MARKETING',
@@ -67,20 +63,18 @@ export class SendSmsDto {
   category:
     | 'AUTH'
     | 'ACCOUNT'
-    | 'ORDER'
-    | 'SHIPMENT'
     | 'PAYMENT'
     | 'SYSTEM'
     | 'MARKETING';
 
   @ApiProperty({
     description: 'Specific purpose of the notification (flexible string)',
-    example: 'order_confirmed',
+    example: 'payment_success',
     examples: [
-      'order_confirmed',
-      'otp_verification',
-      'shipment_update',
       'payment_success',
+      'otp_verification',
+      'event_reminder',
+      'giving_reminder',
       'custom_notification',
     ],
   })
@@ -107,11 +101,11 @@ export class SendSmsDto {
   showInApp?: boolean;
 
   @ApiPropertyOptional({
-    description: 'Additional metadata for linking to orders, shipments, etc.',
+    description: 'Additional metadata for linking to payments, events, groups, etc.',
     example: {
-      orderId: 12345,
-      shipmentId: 67890,
-      deepLink: '/orders/12345',
+      paymentId: 12345,
+      eventId: 67890,
+      deepLink: '/events/67890',
     },
   })
   @IsOptional()

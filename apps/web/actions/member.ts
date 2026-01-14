@@ -55,17 +55,27 @@ export async function createMember(
   }
 
   try {
+    // Map form fields to API fields
+    const mappedData = {
+      churchId: data.churchId,
+      firstName: data.personalInfo.firstName,
+      lastName: data.personalInfo.lastName,
+      dateOfBirth: data.personalInfo.birthDate,
+      gender: data.personalInfo.gender.toLowerCase(),
+      maritalStatus: data.personalInfo.maritalStatus.toLowerCase(),
+      phone: data.contactInfo?.phone,
+      occupation: data.personalInfo.occupation,
+      dateOfSalvation: data.churchInfo.salvationDate || undefined,
+      notes: data.personalInfo.tribe || undefined,
+    }
+
     const response = await fetch(`${API_BASE_URL}/members`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${session.accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...data.personalInfo,
-        ...data.churchInfo,
-        churchId: data.churchId,
-      }),
+      body: JSON.stringify(mappedData),
     })
 
     if (!response.ok) {
@@ -90,7 +100,8 @@ export async function getMembers(
     page: number
     per_page: number
     sort: string
-    fullName: string
+    firstName: string
+    lastName: string
     gender: string
     maritalStatus: string
     occupation: string
@@ -111,7 +122,8 @@ export async function getMembers(
       page: queryParams.page.toString(),
       per_page: queryParams.per_page.toString(),
       sort: queryParams.sort,
-      ...(queryParams.fullName && { fullName: queryParams.fullName }),
+      ...(queryParams.firstName && { firstName: queryParams.firstName }),
+      ...(queryParams.lastName && { lastName: queryParams.lastName }),
       ...(queryParams.gender && { gender: queryParams.gender }),
       ...(queryParams.maritalStatus && { maritalStatus: queryParams.maritalStatus }),
       ...(queryParams.occupation && { occupation: queryParams.occupation }),
@@ -130,12 +142,13 @@ export async function getMembers(
     }
 
     const result = await response.json()
-    // Handle both wrapped and unwrapped responses
-    const members = result.data || result.members || result || []
-    const pageCount = result.meta?.pageCount || 0
+    // API returns { success, data, message, meta, ... }
+    // For list endpoints, data contains the array
+    const members = result.success && Array.isArray(result.data) ? result.data : []
+    const pageCount = result.meta?.total_pages || 1
     
     return { 
-      members: Array.isArray(members) ? members : [], 
+      members, 
       pageCount 
     }
   } catch (error) {
@@ -162,10 +175,51 @@ export async function getMemberById(id: string): Promise<any> {
       throw new Error('Failed to fetch member')
     }
 
-    return response.json()
+    const result = await response.json()
+    // API returns { success, data, message, ... }
+    if (result.success && result.data) {
+      return result.data
+    }
+    throw new Error(result.message || 'Failed to fetch member')
   } catch (error) {
     console.error('Error fetching member:', error)
     throw error
+  }
+}
+
+// Function to get zones for a member
+export async function getMemberZones(memberId: string): Promise<any[]> {
+  const session = await getSession()
+  if (!session?.accessToken) {
+    throw new Error('Unauthorized')
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/members/${memberId}/zones`, {
+      headers: {
+        Authorization: `Bearer ${session.accessToken}`,
+      },
+    })
+
+    if (!response.ok) {
+      return []
+    }
+
+    const result = await response.json()
+    
+    // The API returns member zones with zone data included
+    if (result.success && Array.isArray(result.data)) {
+      return result.data.map((memberZone: any) => ({
+        id: memberZone.zone?.id,
+        name: memberZone.zone?.name,
+        isLeader: memberZone.isLeader,
+      }))
+    }
+    
+    return []
+  } catch (error) {
+    console.error('Error fetching member zones:', error)
+    return []
   }
 }
 

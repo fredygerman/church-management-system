@@ -9,7 +9,8 @@ export async function seedMembers(churchId: string) {
   const zoneIds = await db.select({ id: zones.id }).from(zones) // Fetch zone IDs
 
   const memberData: Array<{
-    fullName: string
+    firstName: string
+    lastName: string
     birthDate: string
     gender: "Male" | "Female"
     maritalStatus: "Single" | "Married" | "Divorced" | "Widowed"
@@ -17,7 +18,8 @@ export async function seedMembers(churchId: string) {
     zoneId: string
   }> = [
     {
-      fullName: "John Doe",
+      firstName: "John",
+      lastName: "Doe",
       birthDate: new Date("1990-01-01").toISOString(),
       gender: "Male",
       maritalStatus: "Single",
@@ -25,7 +27,8 @@ export async function seedMembers(churchId: string) {
       zoneId: zoneIds[0].id, // Assign a zone ID
     },
     {
-      fullName: "Jane Smith",
+      firstName: "Jane",
+      lastName: "Smith",
       birthDate: new Date("1985-05-15").toISOString(),
       gender: "Female",
       maritalStatus: "Married",
@@ -37,7 +40,8 @@ export async function seedMembers(churchId: string) {
 
   for (let i = 0; i < 8; i++) {
     memberData.push({
-      fullName: `Member ${i + 3}`,
+      firstName: `Member`,
+      lastName: `${i + 3}`,
       birthDate: new Date(`198${i}-01-01`).toISOString(),
       gender: i % 2 === 0 ? "Male" : "Female",
       maritalStatus: i % 2 === 0 ? "Single" : "Married",
@@ -58,7 +62,8 @@ export async function seedMembers(churchId: string) {
 
     await createMember({
       personalInfo: {
-        fullName: member.fullName,
+        firstName: member.firstName,
+        lastName: member.lastName,
         birthDate: validBirthDate,
         gender: member.gender,
         maritalStatus: member.maritalStatus,

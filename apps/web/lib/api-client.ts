@@ -127,12 +127,15 @@ async function serverFetch<D = any>({
 
     console.log(`[API] Response data:`, data)
 
-    // Handle 401 errors - try to refresh token
+    // Handle 401 errors - check both HTTP status and response status code
+    const is401 = response.status === 401 || data?.statusCode === 401
+    
     if (
-      response.status === 401 &&
+      is401 &&
       !requestConfig.skipAuth &&
       token
     ) {
+      console.log("[API] 401 Unauthorized detected - attempting token refresh")
       try {
         // Get the session to access the refresh token
         const { getSession } = await import("@/auth")
@@ -187,6 +190,7 @@ async function serverFetch<D = any>({
         console.error("[API] Failed to get session for token refresh:", sessionError)
       }
 
+      console.log("[API] Redirecting to signin")
       redirect("/auth/signin?error=session_expired")
     }
 

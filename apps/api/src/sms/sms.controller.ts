@@ -4,19 +4,15 @@ import {
   Get,
   Body,
   Param,
-  Query,
   HttpCode,
   HttpStatus,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SmsService } from './sms.service';
-import { SendSmsDto } from '../../../../packages/config/src/dtos/sms';
-import {
-  NotificationType,
-  NotificationStatus,
-} from '../../../../packages/config/src/schema/notifications.schema';
+import type { SendSmsDto } from '../../../../packages/config/src/dtos/sms';
 
 @ApiTags('SMS')
 @Controller('sms')
@@ -28,7 +24,7 @@ export class SmsController {
   @Post('send')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Send SMS (no authentication required for testing)',
+    summary: 'Send SMS notification',
   })
   @ApiResponse({ status: 200, description: 'SMS sent successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
@@ -100,69 +96,5 @@ export class SmsController {
     }
 
     return notification;
-  }
-
-  @Get('notifications')
-  @ApiOperation({ summary: 'Get all notifications with pagination' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'offset', required: false, type: Number })
-  @ApiResponse({ status: 200, description: 'Notifications retrieved' })
-  async getAllNotifications(
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number
-  ) {
-    const notifications = await this.smsService.getAllNotifications(
-      limit || 50,
-      offset || 0
-    );
-
-    return {
-      items: notifications,
-      count: notifications.length,
-    };
-  }
-
-  @Get('notifications/type/:type')
-  @ApiOperation({ summary: 'Get notifications by type' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'offset', required: false, type: Number })
-  @ApiResponse({ status: 200, description: 'Notifications retrieved' })
-  async getNotificationsByType(
-    @Param('type') type: keyof typeof NotificationType,
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number
-  ) {
-    const notifications = await this.smsService.getNotificationsByType(
-      type,
-      limit || 50,
-      offset || 0
-    );
-
-    return {
-      items: notifications,
-      count: notifications.length,
-    };
-  }
-
-  @Get('notifications/status/:status')
-  @ApiOperation({ summary: 'Get notifications by status' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'offset', required: false, type: Number })
-  @ApiResponse({ status: 200, description: 'Notifications retrieved' })
-  async getNotificationsByStatus(
-    @Param('status') status: keyof typeof NotificationStatus,
-    @Query('limit') limit?: number,
-    @Query('offset') offset?: number
-  ) {
-    const notifications = await this.smsService.getNotificationsByStatus(
-      status,
-      limit || 50,
-      offset || 0
-    );
-
-    return {
-      items: notifications,
-      count: notifications.length,
-    };
   }
 }

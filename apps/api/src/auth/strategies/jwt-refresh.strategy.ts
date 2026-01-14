@@ -1,10 +1,11 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, OnModuleInit } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { DatabaseService } from '../../database/database.service';
 import { eq, isNull } from 'drizzle-orm';
 import config from '../../config';
 import { users } from '@church/db';
+import { Database } from '../../database/interfaces/database.interfaces';
 
 export interface JwtRefreshPayload {
   sub: string; // user id
@@ -16,17 +17,23 @@ export interface JwtRefreshPayload {
 }
 
 @Injectable()
-export class JwtRefreshStrategy extends PassportStrategy(
-  Strategy,
-  'jwt-refresh',
-) {
-  constructor(private readonly db: DatabaseService) {
+export class JwtRefreshStrategy
+  extends PassportStrategy(Strategy, 'jwt-refresh')
+  implements OnModuleInit
+{
+  private db: Database;
+
+  constructor(private readonly databaseService: DatabaseService) {
     super({
       jwtFromRequest: ExtractJwt.fromBodyField('refreshToken'),
       ignoreExpiration: false,
       secretOrKey: config.jwt.secret,
       passReqToCallback: true,
     });
+  }
+
+  async onModuleInit() {
+    this.db = await this.databaseService.getDatabase();
   }
 
   async validate(req: any, payload: JwtRefreshPayload) {
@@ -36,7 +43,6 @@ export class JwtRefreshStrategy extends PassportStrategy(
     }
 
     const [user] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(eq(users.id, payload.sub))

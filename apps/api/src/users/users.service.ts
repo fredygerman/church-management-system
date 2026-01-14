@@ -3,21 +3,28 @@ import {
   NotFoundException,
   ConflictException,
   Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { FileUploadService } from '../file-upload/file-upload.service';
 import { users, type User } from '../database/schema';
 import { eq, and, ne, isNull } from 'drizzle-orm';
+import { Database } from '../database/interfaces/database.interfaces';
 
 @Injectable()
-export class UsersService {
+export class UsersService implements OnModuleInit {
   private readonly logger = new Logger(UsersService.name);
+  private db: Database;
 
   constructor(
-    private readonly db: DatabaseService,
+    private readonly databaseService: DatabaseService,
     private readonly fileUploadService: FileUploadService,
   ) {
     this.logger.log('Users service initialized');
+  }
+
+  async onModuleInit() {
+    this.db = await this.databaseService.getDatabase();
   }
 
   /**
@@ -25,7 +32,6 @@ export class UsersService {
    */
   async getAccount(userId: string): Promise<User> {
     const [user] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(and(eq(users.id, userId), isNull(users.deletedAt)))
@@ -52,7 +58,6 @@ export class UsersService {
   ): Promise<{ success: boolean; user: User; message: string }> {
     // Get current user
     const [currentUser] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(and(eq(users.id, userId), isNull(users.deletedAt)))
@@ -65,7 +70,6 @@ export class UsersService {
     // Check for duplicate email
     if (dto.email && dto.email !== currentUser.email) {
       const existing = await this.db
-        .getDb()
         .select()
         .from(users)
         .where(
@@ -91,7 +95,6 @@ export class UsersService {
 
     // Update user in database
     const [updatedUser] = await this.db
-      .getDb()
       .update(users)
       .set(updateData)
       .where(eq(users.id, userId))
@@ -111,7 +114,6 @@ export class UsersService {
    */
   async getUserByEmail(email: string): Promise<User | null> {
     const [user] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(and(eq(users.email, email), isNull(users.deletedAt)))
@@ -125,7 +127,6 @@ export class UsersService {
    */
   async getUserById(userId: string): Promise<User | null> {
     const [user] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(and(eq(users.id, userId), isNull(users.deletedAt)))
@@ -163,7 +164,6 @@ export class UsersService {
     }
 
     const result = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(and(...conditions))
@@ -172,7 +172,6 @@ export class UsersService {
 
     // Get total count
     const countResult = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(and(eq(users.churchId, churchId), isNull(users.deletedAt)));
@@ -188,7 +187,6 @@ export class UsersService {
    */
   async deleteUser(userId: string): Promise<void> {
     const [user] = await this.db
-      .getDb()
       .update(users)
       .set({ deletedAt: new Date().toISOString() })
       .where(eq(users.id, userId))
@@ -206,7 +204,6 @@ export class UsersService {
    */
   async restoreUser(userId: string): Promise<User> {
     const [user] = await this.db
-      .getDb()
       .update(users)
       .set({ deletedAt: null })
       .where(eq(users.id, userId))

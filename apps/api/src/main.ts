@@ -8,53 +8,18 @@ import config from './config';
 import * as express from 'express';
 import { IncomingMessage, ServerResponse } from 'http';
 import { getServiceStatus } from './helpers/util';
-import { ServiceStatusUtil } from './helpers/service-status.util';
 
-const { appUrl, port } = config;
+const { appUrl, port, frontendUrl, nodeEnv } = config;
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+
   logger.log('🚀 Starting Church API Service...');
 
-  const app = await NestFactory.create(AppModule);
-
-  // Get service status
+  // Get service configuration status
   const { enabledFeatures, disabledFeatures } = getServiceStatus();
 
-  // In production, log full system status
-  if (config.nodeEnv === 'production') {
-    const serviceStatusUtil = app.get(ServiceStatusUtil);
-    const fullStatus = serviceStatusUtil.getStatus();
-
-    logger.log('📱 Application Information:');
-    logger.log(`   Name: ${fullStatus.app.name}`);
-    logger.log(`   Version: ${fullStatus.app.version}`);
-    logger.log(`   Environment: ${fullStatus.app.environment}`);
-
-    if ('system' in fullStatus) {
-      logger.log('💻 System Information:');
-      logger.log(
-        `   Platform: ${fullStatus.system.platform} | Arch: ${fullStatus.system.arch}`
-      );
-      logger.log(
-        `   Node: ${fullStatus.system.nodeVersion} | CPUs: ${fullStatus.system.cpus}`
-      );
-      logger.log(
-        `   Memory: ${fullStatus.system.memory.usage} used (${fullStatus.system.memory.free} free of ${fullStatus.system.memory.total})`
-      );
-      logger.log(
-        `   Load Average: ${fullStatus.system.loadAvg.map(l => l.toFixed(2)).join(', ')}`
-      );
-    }
-  }
-
-  logger.log('📋 Enabled Features:');
-  enabledFeatures.forEach(feature => logger.log(`   ✅ ${feature}`));
-
-  if (disabledFeatures.length > 0) {
-    logger.warn('⚠️  Disabled Features:');
-    disabledFeatures.forEach(feature => logger.warn(`   ❌ ${feature}`));
-  }
+  const app = await NestFactory.create(AppModule);
 
   // Configure express middleware directly
   app.use(
@@ -63,32 +28,30 @@ async function bootstrap() {
         req: IncomingMessage & { rawBody?: string },
         res: ServerResponse,
         buf: Buffer,
-        encoding: string
+        encoding: string,
       ) => {
         if (buf && buf.length) {
           req.rawBody = buf.toString((encoding as BufferEncoding) || 'utf8');
         }
       },
-    })
+    }),
   );
   logger.log('Express middleware configured successfully');
 
   // Apply the response interceptor globally
   app.useGlobalInterceptors(new ResponseInterceptor());
 
-  // Swagger API documentation setup
   const docConfig = new DocumentBuilder()
     .setTitle('Church API')
     .setDescription('The Church Management System API')
     .setVersion('1.0')
     .addBearerAuth(
       { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      'access-token'
+      'access-token',
     )
     .build();
 
   const document = SwaggerModule.createDocument(app, docConfig);
-  SwaggerModule.setup('docs', app, document);
 
   // Enhanced validation pipe
   app.useGlobalPipes(
@@ -99,10 +62,10 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-    })
+    }),
   );
 
-  // SwaggerModule.setup("docs", app, document);
+  SwaggerModule.setup('docs', app, document);
 
   // CORS configuration
   app.enableCors({
@@ -112,13 +75,28 @@ async function bootstrap() {
     credentials: true,
   });
 
-  // Start the server
+  // Listen to 0.0.0.0 for Docker container accessibility
   await app.listen(port, '0.0.0.0');
 
-  logger.log(`
-✅ API is running on port ${port}
-📚 Docs: http://localhost:${port}/docs
-🏥 Health: http://localhost:${port}/health
+  // Print the base URL and docs URL
+  const baseUrl = `${appUrl}`;
+  const docsUrl = `${baseUrl}/docs`;
+
+  // Display service configuration status
+  Logger.log(
+    `\n---------------------------------------------\n✨ Configuration loaded successfully\n🟢 Enabled features: ${enabledFeatures.join(', ') || 'None'}\n🔴 Disabled features: ${disabledFeatures.join(', ') || 'None'}\n---------------------------------------------`,
+    'Config',
+  );
+
+  // Display the startup banner
+  logger.log(`\n---------------------------------------------
+✅ Church API Service is running!
+🌐 Environment: ${nodeEnv.toUpperCase()}
+🔗 Running on: http://0.0.0.0:${port} (Internal: ${baseUrl})
+📚 API Documentation: ${docsUrl}
+🏥 Health Check: http://127.0.0.1:${port}/health
+---------------------------------------------
 `);
 }
+
 bootstrap();

@@ -26,7 +26,12 @@ export async function getZones(churchId?: string): Promise<any[]> {
       throw new Error('Failed to fetch zones')
     }
 
-    return response.json()
+    const result = await response.json()
+    // API returns { success, data, message, meta, ... }
+    if (result.success && Array.isArray(result.data)) {
+      return result.data
+    }
+    return []
   } catch (error) {
     console.error('Error fetching zones:', error)
     // Fallback to empty array if API is not available
@@ -52,7 +57,12 @@ export async function getZoneById(zoneId: string): Promise<any> {
       throw new Error('Failed to fetch zone')
     }
 
-    return response.json()
+    const result = await response.json()
+    // API returns { success, data, message, ... }
+    if (result.success && result.data) {
+      return result.data
+    }
+    throw new Error(result.message || 'Failed to fetch zone')
   } catch (error) {
     console.error('Error fetching zone:', error)
     throw error
@@ -82,11 +92,16 @@ export async function createZone(data: {
     })
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Failed to create zone')
+      const result = await response.json()
+      throw new Error(result.message || 'Failed to create zone')
     }
 
-    return response.json()
+    const result = await response.json()
+    // API returns { success, data, message, ... }
+    if (result.success && result.data) {
+      return result.data
+    }
+    throw new Error(result.message || 'Failed to create zone')
   } catch (error) {
     console.error('Error creating zone:', error)
     throw error
@@ -115,11 +130,16 @@ export async function updateZone(zoneId: string, data: {
     })
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Failed to update zone')
+      const result = await response.json()
+      throw new Error(result.message || 'Failed to update zone')
     }
 
-    return response.json()
+    const result = await response.json()
+    // API returns { success, data, message, ... }
+    if (result.success && result.data) {
+      return result.data
+    }
+    throw new Error(result.message || 'Failed to update zone')
   } catch (error) {
     console.error('Error updating zone:', error)
     throw error
@@ -142,8 +162,8 @@ export async function deleteZone(zoneId: string): Promise<void> {
     })
 
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Failed to delete zone')
+      const result = await response.json()
+      throw new Error(result.message || 'Failed to delete zone')
     }
   } catch (error) {
     console.error('Error deleting zone:', error)

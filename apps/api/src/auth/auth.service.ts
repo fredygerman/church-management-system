@@ -3,11 +3,13 @@ import {
   BadRequestException,
   Logger,
   NotFoundException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from '../database/database.service';
 import { eq } from 'drizzle-orm';
 import { users, type User, churches, type Church } from '../database/schema';
+import { Database } from '../database/interfaces/database.interfaces';
 
 export interface AuthTokens {
   accessToken: string;
@@ -19,14 +21,19 @@ export interface AuthResponse extends AuthTokens {
 }
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
+  private db: Database;
 
   constructor(
-    private readonly db: DatabaseService,
+    private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
   ) {
     this.logger.log('Auth service initialized');
+  }
+
+  async onModuleInit() {
+    this.db = await this.databaseService.getDatabase();
   }
 
   /**
@@ -66,7 +73,6 @@ export class AuthService {
    */
   async getProfile(userId: string): Promise<Omit<User, 'password'>> {
     const [user] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(eq(users.id, userId))
@@ -99,7 +105,6 @@ export class AuthService {
   ): Promise<{ user: Omit<User, 'password'> | null; isNewUser: boolean }> {
     // Check if user exists
     const [existingUser] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(eq(users.email, email))
@@ -109,7 +114,6 @@ export class AuthService {
       // Update existing user with latest picture if provided
       if (picture && existingUser.picture !== picture) {
         await this.db
-          .getDb()
           .update(users)
           .set({ picture })
           .where(eq(users.id, existingUser.id));
@@ -126,7 +130,6 @@ export class AuthService {
     };
 
     const [createdUser] = await this.db
-      .getDb()
       .insert(users)
       .values(newUser)
       .returning();
@@ -157,7 +160,6 @@ export class AuthService {
     try {
       // Create the church
       const [church] = await this.db
-        .getDb()
         .insert(churches)
         .values({
           name,
@@ -175,7 +177,6 @@ export class AuthService {
 
       // Update the user to assign them to this church as super_admin
       const [updatedUser] = await this.db
-        .getDb()
         .update(users)
         .set({
           churchId: church.id,

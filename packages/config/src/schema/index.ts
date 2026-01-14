@@ -1,13 +1,42 @@
 /**
- * Central export file for all database schemas
- * Import this file to access all tables and types
+ * Schema type exports from @church/db
+ * This file re-exports database types for use in DTOs and application code
+ * 
+ * The source of truth for data structure is in @church/db package
+ * These types are used to ensure type consistency across the application
  */
 
-// Export all tables
-export * from './users.schema';
-export * from './notifications.schema';
-export * from './payments.schema';
-export * from './otp.schema';
-export * from './customer-profiles.schema';
-export * from './documents.schema';
-export * from './user-settings.schema';
+// Re-export all schema types from db package
+export type {
+  User,
+  NewUser,
+  Member,
+  NewMember,
+  Zone,
+  NewZone,
+  Church,
+  NewChurch,
+  Family,
+  NewFamily,
+  Visitor,
+  NewVisitor,
+  VisitorFollowup,
+  NewVisitorFollowup,
+  MemberZone,
+  NewMemberZone,
+  Notification,
+  NewNotification,
+} from '@church/db';
+
+// Re-export tables for schema reference
+export {
+  users,
+  members,
+  zones,
+  churches,
+  families,
+  visitors,
+  visitorFollowups,
+  memberZones,
+  notifications,
+} from '@church/db';

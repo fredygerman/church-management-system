@@ -3,21 +3,28 @@ import {
   BadRequestException,
   ConflictException,
   Logger,
+  OnModuleInit,
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { eq } from 'drizzle-orm';
 import { users } from '../database/schema';
+import { Database } from '../database/interfaces/database.interfaces';
 
 /**
  * Simplified registration service for church app
  * Uses OAuth for authentication - no complex multi-step registration
  */
 @Injectable()
-export class RegistrationService {
+export class RegistrationService implements OnModuleInit {
   private readonly logger = new Logger(RegistrationService.name);
+  private db: Database;
 
-  constructor(private readonly db: DatabaseService) {
+  constructor(private readonly databaseService: DatabaseService) {
     this.logger.log('Registration service initialized');
+  }
+
+  async onModuleInit() {
+    this.db = await this.databaseService.getDatabase();
   }
 
   /**
@@ -25,7 +32,6 @@ export class RegistrationService {
    */
   async validateEmailAvailable(email: string): Promise<boolean> {
     const [existingUser] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(eq(users.email, email))
@@ -50,7 +56,6 @@ export class RegistrationService {
     },
   ): Promise<any> {
     const [user] = await this.db
-      .getDb()
       .select()
       .from(users)
       .where(eq(users.id, userId))
@@ -69,7 +74,6 @@ export class RegistrationService {
     }
 
     const [updatedUser] = await this.db
-      .getDb()
       .update(users)
       .set(updateData)
       .where(eq(users.id, userId))

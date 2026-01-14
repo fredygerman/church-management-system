@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/select"
 
 type PersonalInfoData = {
-  fullName: string
+  firstName: string
+  lastName: string
   birthDate: string
   gender: "Male" | "Female"
   maritalStatus: "Married" | "Single" | "Divorced" | "Widowed"
@@ -42,12 +43,21 @@ export function PersonalInfoStep({ data, onSubmit }: PersonalInfoStepProps) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <Label htmlFor="fullName">Full Name</Label>
-        <Input id="fullName" {...register("fullName")} />
-        {errors.fullName && (
-          <p className="text-red-500">{errors.fullName.message}</p>
-        )}
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label htmlFor="firstName">First Name</Label>
+          <Input id="firstName" {...register("firstName")} />
+          {errors.firstName && (
+            <p className="text-red-500">{errors.firstName.message}</p>
+          )}
+        </div>
+        <div>
+          <Label htmlFor="lastName">Last Name</Label>
+          <Input id="lastName" {...register("lastName")} />
+          {errors.lastName && (
+            <p className="text-red-500">{errors.lastName.message}</p>
+          )}
+        </div>
       </div>
       <div>
         <Label htmlFor="birthDate">Birth Date</Label>

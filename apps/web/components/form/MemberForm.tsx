@@ -6,6 +6,7 @@ import { createMember } from "@/actions/member"
 import { toast } from "sonner"
 
 import { memberFormSchema, type MemberFormData } from "@/types/member"
+import { Button } from "@/components/ui/button"
 
 import { ChurchInfoStep } from "./ChurchInfoStep"
 import { ContactInfoStep } from "./ContactInfoStep"
@@ -79,20 +80,24 @@ export function MemberForm({
       })
       if (result.success) {
         toast.custom((t) => (
-          <div className="rounded bg-background p-4 shadow-lg">
-            <p className="font-semibold">Form submitted successfully</p>
-            <div className="mt-4 flex justify-end space-x-2">
-              <button
-                className="rounded bg-blue-500 px-4 py-2 text-foreground"
+          <div className="rounded-lg border border-green-200 bg-white p-6 shadow-md">
+            <p className="mb-4 text-sm font-semibold text-gray-900">
+              Member added successfully!
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="default"
+                size="sm"
                 onClick={() => {
                   toast.dismiss((t as unknown as { id: string | number }).id)
                   router.push(`/${churchId}/dashboard/members`)
                 }}
               >
-                Go to Members
-              </button>
-              <button
-                className="rounded bg-green-500 px-4 py-2 text-foreground"
+                View Members
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => {
                   toast.dismiss((t as unknown as { id: string | number }).id)
                   setCurrentStep(0)
@@ -100,7 +105,7 @@ export function MemberForm({
                 }}
               >
                 Add Another
-              </button>
+              </Button>
             </div>
           </div>
         ))
@@ -138,7 +143,8 @@ export function MemberForm({
         <PersonalInfoStep
           data={
             formData.personalInfo || {
-              fullName: "",
+              firstName: "",
+              lastName: "",
               birthDate: new Date().toISOString().split("T")[0],
               gender: "Male",
               maritalStatus: "Single",

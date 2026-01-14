@@ -1,104 +1,108 @@
 /**
- * Shared notification types and constants
- * Can be used across API and Web applications
+ * Notification types and constants for church management system
+ * Includes enums for notification categories, types, statuses, and interfaces for DTO
  */
 
-// Notification Categories (stable enum values)
+/**
+ * Notification category constants - church management focused
+ * Categories help organize and filter notifications by their business domain
+ */
 export const NotificationCategory = {
-  AUTH: 'auth' as const,
-  ACCOUNT: 'account' as const,
-  ORDER: 'order' as const,
-  SHIPMENT: 'shipment' as const,
-  PAYMENT: 'payment' as const,
-  SYSTEM: 'system' as const,
-  MARKETING: 'marketing' as const,
+  AUTH: 'auth',
+  ACCOUNT: 'account',
+  PAYMENT: 'payment',
+  SYSTEM: 'system',
+  MARKETING: 'marketing',
 } as const;
 
-// Notification Types (delivery channels)
+/**
+ * Notification delivery type constants
+ * Determines the channel through which notification is sent
+ */
 export const NotificationType = {
-  SMS: 'sms' as const,
-  EMAIL: 'email' as const,
-  PUSH: 'push' as const,
+  SMS: 'sms',
+  EMAIL: 'email',
+  PUSH: 'push',
 } as const;
 
-// Notification Status
+/**
+ * Notification status constants
+ * Tracks the lifecycle of a notification
+ */
 export const NotificationStatus = {
-  PENDING: 'pending' as const,
-  SENT: 'sent' as const,
-  FAILED: 'failed' as const,
-  DELIVERED: 'delivered' as const,
+  PENDING: 'pending',
+  SENT: 'sent',
+  FAILED: 'failed',
+  DELIVERED: 'delivered',
 } as const;
 
-// Common notification purposes (can be any string, these are just helpers)
+/**
+ * Common notification purposes - church management scenarios
+ * Purpose provides granular classification of why a notification is sent
+ */
 export const CommonNotificationPurposes = {
-  // Auth
+  // Account & Authentication
   OTP_VERIFICATION: 'otp_verification',
   PASSWORD_RESET: 'password_reset',
   ACCOUNT_VERIFICATION: 'account_verification',
-
-  // Account
   ACCOUNT_CREATED: 'account_created',
   ACCOUNT_UPDATED: 'account_updated',
   PROFILE_COMPLETED: 'profile_completed',
   PASSWORD_CHANGED: 'password_changed',
 
-  // Orders
-  ORDER_CONFIRMED: 'order_confirmed',
-  ORDER_PROCESSING: 'order_processing',
-  ORDER_SHIPPED: 'order_shipped',
-  ORDER_DELIVERED: 'order_delivered',
-  ORDER_CANCELLED: 'order_cancelled',
-  ORDER_REFUNDED: 'order_refunded',
-
-  // Payments
+  // Payments & Giving
   PAYMENT_SUCCESS: 'payment_success',
   PAYMENT_FAILED: 'payment_failed',
   PAYMENT_REMINDER: 'payment_reminder',
   PAYMENT_RECEIVED: 'payment_received',
+  DONATION_RECEIVED: 'donation_received',
+  GIVING_REMINDER: 'giving_reminder',
 
-  // Shipments
-  SHIPMENT_CREATED: 'shipment_created',
-  SHIPMENT_PICKED_UP: 'shipment_picked_up',
-  SHIPMENT_IN_TRANSIT: 'shipment_in_transit',
-  SHIPMENT_OUT_FOR_DELIVERY: 'shipment_out_for_delivery',
-  SHIPMENT_DELIVERED: 'shipment_delivered',
-  SHIPMENT_DELAYED: 'shipment_delayed',
-  SHIPMENT_EXCEPTION: 'shipment_exception',
-
-  // System
+  // System & Maintenance
   SYSTEM_MAINTENANCE: 'system_maintenance',
   SYSTEM_UPDATE: 'system_update',
   FEATURE_ANNOUNCEMENT: 'feature_announcement',
   SERVICE_DISRUPTION: 'service_disruption',
 
-  // Marketing
+  // Church Events & Activities
+  EVENT_REMINDER: 'event_reminder',
+  SERVICE_ANNOUNCEMENT: 'service_announcement',
+  GROUP_INVITATION: 'group_invitation',
+
+  // Marketing & Communications
   PROMO_CAMPAIGN: 'promo_campaign',
   SEASONAL_OFFER: 'seasonal_offer',
   NEWSLETTER: 'newsletter',
-  PRODUCT_UPDATE: 'product_update',
+  PRAYER_REQUEST: 'prayer_request',
 } as const;
 
-// Type exports
-export type NotificationCategoryType =
-  (typeof NotificationCategory)[keyof typeof NotificationCategory];
-export type NotificationTypeType =
-  (typeof NotificationType)[keyof typeof NotificationType];
-export type NotificationStatusType =
-  (typeof NotificationStatus)[keyof typeof NotificationStatus];
-export type NotificationPurposeType = string; // Flexible - can be any string
+/**
+ * Type derivations from constant objects
+ * These types are extracted from the readonly objects for type safety
+ */
+export type NotificationCategoryType = typeof NotificationCategory[keyof typeof NotificationCategory];
+export type NotificationTypeType = typeof NotificationType[keyof typeof NotificationType];
+export type NotificationStatusType = typeof NotificationStatus[keyof typeof NotificationStatus];
+export type NotificationPurposeType = string;
 
-// Notification metadata type
+/**
+ * Metadata for notifications - extensible data structure
+ * Allows storing domain-specific context related to a notification
+ */
 export interface NotificationMetadata {
-  orderId?: number;
-  shipmentId?: number;
   paymentId?: number;
   userId?: number;
-  deepLink?: string; // e.g., '/orders/123', '/shipments/456'
-  actionUrl?: string; // External URL if needed
+  eventId?: number;
+  groupId?: number;
+  deepLink?: string;
+  actionUrl?: string;
   [key: string]: any;
 }
 
-// Base notification interface (for frontend/API communication)
+/**
+ * Base notification interface
+ * Represents a notification entity with all possible fields
+ */
 export interface NotificationBase {
   id: number;
   userId: number;
@@ -124,7 +128,10 @@ export interface NotificationBase {
   updatedAt: Date;
 }
 
-// DTO for creating notifications
+/**
+ * DTO for creating a notification
+ * Excludes generated fields (id, timestamps)
+ */
 export interface CreateNotificationDto {
   userId: number;
   type: NotificationTypeType;
@@ -140,7 +147,10 @@ export interface CreateNotificationDto {
   metadata?: NotificationMetadata;
 }
 
-// DTO for sending SMS
+/**
+ * DTO for sending SMS notifications
+ * Simplified interface for SMS-specific operations
+ */
 export interface SendSmsDto {
   userId: number;
   to: string;
@@ -151,7 +161,9 @@ export interface SendSmsDto {
   metadata?: NotificationMetadata;
 }
 
-// SMS Response interface
+/**
+ * Response structure for SMS sending operations
+ */
 export interface SmsResponse {
   success: boolean;
   reference: string;
@@ -160,7 +172,10 @@ export interface SmsResponse {
   response?: any;
 }
 
-// Notification filter options
+/**
+ * Filter options for querying notifications
+ * Supports filtering and pagination
+ */
 export interface NotificationFilterOptions {
   userId?: number;
   type?: NotificationTypeType;

@@ -37,7 +37,7 @@ export default async function VisitorsPage({ params }: PageProps) {
               >
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-lg font-semibold">{visitor.fullName}</h3>
+                    <h3 className="text-lg font-semibold">{visitor.firstName} {visitor.lastName}</h3>
                     <p className="text-sm text-muted-foreground">{visitor.phone || 'No phone'}</p>
                     <p className="mt-2 text-sm">
                       <span className="font-medium">Status:</span>{' '}
