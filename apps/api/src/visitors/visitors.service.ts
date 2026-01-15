@@ -3,6 +3,7 @@ import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '@church/db'
 import { visitors, visitorFollowups, members, memberZones } from '@church/db'
 import type { Visitor, VisitorFollowup } from '@church/db'
+import { toDateString, getToday } from '@church/config'
 
 
 @Injectable()
@@ -20,21 +21,9 @@ export class VisitorsService {
     visitorSource?: string
     referredByMemberId?: string
   }): Promise<Visitor> {
-    // Convert visitDate to date-only string (YYYY-MM-DD)
-    let visitDate: string
-    if (data.visitDate) {
-      if (typeof data.visitDate === 'string') {
-        visitDate = data.visitDate
-      } else {
-        visitDate = data.visitDate.toISOString().split('T')[0]
-      }
-    } else {
-      visitDate = new Date().toISOString().split('T')[0]
-    }
-
     const [visitor] = await db.insert(visitors).values({
       ...data,
-      visitDate: visitDate as any,
+      visitDate: toDateString(data.visitDate || new Date()) as any,
     }).returning()
     return visitor
   }
@@ -77,7 +66,7 @@ export class VisitorsService {
   ): Promise<Visitor> {
     const [updatedVisitor] = await db
       .update(visitors)
-      .set({ ...data, updatedAt: new Date().toISOString().split('T')[0] })
+      .set({ ...data, updatedAt: toDateString(new Date()) as any })
       .where(eq(visitors.id, visitorId))
       .returning()
     return updatedVisitor
@@ -89,7 +78,7 @@ export class VisitorsService {
   async deleteVisitor(visitorId: string): Promise<void> {
     await db
       .update(visitors)
-      .set({ deletedAt: new Date().toISOString().split('T')[0] })
+      .set({ deletedAt: getToday() as any })
       .where(eq(visitors.id, visitorId))
   }
 
@@ -121,13 +110,15 @@ export class VisitorsService {
     }
 
     // Create new member from visitor data
+    // Only copy visitor fields that exist; nullable fields are set to NULL
     const [newMember] = await db.insert(members).values({
       churchId: visitor.churchId,
       firstName: visitor.firstName,
       lastName: visitor.lastName,
       phone: visitor.phone,
-      email: visitor.email,
-      // Additional fields can be filled in by the user later
+      dateOfBirth: null,
+      gender: null,
+      maritalStatus: null,
     }).returning()
 
     // Assign to zone if provided
@@ -140,19 +131,20 @@ export class VisitorsService {
     }
 
     // Update visitor to mark as converted and soft-delete the visitor
+    const today = getToday()
     await db
       .update(visitors)
       .set({ 
         convertedToMemberId: newMember.id,
-        updatedAt: new Date().toISOString().split('T')[0],
-        deletedAt: new Date().toISOString().split('T')[0],
+        updatedAt: today as any,
+        deletedAt: today as any,
       })
       .where(eq(visitors.id, data.visitorId))
 
     // Update followup status to converted
     await db
       .update(visitorFollowups)
-      .set({ status: 'converted', updatedAt: new Date().toISOString().split('T')[0] })
+      .set({ status: 'converted', updatedAt: today as any })
       .where(eq(visitorFollowups.visitorId, data.visitorId))
 
     return { visitor: await this.getVisitorById(data.visitorId), member: newMember }
@@ -168,21 +160,9 @@ export class VisitorsService {
     followupDate?: Date | string
     completedBy?: string
   }): Promise<VisitorFollowup> {
-    // Convert followupDate to date-only string (YYYY-MM-DD)
-    let followupDate: string
-    if (data.followupDate) {
-      if (typeof data.followupDate === 'string') {
-        followupDate = data.followupDate
-      } else {
-        followupDate = data.followupDate.toISOString().split('T')[0]
-      }
-    } else {
-      followupDate = new Date().toISOString().split('T')[0]
-    }
-
     const [followup] = await db.insert(visitorFollowups).values({
       ...data,
-      followupDate: followupDate as any,
+      followupDate: toDateString(data.followupDate || new Date()) as any,
     }).returning()
     return followup
   }
@@ -218,15 +198,10 @@ export class VisitorsService {
       followupDate?: Date | string
     },
   ): Promise<VisitorFollowup> {
-    // Convert followupDate to date-only string if provided
-    const updateData: any = { ...data, updatedAt: new Date().toISOString().split('T')[0] }
+    const updateData: any = { ...data, updatedAt: getToday() }
     
     if (data.followupDate) {
-      if (typeof data.followupDate === 'string') {
-        updateData.followupDate = data.followupDate
-      } else {
-        updateData.followupDate = data.followupDate.toISOString().split('T')[0]
-      }
+      updateData.followupDate = toDateString(data.followupDate)
     }
 
     const [updatedFollowup] = await db
