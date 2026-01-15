@@ -2,64 +2,24 @@
   "name": "@church/config",
   "version": "0.0.0",
   "private": true,
-  "main": "./dist/schema/index.js",
-  "types": "./dist/schema/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/schema/index.d.ts",
-      "default": "./dist/schema/index.js"
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./types": {
       "types": "./dist/types/index.d.ts",
       "default": "./dist/types/index.js"
     },
-    "./types/notifications": {
-      "types": "./dist/types/notifications.d.ts",
-      "default": "./dist/types/notifications.js"
-    },
-    "./dtos": {
-      "types": "./dist/dtos/index.d.ts",
-      "default": "./dist/dtos/index.js"
-    },
-    "./dtos/sms": {
-      "types": "./dist/dtos/sms/index.d.ts",
-      "default": "./dist/dtos/sms/index.js"
-    },
-    "./dtos/notifications": {
-      "types": "./dist/dtos/notifications/index.d.ts",
-      "default": "./dist/dtos/notifications/index.js"
-    },
-    "./dtos/mail": {
-      "types": "./dist/dtos/mail/index.d.ts",
-      "default": "./dist/dtos/mail/index.js"
-    },
-    "./dtos/payments": {
-      "types": "./dist/dtos/payments.dto.d.ts",
-      "default": "./dist/dtos/payments.dto.js"
-    },
-    "./dtos/auth": {
-      "types": "./dist/dtos/auth/index.d.ts",
-      "default": "./dist/dtos/auth/index.js"
-    },
-    "./dtos/registration": {
-      "types": "./dist/dtos/registration/index.d.ts",
-      "default": "./dist/dtos/registration/index.js"
-    },
-    "./dtos/users": {
-      "types": "./dist/dtos/users/index.d.ts",
-      "default": "./dist/dtos/users/index.js"
-    },
-    "./utils": {
-      "types": "./dist/utils/index.d.ts",
-      "default": "./dist/utils/index.js"
-    },
     "./schema": {
       "types": "./dist/schema/index.d.ts",
       "default": "./dist/schema/index.js"
     },
-    "./schema/notifications": {
-      "types": "./dist/schema/notifications.schema.d.ts",
-      "default": "./dist/schema/notifications.schema.js"
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "default": "./dist/utils/index.js"
     }
   },
   "scripts": {

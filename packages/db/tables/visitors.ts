@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm"
 import { date, pgEnum, pgTable, text, uuid, varchar, index } from "drizzle-orm/pg-core"
 
 import { churches } from "./churches"
+import { members } from "./members"
 
 export const visitorFollowupStatusEnum = pgEnum("visitor_followup_status", [
   "none",
@@ -9,6 +10,16 @@ export const visitorFollowupStatusEnum = pgEnum("visitor_followup_status", [
   "visited",
   "converted",
   "dropped",
+])
+
+export const visitorSourceEnum = pgEnum("visitor_source", [
+  "friend",
+  "flyer",
+  "walk_in",
+  "event",
+  "referral",
+  "social_media",
+  "other",
 ])
 
 export const visitors = pgTable(
@@ -26,6 +37,9 @@ export const visitors = pgTable(
     phone: varchar("phone", { length: 20 }),
     email: varchar("email", { length: 255 }),
     visitDate: date("visit_date").defaultNow(),
+    visitorSource: visitorSourceEnum("visitor_source").default("walk_in"),
+    referredByMemberId: uuid("referred_by_member_id").references(() => members.id),
+    convertedToMemberId: uuid("converted_to_member_id").references(() => members.id),
     createdAt: date("created_at").defaultNow(),
     updatedAt: date("updated_at").defaultNow(),
     deletedAt: date("deleted_at"),
@@ -35,6 +49,8 @@ export const visitors = pgTable(
     phoneIdx: index("idx_visitors_phone").on(table.phone),
     emailIdx: index("idx_visitors_email").on(table.email),
     visitDateIdx: index("idx_visitors_visit_date").on(table.visitDate),
+    sourceIdx: index("idx_visitors_source").on(table.visitorSource),
+    referredByIdx: index("idx_visitors_referred_by").on(table.referredByMemberId),
   })
 )
 

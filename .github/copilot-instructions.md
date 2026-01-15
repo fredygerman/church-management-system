@@ -20,7 +20,7 @@ apps/
       database/  # Seeds
 packages/
   db/            # Drizzle ORM (schema.ts, tables/, migrations/)
-  config/        # Shared types, DTOs, Zod schemas
+  config/        # Shared types, enums, utilities (no DTOs - API-specific)
 ```
 
 **Key Principles:**
@@ -366,14 +366,41 @@ import type { Zone } from "./types"
 ```
 
 ### Using Workspace Packages
+
 ```typescript
-// Import from shared packages
+// Backend - Import from shared packages
 import { db, zones, members } from "@church/db"
-import { CreateZoneDto } from "@church/config/dtos"
-import type { Zone } from "@church/config/types"
+import type { Zone } from "@church/config"
+// DTOs are defined locally in apps/api/src/*/dtos/*.ts
+
+// Frontend - Import from shared packages
+import type { Zone } from "@church/config"
+// Frontend uses types from @church/config only, not DTOs
 ```
 
 ## State Management
+
+### DTOs vs Types
+
+**Important:** DTOs are **API-specific only** and should never be in shared packages:
+
+- **DTOs** (Data Transfer Objects): Backend request/response validation using class-validator
+  - Location: `apps/api/src/*/dtos/*.ts`
+  - Use: NestJS controllers for request validation
+  - Never import in frontend
+  
+- **Types**: Shared database types and interfaces
+  - Location: `packages/config/src/types/`
+  - Use: Both frontend and backend for typing data
+  - Re-exported from `@church/db` (source of truth)
+
+```typescript
+// ✅ Backend only
+import { CreateVisitorDto } from './dtos/visitors'
+
+// ✅ Frontend AND Backend
+import type { Visitor, VisitorFollowup } from '@church/config'
+```
 
 ### Frontend
 - **Local state**: `useState`, `useReducer`

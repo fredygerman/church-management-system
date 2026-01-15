@@ -1,12 +1,10 @@
 import { Body, Controller, Post, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { MailService } from './mail.service';
-import {
-  SendEmailDto,
-  SendWelcomeEmailDto,
-  SendPasswordResetEmailDto,
-  SendOrderConfirmationDto,
-} from '../../../../packages/config/src/dtos/mail';
+import { SendEmailDto } from './dtos/send-email.dto';
+import { SendWelcomeEmailDto } from './dtos/send-welcome-email.dto';
+import { SendPasswordResetEmailDto } from './dtos/send-password-reset-email.dto';
+import { SendOrderConfirmationDto } from './dtos/send-order-confirmation.dto';
 
 @ApiTags('Mail')
 @Controller('mail')

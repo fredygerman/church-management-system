@@ -12,11 +12,15 @@ import {
   Req,
 } from '@nestjs/common'
 import { Request } from 'express'
-import { VisitorsService, type CreateVisitorInput, type CreateVisitorFollowupInput } from './visitors.service'
+import {
+  CreateVisitorDto,
+  UpdateVisitorDto,
+  CreateVisitorFollowupDto,
+  ConvertVisitorToMemberDto,
+} from './dtos'
+import { VisitorsService } from './visitors.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
-
-export type UpdateVisitorInput = Partial<CreateVisitorInput>
 
 @Controller('visitors')
 @UseGuards(ChurchContextGuard)
@@ -28,12 +32,15 @@ export class VisitorsController {
    */
   @Post()
   @RequirePermission('create:visitor')
-  async create(@Body() input: CreateVisitorInput) {
-    if (!input.churchId || !input.firstName || !input.lastName) {
+  async create(@Body() createVisitorDto: CreateVisitorDto) {
+    if (!createVisitorDto.churchId || !createVisitorDto.firstName || !createVisitorDto.lastName) {
       throw new BadRequestException('Missing required fields: churchId, firstName, lastName')
     }
 
-    return this.visitorsService.createVisitor(input)
+    return this.visitorsService.createVisitor({
+      ...createVisitorDto,
+      visitDate: createVisitorDto.visitDate ? new Date(createVisitorDto.visitDate) : undefined,
+    })
   }
 
   /**
@@ -70,9 +77,9 @@ export class VisitorsController {
   @RequirePermission('update:visitor')
   async update(
     @Param('id') id: string,
-    @Body() input: UpdateVisitorInput,
+    @Body() updateVisitorDto: UpdateVisitorDto,
   ) {
-    return this.visitorsService.updateVisitor(id, input)
+    return this.visitorsService.updateVisitor(id, updateVisitorDto)
   }
 
   /**
@@ -83,6 +90,21 @@ export class VisitorsController {
   async delete(@Param('id') id: string) {
     await this.visitorsService.deleteVisitor(id)
     return { message: 'Visitor deleted successfully' }
+  }
+
+  /**
+   * POST /visitors/:id/convert - Convert visitor to member
+   */
+  @Post(':id/convert')
+  @RequirePermission('update:visitor')
+  async convertToMember(
+    @Param('id') id: string,
+    @Body() convertVisitorDto: ConvertVisitorToMemberDto,
+  ) {
+    return this.visitorsService.convertVisitorToMember({
+      visitorId: id,
+      zoneId: convertVisitorDto.zoneId,
+    })
   }
 
   /**
@@ -108,15 +130,18 @@ export class VisitorsController {
   @RequirePermission('create:visitation')
   async createFollowup(
     @Param('id') id: string,
-    @Body() input: Omit<CreateVisitorFollowupInput, 'visitorId'>,
+    @Body() createFollowupDto: CreateVisitorFollowupDto,
   ) {
-    if (!input.status) {
+    if (!createFollowupDto.status) {
       throw new BadRequestException('status is required')
     }
 
     return this.visitorsService.createFollowup({
       visitorId: id,
-      ...input,
+      status: createFollowupDto.status,
+      notes: createFollowupDto.notes,
+      followupDate: createFollowupDto.followupDate ? new Date(createFollowupDto.followupDate) : undefined,
+      completedBy: createFollowupDto.completedBy,
     })
   }
 

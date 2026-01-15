@@ -4,4 +4,7 @@
  */
 
 // Export notification types and constants
-export * from './notifications';
+export * from './notifications'
+
+// Export visitor types (re-exported from @church/db)
+export * from './visitor'

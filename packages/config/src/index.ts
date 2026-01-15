@@ -1,15 +1,21 @@
 /**
- * @church/config - Central configuration and types package
+ * @church/config - Shared types, schemas, and utilities
  * 
  * Package structure:
- * - schema/: Re-exported types from @church/db (source of truth)
- * - dtos/: API request/response contracts
- * - types/: Application-level type definitions (notifications, enums, etc.)
+ * - schema/: Re-exported database types from @church/db (source of truth)
+ * - types/: Application-level types (enums, interfaces, constants)
  * - utils/: Shared utility functions
+ * 
+ * NOTE: DTOs are API-specific and belong in the backend only.
+ * The frontend uses types from this package + Zod schemas for validation.
  */
 
-// Main exports
-export * from './schema';
-export * from './dtos';
-export * from './types';
-export * from './utils';
+// Database types (source of truth)
+export * from './schema'
+
+// Application-level types (enums, constants, interfaces)
+export * from './types/notifications'
+export * from './types/visitor'
+
+// Shared utilities
+export * from './utils'

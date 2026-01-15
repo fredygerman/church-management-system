@@ -12,7 +12,7 @@ import {
 
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SmsService } from './sms.service';
-import type { SendSmsDto } from '../../../../packages/config/src/dtos/sms';
+import { SendSmsDto } from './dtos/send-sms.dto';
 
 @ApiTags('SMS')
 @Controller('sms')
