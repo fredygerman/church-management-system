@@ -3,6 +3,10 @@
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
 
+// ============================================
+// Types
+// ============================================
+
 export interface PaginationMeta {
   page?: number
   per_page?: number
@@ -41,6 +45,7 @@ const getBaseUrl = (): string => {
   // Fallback to public API URL
   return (
     process.env.NEXT_PUBLIC_API_BASE_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
     "http://localhost:3001"
   )
 }
@@ -130,67 +135,77 @@ async function serverFetch<D = any>({
     // Handle 401 errors - check both HTTP status and response status code
     const is401 = response.status === 401 || data?.statusCode === 401
     
-    if (
-      is401 &&
-      !requestConfig.skipAuth &&
-      token
-    ) {
-      console.log("[API] 401 Unauthorized detected - attempting token refresh")
-      try {
-        // Get the session to access the refresh token
-        const { getSession } = await import("@/auth")
-        const session = await getSession()
-        const refreshToken = session?.refreshToken
+    if (is401 && !requestConfig.skipAuth) {
+      console.log("[API] 401 Unauthorized detected")
+      
+      // Only attempt token refresh if we have a token and refresh token
+      if (token) {
+        console.log("[API] Attempting token refresh")
+        try {
+          // Get the session to access the refresh token
+          const { getSession } = await import("@/auth")
+          const session = await getSession()
+          const refreshToken = session?.refreshToken
 
-        if (refreshToken) {
-          try {
-            // Try to refresh the token via API
-            const refreshResponse = await fetch(
-              new URL("/auth/refresh", baseUrl).toString(),
-              {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ refreshToken }),
-                cache: "no-store",
+          if (refreshToken) {
+            try {
+              // Try to refresh the token via API
+              const refreshResponse = await fetch(
+                new URL("/auth/refresh", baseUrl).toString(),
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({ refreshToken }),
+                  cache: "no-store",
+                }
+              )
+
+              const refreshData = await refreshResponse.json()
+
+              if (
+                refreshResponse.ok &&
+                refreshData?.data?.accessToken
+              ) {
+                const newAccessToken = refreshData.data.accessToken
+                console.log("[API] Token refresh successful, retrying request")
+
+                // Retry original request with new token
+                const retryHeaders = new Headers(headers)
+                retryHeaders.set("Authorization", `Bearer ${newAccessToken}`)
+
+                const retryResponse = await fetch(url.toString(), {
+                  method,
+                  headers: retryHeaders,
+                  body,
+                  cache: requestConfig.skipAuth
+                    ? "default"
+                    : ("no-store" as RequestCache),
+                })
+
+                const retryData: ApiResponse<D> = await retryResponse.json()
+                
+                // Check if the retry also failed with 401
+                const retryIs401 = retryResponse.status === 401 || retryData?.statusCode === 401
+                if (retryIs401) {
+                  console.log("[API] Retry after token refresh also failed with 401, redirecting to signin")
+                  redirect("/auth/signin?error=session_expired")
+                }
+                
+                return retryData
               }
-            )
-
-            const refreshData = await refreshResponse.json()
-
-            if (
-              refreshResponse.ok &&
-              refreshData?.data?.accessToken
-            ) {
-              const newAccessToken = refreshData.data.accessToken
-
-              // Retry original request with new token
-              const retryHeaders = new Headers(headers)
-              retryHeaders.set("Authorization", `Bearer ${newAccessToken}`)
-
-              const retryResponse = await fetch(url.toString(), {
-                method,
-                headers: retryHeaders,
-                body,
-                cache: requestConfig.skipAuth
-                  ? "default"
-                  : ("no-store" as RequestCache),
-              })
-
-              const retryData: ApiResponse<D> = await retryResponse.json()
-              return retryData
+            } catch (refreshError) {
+              console.error("[API] Token refresh failed:", refreshError)
             }
-          } catch (refreshError) {
-            // Ignore refresh error - proceed to login redirect
-            console.error("[API] Token refresh failed:", refreshError)
           }
+        } catch (sessionError) {
+          console.error("[API] Failed to get session for token refresh:", sessionError)
         }
-      } catch (sessionError) {
-        console.error("[API] Failed to get session for token refresh:", sessionError)
       }
 
-      console.log("[API] Redirecting to signin")
+      // If we get here, either no token, no refresh token, or refresh failed
+      console.log("[API] Redirecting to signin due to 401")
       redirect("/auth/signin?error=session_expired")
     }
 
@@ -247,7 +262,6 @@ export async function apiRequest<D = any>({
         token = cookieStore.get("accessToken")?.value ?? null
       }
 
-      console.log(`[API] Session token: ${token ? "found" : "not found"}`)
     } catch (error) {
       // During static generation, cookies() may fail
       console.warn("[API] Failed to get token:", error)

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '@church/db'
-import { zones, NewZone, Zone } from '@church/db'
+import { zones, memberZones, members, NewZone, Zone } from '@church/db'
 
 export type CreateZoneInput = {
   churchId: string
@@ -88,5 +88,67 @@ export class ZonesService {
         isNull(zones.deletedAt),
       ),
     })
+  }
+
+  /**
+   * Get members in a zone
+   */
+  async getZoneMembers(zoneId: string): Promise<any[]> {
+    const memberRecords = await db.query.memberZones.findMany({
+      where: eq(memberZones.zoneId, zoneId),
+      with: { member: true },
+    })
+    
+    return memberRecords
+      .map(record => ({
+        ...record.member,
+        isLeader: record.isLeader,
+      }))
+      .filter(member => !member.deletedAt)
+  }
+
+  /**
+   * Assign a member to a zone
+   */
+  async assignMemberToZone(zoneId: string, memberId: string, isLeader: boolean = false): Promise<any> {
+    // Check if already assigned
+    const existing = await db.query.memberZones.findFirst({
+      where: and(
+        eq(memberZones.zoneId, zoneId),
+        eq(memberZones.memberId, memberId),
+      ),
+    })
+
+    if (existing) {
+      // Update isLeader status if already exists
+      const [updated] = await db
+        .update(memberZones)
+        .set({ isLeader })
+        .where(and(
+          eq(memberZones.zoneId, zoneId),
+          eq(memberZones.memberId, memberId),
+        ))
+        .returning()
+      return updated
+    }
+
+    // Insert new assignment
+    const [assignment] = await db
+      .insert(memberZones)
+      .values({ zoneId, memberId, isLeader })
+      .returning()
+    return assignment
+  }
+
+  /**
+   * Remove a member from a zone
+   */
+  async removeMemberFromZone(zoneId: string, memberId: string): Promise<void> {
+    await db
+      .delete(memberZones)
+      .where(and(
+        eq(memberZones.zoneId, zoneId),
+        eq(memberZones.memberId, memberId),
+      ))
   }
 }

@@ -1,71 +1,64 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
 import { getSession } from '@/auth'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api-helpers'
 
 // Function to get all zones for a church
 export async function getZones(churchId?: string): Promise<any[]> {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
   try {
-    const url = churchId 
-      ? `${API_BASE_URL}/zones?churchId=${churchId}`
-      : `${API_BASE_URL}/zones`
+    const endpoint = churchId 
+      ? `/zones?churchId=${churchId}`
+      : `/zones`
     
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch zones')
-    }
-
-    const result = await response.json()
-    // API returns { success, data, message, meta, ... }
-    if (result.success && Array.isArray(result.data)) {
-      return result.data
-    }
-    return []
+    const result = await apiGet(endpoint)
+    return Array.isArray(result) ? result : []
   } catch (error) {
+    // Re-throw Next.js control flow errors (redirect, notFound, etc)
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error
+    }
     console.error('Error fetching zones:', error)
-    // Fallback to empty array if API is not available
     return []
   }
 }
 
 // Function to get a single zone by ID
 export async function getZoneById(zoneId: string): Promise<any> {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
   try {
-    const response = await fetch(`${API_BASE_URL}/zones/${zoneId}`, {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch zone')
-    }
-
-    const result = await response.json()
-    // API returns { success, data, message, ... }
-    if (result.success && result.data) {
-      return result.data
-    }
-    throw new Error(result.message || 'Failed to fetch zone')
+    return await apiGet(`/zones/${zoneId}`)
   } catch (error) {
     console.error('Error fetching zone:', error)
     throw error
+  }
+}
+
+// Function to get members of a zone
+export async function getZoneMembers(
+  zoneId: string,
+  queryParams?: {
+    page?: number
+    per_page?: number
+    sort?: string
+  }
+): Promise<{ members: any[]; pageCount: number }> {
+  try {
+    const params = new URLSearchParams({
+      page: (queryParams?.page ?? 1).toString(),
+      per_page: (queryParams?.per_page ?? 10).toString(),
+      sort: queryParams?.sort ?? 'firstName.asc',
+    })
+
+    const result = await apiGet(`/zones/${zoneId}/members?${params}`)
+    const pageCount = result?.meta?.total_pages || 1
+    
+    return { 
+      members: result || [], 
+      pageCount 
+    }
+  } catch (error) {
+    console.error('Error fetching zone members:', error)
+    return { members: [], pageCount: 0 }
   }
 }
 
@@ -75,33 +68,38 @@ export async function createZone(data: {
   name: string
   leader?: string
   description?: string
+  meetingDay?: string
 }): Promise<any> {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
   try {
-    const response = await fetch(`${API_BASE_URL}/zones`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
+    // Get current user session
+    const session = await getSession()
+    const userId = session?.user?.id
 
-    if (!response.ok) {
-      const result = await response.json()
-      throw new Error(result.message || 'Failed to create zone')
+    // Create zone with auto-assigned leader if user is logged in
+    const zoneData = {
+      ...data,
+      leaderId: userId || data.leader,
     }
 
-    const result = await response.json()
-    // API returns { success, data, message, ... }
-    if (result.success && result.data) {
-      return result.data
+    const zone = await apiPost('/zones', zoneData)
+
+    // Auto-add creator as leader to the zone members
+    if (userId) {
+      try {
+        await apiPost(`/zones/${zone.id}/members`, {
+          memberId: userId,
+          isLeader: true,
+        })
+      } catch (error) {
+        console.error('Error auto-assigning creator as leader:', error)
+        // Continue even if this fails - zone is created
+      }
     }
-    throw new Error(result.message || 'Failed to create zone')
+
+    // Revalidate zones list page
+    revalidatePath(`/${data.churchId}/dashboard/zones`)
+    
+    return zone
   } catch (error) {
     console.error('Error creating zone:', error)
     throw error
@@ -113,33 +111,17 @@ export async function updateZone(zoneId: string, data: {
   name?: string
   leader?: string
   description?: string
-}): Promise<any> {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
+}, churchId?: string): Promise<any> {
   try {
-    const response = await fetch(`${API_BASE_URL}/zones/${zoneId}`, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    })
-
-    if (!response.ok) {
-      const result = await response.json()
-      throw new Error(result.message || 'Failed to update zone')
+    const result = await apiPut(`/zones/${zoneId}`, data)
+    
+    // Revalidate zone detail page if churchId is provided
+    if (churchId) {
+      revalidatePath(`/${churchId}/dashboard/zones/${zoneId}`)
+      revalidatePath(`/${churchId}/dashboard/zones`)
     }
-
-    const result = await response.json()
-    // API returns { success, data, message, ... }
-    if (result.success && result.data) {
-      return result.data
-    }
-    throw new Error(result.message || 'Failed to update zone')
+    
+    return result
   } catch (error) {
     console.error('Error updating zone:', error)
     throw error
@@ -147,26 +129,83 @@ export async function updateZone(zoneId: string, data: {
 }
 
 // Function to delete a zone
-export async function deleteZone(zoneId: string): Promise<void> {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
+export async function deleteZone(zoneId: string, churchId?: string): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/zones/${zoneId}`, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      const result = await response.json()
-      throw new Error(result.message || 'Failed to delete zone')
+    await apiDelete(`/zones/${zoneId}`)
+    
+    // Revalidate zones list page if churchId is provided
+    if (churchId) {
+      revalidatePath(`/${churchId}/dashboard/zones`)
     }
   } catch (error) {
     console.error('Error deleting zone:', error)
+    throw error
+  }
+}
+
+// Function to get zone leader details
+export async function getZoneLeader(leaderId: string): Promise<any> {
+  try {
+    return await apiGet(`/members/${leaderId}`)
+  } catch (error) {
+    console.error('Error fetching zone leader:', error)
+    return null
+  }
+}
+
+// Function to assign a member to a zone
+export async function assignMemberToZone(
+  zoneId: string,
+  memberId: string,
+  isLeader: boolean = false,
+  churchId?: string
+): Promise<any> {
+  try {
+    const result = await apiPost(`/zones/${zoneId}/members`, {
+      memberId,
+      isLeader,
+    })
+    
+    // Revalidate zone detail page if churchId is provided
+    if (churchId) {
+      revalidatePath(`/${churchId}/dashboard/zones/${zoneId}`)
+    }
+    
+    return result
+  } catch (error) {
+    console.error('Error assigning member to zone:', error)
+    throw error
+  }
+}
+
+// Function to unassign a member from a zone
+export async function unassignMemberFromZone(
+  zoneId: string,
+  memberId: string,
+  newLeaderId?: string,
+  churchId?: string
+): Promise<void> {
+  try {
+    // If member is a leader, check if there's a replacement
+    const zone = await getZoneById(zoneId)
+    if (zone.leaderId === memberId && !newLeaderId) {
+      throw new Error('Cannot remove the zone leader without assigning a replacement leader')
+    }
+
+    // If assigning a new leader, update zone
+    if (newLeaderId && zone.leaderId === memberId) {
+      await updateZone(zoneId, { leader: newLeaderId }, churchId)
+    }
+
+    // Remove member from zone
+    await apiDelete(`/zones/${zoneId}/members/${memberId}`)
+    
+    // Revalidate zone detail page if churchId is provided
+    if (churchId) {
+      revalidatePath(`/${churchId}/dashboard/zones/${zoneId}`)
+    }
+  } catch (error) {
+    console.error('Error unassigning member from zone:', error)
     throw error
   }
 }

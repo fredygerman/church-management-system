@@ -28,6 +28,10 @@ export default async function Layout({
     currentChurch =
       churches.find((church) => church.id === churchId) || null
   } catch (error) {
+    // Re-throw Next.js control flow errors (redirect, notFound, etc.)
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
+      throw error
+    }
     console.error("Error fetching churches:", error)
   }
 

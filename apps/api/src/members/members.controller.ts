@@ -51,41 +51,6 @@ export class MembersController {
   }
 
   /**
-   * GET /members/:id - Get single member
-   */
-  @Get(':id')
-  @RequirePermission('read:member')
-  async getOne(@Param('id') id: string) {
-    const member = await this.membersService.getMemberById(id)
-    if (!member) {
-      throw new BadRequestException(`Member with ID ${id} not found`)
-    }
-    return member
-  }
-
-  /**
-   * PUT /members/:id - Update member
-   */
-  @Put(':id')
-  @RequirePermission('update:member')
-  async update(
-    @Param('id') id: string,
-    @Body() input: UpdateMemberInput,
-  ) {
-    return this.membersService.updateMember(id, input)
-  }
-
-  /**
-   * DELETE /members/:id - Soft delete member
-   */
-  @Delete(':id')
-  @RequirePermission('delete:member')
-  async delete(@Param('id') id: string) {
-    await this.membersService.deleteMember(id)
-    return { message: 'Member deleted successfully' }
-  }
-
-  /**
    * GET /members/search - Search members
    */
   @Get('search')
@@ -118,6 +83,41 @@ export class MembersController {
   @RequirePermission('view:families')
   async getByFamily(@Param('familyId') familyId: string) {
     return this.membersService.getMembersByFamily(familyId)
+  }
+
+  /**
+   * GET /members/:id - Get single member
+   */
+  @Get(':id')
+  @RequirePermission('read:member')
+  async getOne(@Param('id') id: string) {
+    const member = await this.membersService.getMemberById(id)
+    if (!member) {
+      throw new BadRequestException(`Member with ID ${id} not found`)
+    }
+    return member
+  }
+
+  /**
+   * PUT /members/:id - Update member
+   */
+  @Put(':id')
+  @RequirePermission('update:member')
+  async update(
+    @Param('id') id: string,
+    @Body() input: UpdateMemberInput,
+  ) {
+    return this.membersService.updateMember(id, input)
+  }
+
+  /**
+   * DELETE /members/:id - Soft delete member
+   */
+  @Delete(':id')
+  @RequirePermission('delete:member')
+  async delete(@Param('id') id: string) {
+    await this.membersService.deleteMember(id)
+    return { message: 'Member deleted successfully' }
   }
 
   /**

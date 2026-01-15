@@ -167,7 +167,6 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role as string
         session.accessToken = token.accessToken as string
         session.refreshToken = token.refreshToken as string
-        console.log("[Auth] Session token (first 50 chars):", (token.accessToken as string)?.substring(0, 50))
         console.log("[Auth] Session role:", token.role)
       } else {
         // User is not authenticated, clear the session

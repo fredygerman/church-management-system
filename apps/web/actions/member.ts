@@ -1,10 +1,8 @@
 "use server"
 
-import { getSession } from "@/auth"
 import { isValid, parseISO } from "date-fns"
 import { type MemberFormData } from "@/types/member"
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+import { apiPost, apiGet, apiPut, apiDelete } from "@/lib/api-helpers"
 
 function isValidDate(dateStr: string): boolean {
   try {
@@ -18,11 +16,6 @@ function isValidDate(dateStr: string): boolean {
 export async function createMember(
   data: MemberFormData & { churchId: string }
 ): Promise<{ success: boolean; member: any }> {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
   // Validate required dates
   if (
     !data.personalInfo.birthDate ||
@@ -69,21 +62,8 @@ export async function createMember(
       notes: data.personalInfo.tribe || undefined,
     }
 
-    const response = await fetch(`${API_BASE_URL}/members`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(mappedData),
-    })
-
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Failed to create member')
-    }
-
-    const member = await response.json()
+    const member = await apiPost('/members', mappedData)
+    
     return {
       success: true,
       member,
@@ -110,14 +90,9 @@ export async function getMembers(
   },
   churchId: string
 ): Promise<{ members: any[]; pageCount: number }> {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
   try {
     // Build query string
-    const queryString = new URLSearchParams({
+    const params = new URLSearchParams({
       churchId,
       page: queryParams.page.toString(),
       per_page: queryParams.per_page.toString(),
@@ -131,56 +106,27 @@ export async function getMembers(
       ...(queryParams.to && { to: queryParams.to }),
     })
 
-    const response = await fetch(`${API_BASE_URL}/members?${queryString}`, {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch members')
-    }
-
-    const result = await response.json()
-    // API returns { success, data, message, meta, ... }
-    // For list endpoints, data contains the array
-    const members = result.success && Array.isArray(result.data) ? result.data : []
-    const pageCount = result.meta?.total_pages || 1
+    const result = await apiGet(`/members?${params}`)
+    const pageCount = result?.meta?.total_pages || 1
     
     return { 
-      members, 
+      members: result || [], 
       pageCount 
     }
   } catch (error) {
     console.error('Error fetching members:', error)
+    // Re-throw Next.js control flow errors (redirect, notFound, etc)
+    if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
+      throw error
+    }
     return { members: [], pageCount: 0 }
   }
 }
 
 // Function to get a single member by ID
 export async function getMemberById(id: string): Promise<any> {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
   try {
-    const response = await fetch(`${API_BASE_URL}/members/${id}`, {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch member')
-    }
-
-    const result = await response.json()
-    // API returns { success, data, message, ... }
-    if (result.success && result.data) {
-      return result.data
-    }
-    throw new Error(result.message || 'Failed to fetch member')
+    return await apiGet(`/members/${id}`)
   } catch (error) {
     console.error('Error fetching member:', error)
     throw error
@@ -189,27 +135,12 @@ export async function getMemberById(id: string): Promise<any> {
 
 // Function to get zones for a member
 export async function getMemberZones(memberId: string): Promise<any[]> {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
-  }
-
   try {
-    const response = await fetch(`${API_BASE_URL}/members/${memberId}/zones`, {
-      headers: {
-        Authorization: `Bearer ${session.accessToken}`,
-      },
-    })
-
-    if (!response.ok) {
-      return []
-    }
-
-    const result = await response.json()
+    const data = await apiGet(`/members/${memberId}/zones`)
     
-    // The API returns member zones with zone data included
-    if (result.success && Array.isArray(result.data)) {
-      return result.data.map((memberZone: any) => ({
+    // Map the response to extract zone info
+    if (Array.isArray(data)) {
+      return data.map((memberZone: any) => ({
         id: memberZone.zone?.id,
         name: memberZone.zone?.name,
         isLeader: memberZone.isLeader,
@@ -233,45 +164,43 @@ export async function updateMember(
     gender?: "male" | "female" | "others"
     maritalStatus?: "single" | "married" | "divorced" | "widowed"
   }
-) {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
+): Promise<any> {
+  try {
+    return await apiPut(`/members/${id}`, data)
+  } catch (error) {
+    console.error('Error updating member:', error)
+    throw error
   }
-
-  const response = await fetch(`${API_BASE_URL}/members/${id}`, {
-    method: 'PUT',
-    headers: {
-      Authorization: `Bearer ${session.accessToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || 'Failed to update member')
-  }
-
-  return response.json()
 }
 
 // Function to delete a member
-export async function deleteMember(id: string) {
-  const session = await getSession()
-  if (!session?.accessToken) {
-    throw new Error('Unauthorized')
+export async function deleteMember(id: string): Promise<void> {
+  try {
+    await apiDelete(`/members/${id}`)
+  } catch (error) {
+    console.error('Error deleting member:', error)
+    throw error
   }
+}
 
-  const response = await fetch(`${API_BASE_URL}/members/${id}`, {
-    method: 'DELETE',
-    headers: {
-      Authorization: `Bearer ${session.accessToken}`,
-    },
-  })
-
-  if (!response.ok) {
-    const error = await response.json()
-    throw new Error(error.message || 'Failed to delete member')
+// Function to search members by name or phone
+export async function searchMembers(
+  churchId: string,
+  query: string
+): Promise<any[]> {
+  try {
+    if (!query.trim()) {
+      return []
+    }
+    
+    const params = new URLSearchParams({
+      q: query,
+    })
+    
+    const result = await apiGet(`/members/search?${params}`)
+    return Array.isArray(result) ? result : []
+  } catch (error) {
+    console.error('Error searching members:', error)
+    return []
   }
 }

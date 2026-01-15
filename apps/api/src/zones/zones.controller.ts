@@ -51,6 +51,22 @@ export class ZonesController {
   }
 
   /**
+   * GET /zones/by-meeting-day - Get zones by meeting day
+   */
+  @Get('by-meeting-day')
+  @RequirePermission('manage:zones')
+  async getByMeetingDay(
+    @Query('churchId') churchId: string,
+    @Query('meetingDay') meetingDay: string,
+  ) {
+    if (!churchId || !meetingDay) {
+      throw new BadRequestException('churchId and meetingDay are required')
+    }
+
+    return this.zonesService.getZonesByMeetingDay(churchId, meetingDay)
+  }
+
+  /**
    * GET /zones/:id - Get single zone
    */
   @Get(':id')
@@ -86,6 +102,45 @@ export class ZonesController {
   }
 
   /**
+   * GET /zones/:id/members - Get members in a zone
+   */
+  @Get(':id/members')
+  @RequirePermission('manage:zones')
+  async getZoneMembers(@Param('id') id: string) {
+    return this.zonesService.getZoneMembers(id)
+  }
+
+  /**
+   * POST /zones/:id/members - Assign member to zone
+   */
+  @Post(':id/members')
+  @RequirePermission('manage:zones')
+  async assignMember(
+    @Param('id') id: string,
+    @Body('memberId') memberId: string,
+    @Body('isLeader') isLeader: boolean = false,
+  ) {
+    if (!memberId) {
+      throw new BadRequestException('memberId is required')
+    }
+
+    return this.zonesService.assignMemberToZone(id, memberId, isLeader)
+  }
+
+  /**
+   * DELETE /zones/:id/members/:memberId - Remove member from zone
+   */
+  @Delete(':id/members/:memberId')
+  @RequirePermission('manage:zones')
+  async removeMember(
+    @Param('id') id: string,
+    @Param('memberId') memberId: string,
+  ) {
+    await this.zonesService.removeMemberFromZone(id, memberId)
+    return { message: 'Member removed from zone' }
+  }
+
+  /**
    * POST /zones/:id/assign-leader - Assign leader to zone
    */
   @Post(':id/assign-leader')
@@ -99,21 +154,5 @@ export class ZonesController {
     }
 
     return this.zonesService.assignLeader(id, leaderId)
-  }
-
-  /**
-   * GET /zones/by-meeting-day - Get zones by meeting day
-   */
-  @Get('by-meeting-day')
-  @RequirePermission('manage:zones')
-  async getByMeetingDay(
-    @Query('churchId') churchId: string,
-    @Query('meetingDay') meetingDay: string,
-  ) {
-    if (!churchId || !meetingDay) {
-      throw new BadRequestException('churchId and meetingDay are required')
-    }
-
-    return this.zonesService.getZonesByMeetingDay(churchId, meetingDay)
   }
 }

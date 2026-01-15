@@ -4,33 +4,49 @@ import { apiRequest } from '@/lib/api-client'
 import { handleApiError } from '@/lib/error-handler'
 
 export async function getChurches() {
-  const response = await apiRequest({
-    requestConfig: {
-      method: 'GET',
-      url: '/churches',
-    },
-  })
+  try {
+    const response = await apiRequest({
+      requestConfig: {
+        method: 'GET',
+        url: '/churches',
+      },
+    })
 
-  if (!response.success) {
-    handleApiError(response)
+    if (!response.success) {
+      handleApiError(response)
+    }
+
+    return response.data || []
+  } catch (error) {
+    // Re-throw Next.js control flow errors (redirect, notFound, etc.)
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
+      throw error
+    }
+    throw error
   }
-
-  return response.data || []
 }
 
 export async function getChurchById(churchId: string) {
-  const response = await apiRequest({
-    requestConfig: {
-      method: 'GET',
-      url: `/churches/${churchId}`,
-    },
-  })
+  try {
+    const response = await apiRequest({
+      requestConfig: {
+        method: 'GET',
+        url: `/churches/${churchId}`,
+      },
+    })
 
-  if (!response.success) {
-    handleApiError(response)
+    if (!response.success) {
+      handleApiError(response)
+    }
+
+    return response.data || null
+  } catch (error) {
+    // Re-throw Next.js control flow errors (redirect, notFound, etc.)
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
+      throw error
+    }
+    throw error
   }
-
-  return response.data || null
 }
 
 export async function setupChurch(data: {
@@ -41,19 +57,27 @@ export async function setupChurch(data: {
   email?: string
   description?: string
 }) {
-  const response = await apiRequest({
-    requestConfig: {
-      method: 'POST',
-      url: '/auth/setup',
-      data,
-    },
-  })
+  try {
+    const response = await apiRequest({
+      requestConfig: {
+        method: 'POST',
+        url: '/auth/setup',
+        data,
+      },
+    })
 
-  if (!response.success) {
-    throw new Error(response.message || 'Failed to setup church')
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to setup church')
+    }
+
+    return response.data
+  } catch (error) {
+    // Re-throw Next.js control flow errors
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
+      throw error
+    }
+    throw error
   }
-
-  return response.data
 }
 
 export async function createChurch(data: {
@@ -64,19 +88,27 @@ export async function createChurch(data: {
   email?: string
   description?: string
 }) {
-  const response = await apiRequest({
-    requestConfig: {
-      method: 'POST',
-      url: '/churches',
-      data,
-    },
-  })
+  try {
+    const response = await apiRequest({
+      requestConfig: {
+        method: 'POST',
+        url: '/churches',
+        data,
+      },
+    })
 
-  if (!response.success) {
-    throw new Error(response.message || 'Failed to create church')
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to create church')
+    }
+
+    return response.data
+  } catch (error) {
+    // Re-throw Next.js control flow errors
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
+      throw error
+    }
+    throw error
   }
-
-  return response.data
 }
 
 export async function updateChurch(
@@ -90,19 +122,27 @@ export async function updateChurch(
     description?: string
   }
 ) {
-  const response = await apiRequest({
-    requestConfig: {
-      method: 'PUT',
-      url: `/churches/${id}`,
-      data,
-    },
-  })
+  try {
+    const response = await apiRequest({
+      requestConfig: {
+        method: 'PUT',
+        url: `/churches/${id}`,
+        data,
+      },
+    })
 
-  if (!response.success) {
-    throw new Error(response.message || 'Failed to update church')
+    if (!response.success) {
+      throw new Error(response.message || 'Failed to update church')
+    }
+
+    return response.data
+  } catch (error) {
+    // Re-throw Next.js control flow errors
+    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
+      throw error
+    }
+    throw error
   }
-
-  return response.data
 }
 
 export async function deleteChurch(id: string) {

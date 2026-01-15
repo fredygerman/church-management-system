@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { eq, and, isNull } from 'drizzle-orm'
+import { eq, and, isNull, or, ilike } from 'drizzle-orm'
 import { db } from '@church/db'
 import { members, memberZones, type NewMember, type Member, type MemberZone } from '@church/db'
 
@@ -79,10 +79,17 @@ export class MembersService {
    * Search members by name or phone
    */
   async searchMembers(churchId: string, query: string): Promise<Member[]> {
+    const searchQuery = `%${query}%`
+    
     return db.query.members.findMany({
       where: and(
         eq(members.churchId, churchId),
         isNull(members.deletedAt),
+        or(
+          ilike(members.firstName, searchQuery),
+          ilike(members.lastName, searchQuery),
+          ilike(members.phone, searchQuery),
+        ),
       ),
     })
   }
