@@ -84,7 +84,7 @@ async function serverFetch<D = any>({
 
   if (token) {
     headers.set("Authorization", `Bearer ${token}`)
-    console.log(`[API] Token (first 50 chars): ${token.substring(0, 50)}...`)
+    // console.log(`[API] Token (first 50 chars): ${token.substring(0, 50)}...`)
   }
 
   const method = (requestConfig.method || "GET").toUpperCase()

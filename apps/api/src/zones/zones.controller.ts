@@ -155,4 +155,13 @@ export class ZonesController {
 
     return this.zonesService.assignLeader(id, leaderId)
   }
+
+  /**
+   * GET /zones/:id/stats - Get zone statistics
+   */
+  @Get(':id/stats')
+  @RequirePermission('manage:zones')
+  async getStats(@Param('id') id: string) {
+    return this.zonesService.getZoneStats(id)
+  }
 }

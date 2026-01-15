@@ -49,7 +49,7 @@ export class ZonesService {
   async updateZone(zoneId: string, data: Partial<CreateZoneInput>): Promise<Zone> {
     const [updatedZone] = await db
       .update(zones)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...data, updatedAt: new Date().toISOString().split('T')[0] as any })
       .where(eq(zones.id, zoneId))
       .returning()
     return updatedZone
@@ -61,7 +61,7 @@ export class ZonesService {
   async deleteZone(zoneId: string): Promise<void> {
     await db
       .update(zones)
-      .set({ deletedAt: new Date() })
+      .set({ deletedAt: new Date().toISOString().split('T')[0] as any })
       .where(eq(zones.id, zoneId))
   }
 
@@ -71,7 +71,7 @@ export class ZonesService {
   async assignLeader(zoneId: string, leaderId: string): Promise<Zone> {
     const [updatedZone] = await db
       .update(zones)
-      .set({ leaderId, updatedAt: new Date() })
+      .set({ leaderId, updatedAt: new Date().toISOString().split('T')[0] as any })
       .where(eq(zones.id, zoneId))
       .returning()
     return updatedZone
@@ -94,49 +94,59 @@ export class ZonesService {
    * Get members in a zone
    */
   async getZoneMembers(zoneId: string): Promise<any[]> {
-    const memberRecords = await db.query.memberZones.findMany({
-      where: eq(memberZones.zoneId, zoneId),
-      with: { member: true },
-    })
+    // Use a join query instead of relational query to avoid relation issues
+    const result = await db
+      .select({
+        id: members.id,
+        firstName: members.firstName,
+        lastName: members.lastName,
+        phone: members.phone,
+        dateOfBirth: members.dateOfBirth,
+        gender: members.gender,
+        occupation: members.occupation,
+        dateOfSalvation: members.dateOfSalvation,
+        baptismStatus: members.baptismStatus,
+        maritalStatus: members.maritalStatus,
+        familyId: members.familyId,
+        notes: members.notes,
+        churchId: members.churchId,
+        createdAt: members.createdAt,
+        updatedAt: members.updatedAt,
+        deletedAt: members.deletedAt,
+        isLeader: memberZones.isLeader,
+      })
+      .from(memberZones)
+      .innerJoin(members, eq(memberZones.memberId, members.id))
+      .where(and(
+        eq(memberZones.zoneId, zoneId),
+        isNull(members.deletedAt)
+      ))
     
-    return memberRecords
-      .map(record => ({
-        ...record.member,
-        isLeader: record.isLeader,
-      }))
-      .filter(member => !member.deletedAt)
+    return result
   }
 
   /**
    * Assign a member to a zone
    */
   async assignMemberToZone(zoneId: string, memberId: string, isLeader: boolean = false): Promise<any> {
-    // Check if already assigned
-    const existing = await db.query.memberZones.findFirst({
-      where: and(
-        eq(memberZones.zoneId, zoneId),
-        eq(memberZones.memberId, memberId),
-      ),
-    })
-
-    if (existing) {
-      // Update isLeader status if already exists
-      const [updated] = await db
-        .update(memberZones)
-        .set({ isLeader })
-        .where(and(
-          eq(memberZones.zoneId, zoneId),
-          eq(memberZones.memberId, memberId),
-        ))
-        .returning()
-      return updated
-    }
-
-    // Insert new assignment
+    // Use insert with onConflict to handle upsert
     const [assignment] = await db
       .insert(memberZones)
       .values({ zoneId, memberId, isLeader })
+      .onConflictDoUpdate({
+        target: [memberZones.memberId, memberZones.zoneId],
+        set: { isLeader },
+      })
       .returning()
+    
+    // If making this member a leader, update the zone's leaderId
+    if (isLeader) {
+      await db
+        .update(zones)
+        .set({ leaderId: memberId, updatedAt: new Date().toISOString().split('T')[0] as any })
+        .where(eq(zones.id, zoneId))
+    }
+    
     return assignment
   }
 
@@ -150,5 +160,22 @@ export class ZonesService {
         eq(memberZones.zoneId, zoneId),
         eq(memberZones.memberId, memberId),
       ))
+  }
+
+  /**
+   * Get zone statistics
+   */
+  async getZoneStats(zoneId: string): Promise<any> {
+    const members = await this.getZoneMembers(zoneId)
+    
+    const totalMembers = members.length
+    const leaders = members.filter(m => m.isLeader).length
+    const regularMembers = totalMembers - leaders
+
+    return {
+      totalMembers,
+      leaders,
+      regularMembers,
+    }
   }
 }

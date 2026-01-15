@@ -1,6 +1,6 @@
 import React from "react"
 import Link from "next/link"
-import { getZoneById, getZoneMembers, getZoneLeader } from "@/actions/zone"
+import { getZoneById, getZoneMembers, getZoneLeader, getZoneStats } from "@/actions/zone"
 
 import { Button } from "@/components/ui/button"
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
@@ -23,6 +23,7 @@ export default async function ZoneDetailPage({ params }: PageProps) {
   const membersPromise = getZoneMembers(zoneId)
 
   const zone = await zonePromise
+  const { members: zoneMembers = [] } = await membersPromise
   
   // Fetch leader details if leaderId exists
   let leader = null
@@ -30,17 +31,14 @@ export default async function ZoneDetailPage({ params }: PageProps) {
     leader = await getZoneLeader(zone.leaderId)
   }
 
+  // Fetch zone statistics
+  const stats = await getZoneStats(zoneId)
+
   return (
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <div className="flex items-center gap-2">
-            <Link href={`/${churchId}/dashboard/zones`} className="text-blue-600 hover:underline">
-              Zones
-            </Link>
-            <span className="text-muted-foreground">/</span>
-            <h2 className="text-2xl font-bold tracking-tight">{zone.name}</h2>
-          </div>
+          <h2 className="text-2xl font-bold tracking-tight">{zone.name}</h2>
           <p className="text-muted-foreground mt-1">
             View zone details and manage zone members.
           </p>
@@ -54,7 +52,7 @@ export default async function ZoneDetailPage({ params }: PageProps) {
       <Separator />
 
       {/* Zone Info Cards */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">Zone Name</CardTitle>
@@ -83,6 +81,18 @@ export default async function ZoneDetailPage({ params }: PageProps) {
             <div className="text-2xl font-bold">
               {leader ? `${leader.firstName} ${leader.lastName}` : "Not Assigned"}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats?.totalMembers || 0}</div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {stats?.leaders || 0} leader{stats?.leaders !== 1 ? 's' : ''} • {stats?.regularMembers || 0} member{stats?.regularMembers !== 1 ? 's' : ''}
+            </p>
           </CardContent>
         </Card>
       </div>

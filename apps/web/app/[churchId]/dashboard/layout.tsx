@@ -1,5 +1,6 @@
 import { getChurches } from "@/actions/church"
-import { DashboardLayout } from "@/components/layout/dashboard-layout"
+import { DashboardLayout } from "@/components/layout/dashboard/dashboard-layout"
+import { ChurchNotFoundError } from "@/components/church/church-not-found-error"
 
 interface PageProps {
   params: Promise<{
@@ -36,11 +37,7 @@ export default async function Layout({
   }
 
   if (!currentChurch) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-xl text-red-500">Error: Church not found</p>
-      </div>
-    )
+    return <ChurchNotFoundError churchId={churchId} />
   }
 
   return (

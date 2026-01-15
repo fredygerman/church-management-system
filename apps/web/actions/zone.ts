@@ -209,3 +209,13 @@ export async function unassignMemberFromZone(
     throw error
   }
 }
+
+// Function to get zone statistics
+export async function getZoneStats(zoneId: string): Promise<any> {
+  try {
+    return await apiGet(`/zones/${zoneId}/stats`)
+  } catch (error) {
+    console.error('Error fetching zone stats:', error)
+    return { totalMembers: 0, leaders: 0, regularMembers: 0 }
+  }
+}

@@ -7,6 +7,18 @@ import { visitors, visitorFollowups, type Visitor, type NewVisitor, type Visitor
 import { memberZones, type MemberZone, type NewMemberZone } from "./tables/memberZones"
 import { notifications, type Notification, type NewNotification } from "./tables/notifications"
 
+// Import all relations
+import {
+  churchesRelations,
+  zonesRelations,
+  membersRelations,
+  memberZonesRelations,
+  familiesRelations,
+  visitorsRelations,
+  visitorFollowupsRelations,
+  usersRelations,
+} from "./tables/relations"
+
 export {
   users,
   zones,
@@ -17,6 +29,15 @@ export {
   visitorFollowups,
   memberZones,
   notifications,
+  // Export relations for Drizzle ORM
+  churchesRelations,
+  zonesRelations,
+  membersRelations,
+  memberZonesRelations,
+  familiesRelations,
+  visitorsRelations,
+  visitorFollowupsRelations,
+  usersRelations,
   // Type exports
   type User,
   type NewUser,
