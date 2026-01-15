@@ -259,23 +259,29 @@ await apiPost("/zones", { ...data, churchId })
 ```
 
 ### User Roles & Permissions
-```typescript
-enum UserRole {
-  SUPER_ADMIN = "super_admin",     // Full access to all churches
-  BRANCH_ADMIN = "branch_admin",   // Church administrator
-  ZONE_LEADER = "ZONE_LEADER",     // Zone/small group leader
-  MEMBER = "member",               // Regular church member
-}
 
-interface UserContext {
-  id: string
-  email: string
-  role: UserRole
-  churchId: string             // Mandatory church context
-  assignedZoneId?: string      // For zone leaders
-  workspaceId: string
-  isActive: boolean
-}
+**Centralized System** (`packages/config/src/permissions.ts`):
+- All permissions in `@church/config` - single source of truth
+- Import roles, permissions, and utility functions from `@church/config`
+- Backend uses `@RequirePermissions()` decorator on endpoints
+- Frontend uses `usePermission()` hook and `checkPermission()` server function
+- `PermissionGate` component for conditional UI rendering with `showDisabled` prop
+
+```typescript
+// Import from @church/config (both frontend & backend)
+import { UserRole, type PermissionAction, PERMISSION_MAP, roleHasPermission } from "@church/config"
+
+// Frontend: hooks/use-permissions.ts
+const canEdit = usePermission('update:visitor')
+const isAdmin = useIsAdmin()
+
+// Frontend Server: lib/permissions-server.ts
+await requirePermission('delete:visitor')  // throws if denied
+const canView = await checkPermission('read:visitor')  // returns boolean
+
+// Backend: @RequirePermissions() decorator
+@RequirePermissions("convert:visitor")
+async convertToMember(@Param("id") id: string) { }
 ```
 
 

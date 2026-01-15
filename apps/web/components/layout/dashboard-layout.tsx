@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { usePathname } from "next/navigation"
-import { Home, LogOut, Menu } from "lucide-react"
+import { Home, LogOut, Menu, User } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { CustomSidebar } from "./custom-sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -129,6 +129,13 @@ export function DashboardLayout({
                     </p>
                   </div>
                 </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <Link href={`/${pathname.split('/')[1]}/dashboard/profile`} passHref>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <User className="mr-2 size-4" />
+                    <span>My Profile</span>
+                  </DropdownMenuItem>
+                </Link>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => setIsDialogOpen(true)}

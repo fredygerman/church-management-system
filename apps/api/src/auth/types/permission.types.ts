@@ -1,90 +1,34 @@
-export enum UserRole {
-  SUPER_ADMIN = 'super_admin',
-  ADMIN = 'admin',
-  BRANCH_ADMIN = 'branch_admin',
-  ZONE_LEADER = 'zone_leader',
-  MEMBER = 'member',
-}
+/**
+ * Re-export shared permissions from @church/config
+ * 
+ * This ensures both frontend and backend use the same permission definitions
+ */
 
+export type {
+  PermissionAction,
+  PermissionMetadata,
+} from '@church/config'
+
+export {
+  UserRole,
+  PERMISSION_MAP,
+  PERMISSION_METADATA,
+  getPermissionsForRole,
+  roleHasPermission,
+  getPermissionMetadata,
+  getPermissionDenialReason,
+} from '@church/config'
+
+/**
+ * User context attached to every authenticated request
+ * Used by guards and controllers for permission checking
+ */
 export interface UserContext {
   id: string
   email: string
-  role: UserRole
+  role: string
   churchId: string
   assignedZoneId?: string
+  workspaceId: string
   isActive: boolean
-}
-
-export type PermissionAction =
-  | 'create:member'
-  | 'read:member'
-  | 'update:member'
-  | 'delete:member'
-  | 'manage:zones'
-  | 'manage:families'
-  | 'view:families'
-  | 'view:visitors'
-  | 'create:visitor'
-  | 'update:visitor'
-  | 'manage:departments'
-  | 'create:visitation'
-  | 'read:visitation'
-
-export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
-  [UserRole.SUPER_ADMIN]: [
-    'create:member',
-    'read:member',
-    'update:member',
-    'delete:member',
-    'manage:zones',
-    'manage:families',
-    'view:families',
-    'view:visitors',
-    'create:visitor',
-    'update:visitor',
-    'manage:departments',
-    'create:visitation',
-    'read:visitation',
-  ],
-
-  [UserRole.ADMIN]: [
-    'create:member',
-    'read:member',
-    'update:member',
-    'delete:member',
-    'manage:zones',
-    'manage:families',
-    'view:families',
-    'view:visitors',
-    'create:visitor',
-    'update:visitor',
-    'manage:departments',
-    'create:visitation',
-    'read:visitation',
-  ],
-
-  [UserRole.BRANCH_ADMIN]: [
-    'create:member',
-    'read:member',
-    'update:member',
-    'manage:zones',
-    'view:families',
-    'view:visitors',
-    'create:visitor',
-    'update:visitor',
-    'manage:departments',
-    'create:visitation',
-    'read:visitation',
-  ],
-
-  [UserRole.ZONE_LEADER]: [
-    'read:member',
-    'view:families',
-    'create:visitation',
-    'read:visitation',
-  ],
-
-  [UserRole.MEMBER]: [
-    'read:member', // Own profile only
-  ],
 }

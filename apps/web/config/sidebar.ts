@@ -7,6 +7,8 @@ import {
   Home,
   Users,
   Users2,
+  Shield,
+  UserCircle,
   type LucideIcon,
 } from "lucide-react"
 
@@ -81,6 +83,21 @@ export const sidebarConfig: SidebarSection[] = [
         title: "Users",
         href: "/dashboard/settings/users",
         icon: Users,
+      },
+      {
+        title: "Permissions",
+        href: "/dashboard/permissions",
+        icon: Shield,
+      },
+    ],
+  },
+  {
+    title: "Account",
+    items: [
+      {
+        title: "My Profile",
+        href: "/dashboard/profile",
+        icon: UserCircle,
       },
     ],
   },

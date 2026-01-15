@@ -15,6 +15,13 @@
       "when": 1768400201805,
       "tag": "0001_awesome_firebird",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1768450090635,
+      "tag": "0002_high_lilandra",
+      "breakpoints": true
     }
   ]
 }

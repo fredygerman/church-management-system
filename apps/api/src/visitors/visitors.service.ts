@@ -16,13 +16,25 @@ export class VisitorsService {
     lastName: string
     phone?: string
     email?: string
-    visitDate?: Date
+    visitDate?: Date | string
     visitorSource?: string
     referredByMemberId?: string
   }): Promise<Visitor> {
+    // Convert visitDate to date-only string (YYYY-MM-DD)
+    let visitDate: string
+    if (data.visitDate) {
+      if (typeof data.visitDate === 'string') {
+        visitDate = data.visitDate
+      } else {
+        visitDate = data.visitDate.toISOString().split('T')[0]
+      }
+    } else {
+      visitDate = new Date().toISOString().split('T')[0]
+    }
+
     const [visitor] = await db.insert(visitors).values({
       ...data,
-      visitDate: data.visitDate || new Date(),
+      visitDate: visitDate as any,
     }).returning()
     return visitor
   }
@@ -65,7 +77,7 @@ export class VisitorsService {
   ): Promise<Visitor> {
     const [updatedVisitor] = await db
       .update(visitors)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...data, updatedAt: new Date().toISOString().split('T')[0] })
       .where(eq(visitors.id, visitorId))
       .returning()
     return updatedVisitor
@@ -77,7 +89,7 @@ export class VisitorsService {
   async deleteVisitor(visitorId: string): Promise<void> {
     await db
       .update(visitors)
-      .set({ deletedAt: new Date() })
+      .set({ deletedAt: new Date().toISOString().split('T')[0] })
       .where(eq(visitors.id, visitorId))
   }
 
@@ -127,19 +139,20 @@ export class VisitorsService {
       })
     }
 
-    // Update visitor to mark as converted
+    // Update visitor to mark as converted and soft-delete the visitor
     await db
       .update(visitors)
       .set({ 
         convertedToMemberId: newMember.id,
-        updatedAt: new Date(),
+        updatedAt: new Date().toISOString().split('T')[0],
+        deletedAt: new Date().toISOString().split('T')[0],
       })
       .where(eq(visitors.id, data.visitorId))
 
     // Update followup status to converted
     await db
       .update(visitorFollowups)
-      .set({ status: 'converted' })
+      .set({ status: 'converted', updatedAt: new Date().toISOString().split('T')[0] })
       .where(eq(visitorFollowups.visitorId, data.visitorId))
 
     return { visitor: await this.getVisitorById(data.visitorId), member: newMember }
@@ -152,12 +165,24 @@ export class VisitorsService {
     visitorId: string
     status: string
     notes?: string
-    followupDate?: Date
+    followupDate?: Date | string
     completedBy?: string
   }): Promise<VisitorFollowup> {
+    // Convert followupDate to date-only string (YYYY-MM-DD)
+    let followupDate: string
+    if (data.followupDate) {
+      if (typeof data.followupDate === 'string') {
+        followupDate = data.followupDate
+      } else {
+        followupDate = data.followupDate.toISOString().split('T')[0]
+      }
+    } else {
+      followupDate = new Date().toISOString().split('T')[0]
+    }
+
     const [followup] = await db.insert(visitorFollowups).values({
       ...data,
-      followupDate: data.followupDate || new Date(),
+      followupDate: followupDate as any,
     }).returning()
     return followup
   }
@@ -190,12 +215,23 @@ export class VisitorsService {
     data: {
       status?: string
       notes?: string
-      followupDate?: Date
+      followupDate?: Date | string
     },
   ): Promise<VisitorFollowup> {
+    // Convert followupDate to date-only string if provided
+    const updateData: any = { ...data, updatedAt: new Date().toISOString().split('T')[0] }
+    
+    if (data.followupDate) {
+      if (typeof data.followupDate === 'string') {
+        updateData.followupDate = data.followupDate
+      } else {
+        updateData.followupDate = data.followupDate.toISOString().split('T')[0]
+      }
+    }
+
     const [updatedFollowup] = await db
       .update(visitorFollowups)
-      .set({ ...data, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(visitorFollowups.id, followupId))
       .returning()
     return updatedFollowup
