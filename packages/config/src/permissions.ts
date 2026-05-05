@@ -62,6 +62,26 @@ export type PermissionAction =
   | 'manage:departments'
   | 'manage:settings'
   | 'manage:users'
+  | 'manage:churches'
+  | 'view:users'
+  | 'manage:files'
+  | 'manage:mail'
+  | 'manage:sms'
+  | 'manage:services'
+  | 'manage:attendance'
+  | 'view:attendance'
+  | 'manage:risk-settings'
+  | 'view:risk-flags'
+  | 'manage:communications'
+  | 'view:communications'
+  | 'send:communications'
+  | 'manage:data-quality'
+  | 'view:data-quality'
+  | 'manage:attendance-analytics'
+  | 'manage:lifecycle-rules'
+  | 'view:lifecycle-dashboard'
+  | 'read:self'
+  | 'update:self'
 
 // ============================================================================
 // ROLE TO PERMISSIONS MAPPING
@@ -75,7 +95,13 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:zone', 'read:zone', 'update:zone', 'delete:zone', 'manage:zones',
     'create:family', 'read:family', 'update:family', 'delete:family', 'manage:families', 'view:families',
     'create:visitation', 'read:visitation', 'update:visitation', 'delete:visitation',
-    'manage:departments', 'manage:settings', 'manage:users',
+    'manage:departments', 'manage:settings', 'manage:users', 'manage:churches', 'view:users',
+    'manage:files', 'manage:mail', 'manage:sms',
+    'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
+    'manage:communications', 'view:communications', 'send:communications',
+    'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
+    'manage:lifecycle-rules', 'view:lifecycle-dashboard',
+    'read:self', 'update:self',
   ],
 
   [UserRole.ADMIN]: [
@@ -85,7 +111,12 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:zone', 'read:zone', 'update:zone', 'delete:zone', 'manage:zones',
     'create:family', 'read:family', 'update:family', 'delete:family', 'manage:families', 'view:families',
     'create:visitation', 'read:visitation', 'update:visitation', 'delete:visitation',
-    'manage:departments', 'manage:settings',
+    'manage:departments', 'manage:settings', 'view:users',
+    'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
+    'manage:communications', 'view:communications', 'send:communications',
+    'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
+    'manage:lifecycle-rules', 'view:lifecycle-dashboard',
+    'manage:files', 'manage:mail', 'manage:sms', 'read:self', 'update:self',
   ],
 
   [UserRole.BRANCH_ADMIN]: [
@@ -94,20 +125,34 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:zone', 'read:zone', 'update:zone', 'manage:zones',
     'read:family', 'view:families',
     'create:visitation', 'read:visitation',
-    'manage:departments',
+    'manage:departments', 'view:users',
+    'manage:services', 'manage:attendance', 'view:attendance', 'view:risk-flags',
+    'manage:communications', 'view:communications', 'send:communications',
+    'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
+    'manage:lifecycle-rules', 'view:lifecycle-dashboard',
+    'manage:files', 'manage:sms', 'read:self', 'update:self',
   ],
 
   [UserRole.ZONE_LEADER]: [
     'read:member',
     'view:visitors', 'create:visitor', 'read:visitor',
     'read:zone',
+    'view:attendance',
+    'view:communications',
+    'view:data-quality',
+    'view:lifecycle-dashboard',
     'view:families',
     'create:visitation', 'read:visitation',
+    'read:self', 'update:self',
   ],
 
   [UserRole.MEMBER]: [
     'read:member', // Own profile only
     'view:visitors', 'create:visitor',
+    'view:attendance',
+    'view:communications',
+    'view:lifecycle-dashboard',
+    'read:self', 'update:self',
   ],
 }
 
@@ -118,7 +163,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
 export interface PermissionMetadata {
   label: string
   description: string
-  category: 'member' | 'visitor' | 'zone' | 'family' | 'visitation' | 'admin'
+  category: 'member' | 'visitor' | 'zone' | 'family' | 'visitation' | 'admin' | 'attendance'
   riskLevel: 'low' | 'medium' | 'high'
 }
 
@@ -290,6 +335,126 @@ export const PERMISSION_METADATA: Record<PermissionAction, PermissionMetadata> =
     description: 'Manage user accounts and roles',
     category: 'admin',
     riskLevel: 'high',
+  },
+  'manage:churches': {
+    label: 'Manage Churches',
+    description: 'Create, edit, and delete churches/branches',
+    category: 'admin',
+    riskLevel: 'high',
+  },
+  'view:users': {
+    label: 'View Users',
+    description: 'View users in church context',
+    category: 'admin',
+    riskLevel: 'medium',
+  },
+  'manage:files': {
+    label: 'Manage Files',
+    description: 'Upload and manage files/documents',
+    category: 'admin',
+    riskLevel: 'medium',
+  },
+  'manage:mail': {
+    label: 'Manage Mail',
+    description: 'Trigger email workflows',
+    category: 'admin',
+    riskLevel: 'high',
+  },
+  'manage:sms': {
+    label: 'Manage SMS',
+    description: 'Trigger SMS notifications',
+    category: 'admin',
+    riskLevel: 'high',
+  },
+  'manage:services': {
+    label: 'Manage Services',
+    description: 'Create and manage service types and sessions',
+    category: 'attendance',
+    riskLevel: 'medium',
+  },
+  'manage:attendance': {
+    label: 'Manage Attendance',
+    description: 'Submit headcount and run check-ins',
+    category: 'attendance',
+    riskLevel: 'medium',
+  },
+  'view:attendance': {
+    label: 'View Attendance',
+    description: 'View attendance sessions and trend reports',
+    category: 'attendance',
+    riskLevel: 'low',
+  },
+  'manage:risk-settings': {
+    label: 'Manage Risk Settings',
+    description: 'Configure at-risk attendance thresholds',
+    category: 'attendance',
+    riskLevel: 'high',
+  },
+  'view:risk-flags': {
+    label: 'View Risk Flags',
+    description: 'View at-risk member queue',
+    category: 'attendance',
+    riskLevel: 'medium',
+  },
+  'manage:communications': {
+    label: 'Manage Communications',
+    description: 'Create and manage communication templates and campaigns',
+    category: 'admin',
+    riskLevel: 'high',
+  },
+  'view:communications': {
+    label: 'View Communications',
+    description: 'View communication campaigns and analytics',
+    category: 'admin',
+    riskLevel: 'low',
+  },
+  'send:communications': {
+    label: 'Send Communications',
+    description: 'Schedule and send communication campaigns',
+    category: 'admin',
+    riskLevel: 'high',
+  },
+  'manage:data-quality': {
+    label: 'Manage Data Quality',
+    description: 'Run imports, review duplicates, and perform merges',
+    category: 'admin',
+    riskLevel: 'high',
+  },
+  'view:data-quality': {
+    label: 'View Data Quality',
+    description: 'View import history and duplicate queues',
+    category: 'admin',
+    riskLevel: 'low',
+  },
+  'manage:attendance-analytics': {
+    label: 'Manage Attendance Analytics',
+    description: 'Manage advanced attendance trend and cohort operations',
+    category: 'attendance',
+    riskLevel: 'medium',
+  },
+  'manage:lifecycle-rules': {
+    label: 'Manage Lifecycle Rules',
+    description: 'Manage milestone notification and lifecycle rule configuration',
+    category: 'family',
+    riskLevel: 'high',
+  },
+  'view:lifecycle-dashboard': {
+    label: 'View Lifecycle Dashboard',
+    description: 'View lifecycle milestones and family care dashboard',
+    category: 'family',
+    riskLevel: 'low',
+  },
+  'read:self': {
+    label: 'Read Own Account',
+    description: 'Read own user profile/account',
+    category: 'admin',
+    riskLevel: 'low',
+  },
+  'update:self': {
+    label: 'Update Own Account',
+    description: 'Update own user profile/account',
+    category: 'admin',
+    riskLevel: 'medium',
   },
 }
 

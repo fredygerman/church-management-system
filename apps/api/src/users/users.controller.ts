@@ -21,6 +21,7 @@ import { UsersService } from './users.service';
 import { JwtAuthGuard, RoleGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 import { UserRole } from '../auth/types/permission.types';
+import { RequirePermission } from '../auth/decorators/require-permission.decorator';
 
 @ApiTags('User Account Management')
 @Controller('users')
@@ -36,6 +37,7 @@ export class UsersController {
    * Get current user's account details
    */
   @Get('me')
+  @RequirePermission('read:self')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get current user',
@@ -82,6 +84,7 @@ export class UsersController {
    * Update current user's account details
    */
   @Patch('me')
+  @RequirePermission('update:self')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Update current user',
@@ -131,6 +134,7 @@ export class UsersController {
   @Get()
   @UseGuards(RoleGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BRANCH_ADMIN)
+  @RequirePermission('view:users')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'List church users',
@@ -172,6 +176,7 @@ export class UsersController {
   @Delete(':userId')
   @UseGuards(RoleGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @RequirePermission('manage:users')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Delete user',
@@ -211,6 +216,7 @@ export class UsersController {
   @Patch(':userId/restore')
   @UseGuards(RoleGuard)
   @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN)
+  @RequirePermission('manage:users')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Restore user',

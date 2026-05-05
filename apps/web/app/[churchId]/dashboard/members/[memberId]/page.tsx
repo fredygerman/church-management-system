@@ -83,7 +83,8 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
     }
   }
 
-  const capitalizeText = (text: string) => {
+  const capitalizeText = (text: string | null | undefined) => {
+    if (!text) return '-'
     return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase()
   }
 

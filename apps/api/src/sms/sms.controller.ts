@@ -8,14 +8,19 @@ import {
   HttpStatus,
   Logger,
   NotFoundException,
+  UseGuards,
 } from '@nestjs/common';
 
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SmsService } from './sms.service';
 import { SendSmsDto } from './dtos/send-sms.dto';
+import { JwtAuthGuard } from '../auth/guards';
+import { RequirePermission } from '../auth/decorators/require-permission.decorator';
 
 @ApiTags('SMS')
 @Controller('sms')
+@UseGuards(JwtAuthGuard)
+@RequirePermission('manage:sms')
 export class SmsController {
   private readonly logger = new Logger(SmsController.name);
 

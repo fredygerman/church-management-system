@@ -14,6 +14,7 @@ import { ChurchService } from './churches.service'
 import { GetUser } from '@/auth/decorators'
 import { churches } from '@church/db'
 import { UserContext } from '@/auth/types/permission.types'
+import { RequirePermission } from '@/auth/decorators/require-permission.decorator'
 
 export type CreateChurchInput = {
   churchId?: string
@@ -43,6 +44,7 @@ export class ChurchController {
    * The creator becomes the super_admin for this church
    */
   @Post()
+  @RequirePermission('manage:churches')
   async create(
     @Body() input: CreateChurchInput,
     @GetUser() user: UserContext,
@@ -72,6 +74,7 @@ export class ChurchController {
    * GET /churches - List all churches for current user
    */
   @Get()
+  @RequirePermission('read:member')
   async list() {
     return this.churchService.getChurches()
   }
@@ -80,6 +83,7 @@ export class ChurchController {
    * GET /churches/:id - Get single church
    */
   @Get(':id')
+  @RequirePermission('read:member')
   async getOne(@Param('id') id: string) {
     const church = await this.churchService.getChurchById(id)
     if (!church) {
@@ -92,6 +96,7 @@ export class ChurchController {
    * PUT /churches/:id - Update church
    */
   @Put(':id')
+  @RequirePermission('manage:churches')
   async update(
     @Param('id') id: string,
     @Body() input: UpdateChurchInput,
@@ -103,6 +108,7 @@ export class ChurchController {
    * DELETE /churches/:id - Soft delete church
    */
   @Delete(':id')
+  @RequirePermission('manage:churches')
   async delete(@Param('id') id: string) {
     await this.churchService.deleteChurch(id)
     return { message: 'Church deleted successfully' }

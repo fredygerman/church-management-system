@@ -6,6 +6,21 @@ import { churches } from "./churches"
 import { families } from "./families"
 import { visitors, visitorFollowups } from "./visitors"
 import { users } from "./user"
+import {
+  serviceTypes,
+  serviceSessions,
+  attendanceHeadcounts,
+  attendanceCheckins,
+  engagementRiskSettings,
+  engagementRiskFlags,
+} from "./attendance"
+import {
+  messageTemplates,
+  campaigns,
+  campaignRecipients,
+  messageDeliveries,
+  campaignEvents,
+} from "./communications"
 
 // Church relations
 export const churchesRelations = relations(churches, ({ many }) => ({
@@ -14,6 +29,17 @@ export const churchesRelations = relations(churches, ({ many }) => ({
   families: many(families),
   visitors: many(visitors),
   users: many(users),
+  serviceTypes: many(serviceTypes),
+  serviceSessions: many(serviceSessions),
+  attendanceHeadcounts: many(attendanceHeadcounts),
+  attendanceCheckins: many(attendanceCheckins),
+  engagementRiskSettings: many(engagementRiskSettings),
+  engagementRiskFlags: many(engagementRiskFlags),
+  messageTemplates: many(messageTemplates),
+  campaigns: many(campaigns),
+  campaignRecipients: many(campaignRecipients),
+  messageDeliveries: many(messageDeliveries),
+  campaignEvents: many(campaignEvents),
 }))
 
 // Zone relations
@@ -41,6 +67,9 @@ export const membersRelations = relations(members, ({ one, many }) => ({
   }),
   memberZones: many(memberZones),
   ledZones: many(zones),
+  attendanceCheckins: many(attendanceCheckins),
+  engagementRiskFlags: many(engagementRiskFlags),
+  campaignRecipients: many(campaignRecipients),
 }))
 
 // MemberZone relations (junction table)
@@ -102,5 +131,142 @@ export const usersRelations = relations(users, ({ one }) => ({
   assignedZone: one(zones, {
     fields: [users.assignedZoneId],
     references: [zones.id],
+  }),
+}))
+
+export const messageTemplatesRelations = relations(messageTemplates, ({ one, many }) => ({
+  church: one(churches, {
+    fields: [messageTemplates.churchId],
+    references: [churches.id],
+  }),
+  createdByUser: one(users, {
+    fields: [messageTemplates.createdBy],
+    references: [users.id],
+  }),
+  campaigns: many(campaigns),
+}))
+
+export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
+  church: one(churches, {
+    fields: [campaigns.churchId],
+    references: [churches.id],
+  }),
+  template: one(messageTemplates, {
+    fields: [campaigns.templateId],
+    references: [messageTemplates.id],
+  }),
+  createdByUser: one(users, {
+    fields: [campaigns.createdBy],
+    references: [users.id],
+  }),
+  recipients: many(campaignRecipients),
+  deliveries: many(messageDeliveries),
+  events: many(campaignEvents),
+}))
+
+export const campaignRecipientsRelations = relations(campaignRecipients, ({ one, many }) => ({
+  campaign: one(campaigns, {
+    fields: [campaignRecipients.campaignId],
+    references: [campaigns.id],
+  }),
+  church: one(churches, {
+    fields: [campaignRecipients.churchId],
+    references: [churches.id],
+  }),
+  member: one(members, {
+    fields: [campaignRecipients.memberId],
+    references: [members.id],
+  }),
+  deliveries: many(messageDeliveries),
+}))
+
+export const messageDeliveriesRelations = relations(messageDeliveries, ({ one }) => ({
+  campaign: one(campaigns, {
+    fields: [messageDeliveries.campaignId],
+    references: [campaigns.id],
+  }),
+  recipient: one(campaignRecipients, {
+    fields: [messageDeliveries.recipientId],
+    references: [campaignRecipients.id],
+  }),
+  church: one(churches, {
+    fields: [messageDeliveries.churchId],
+    references: [churches.id],
+  }),
+}))
+
+export const campaignEventsRelations = relations(campaignEvents, ({ one }) => ({
+  campaign: one(campaigns, {
+    fields: [campaignEvents.campaignId],
+    references: [campaigns.id],
+  }),
+  church: one(churches, {
+    fields: [campaignEvents.churchId],
+    references: [churches.id],
+  }),
+}))
+
+export const serviceTypesRelations = relations(serviceTypes, ({ one, many }) => ({
+  church: one(churches, {
+    fields: [serviceTypes.churchId],
+    references: [churches.id],
+  }),
+  sessions: many(serviceSessions),
+}))
+
+export const serviceSessionsRelations = relations(serviceSessions, ({ one, many }) => ({
+  church: one(churches, {
+    fields: [serviceSessions.churchId],
+    references: [churches.id],
+  }),
+  serviceType: one(serviceTypes, {
+    fields: [serviceSessions.serviceTypeId],
+    references: [serviceTypes.id],
+  }),
+  headcount: many(attendanceHeadcounts),
+  checkins: many(attendanceCheckins),
+}))
+
+export const attendanceHeadcountsRelations = relations(attendanceHeadcounts, ({ one }) => ({
+  church: one(churches, {
+    fields: [attendanceHeadcounts.churchId],
+    references: [churches.id],
+  }),
+  session: one(serviceSessions, {
+    fields: [attendanceHeadcounts.sessionId],
+    references: [serviceSessions.id],
+  }),
+}))
+
+export const attendanceCheckinsRelations = relations(attendanceCheckins, ({ one }) => ({
+  church: one(churches, {
+    fields: [attendanceCheckins.churchId],
+    references: [churches.id],
+  }),
+  session: one(serviceSessions, {
+    fields: [attendanceCheckins.sessionId],
+    references: [serviceSessions.id],
+  }),
+  member: one(members, {
+    fields: [attendanceCheckins.memberId],
+    references: [members.id],
+  }),
+}))
+
+export const engagementRiskSettingsRelations = relations(engagementRiskSettings, ({ one }) => ({
+  church: one(churches, {
+    fields: [engagementRiskSettings.churchId],
+    references: [churches.id],
+  }),
+}))
+
+export const engagementRiskFlagsRelations = relations(engagementRiskFlags, ({ one }) => ({
+  church: one(churches, {
+    fields: [engagementRiskFlags.churchId],
+    references: [churches.id],
+  }),
+  member: one(members, {
+    fields: [engagementRiskFlags.memberId],
+    references: [members.id],
   }),
 }))

@@ -9,7 +9,7 @@ import { Request } from 'express'
 import {
   UserContext,
   PermissionAction,
-  PERMISSION_MAP,
+  roleHasPermission,
 } from '../types/permission.types'
 
 export const REQUIRED_PERMISSION_KEY = 'required_permission'
@@ -19,13 +19,13 @@ export class PermissionGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredPermission = this.reflector.get<PermissionAction>(
+    const requiredPermissions = this.reflector.getAllAndOverride<PermissionAction[]>(
       REQUIRED_PERMISSION_KEY,
-      context.getHandler()
+      [context.getHandler(), context.getClass()]
     )
 
     // If no permission is specified, allow
-    if (!requiredPermission) {
+    if (!requiredPermissions || requiredPermissions.length === 0) {
       return true
     }
 
@@ -36,15 +36,14 @@ export class PermissionGuard implements CanActivate {
       throw new ForbiddenException('User context not found')
     }
 
-    // Get user's allowed permissions based on role
-    const allowedPermissions = PERMISSION_MAP[user.role] || []
-
-    // Check if user has the required permission
-    const hasPermission = allowedPermissions.includes(requiredPermission)
+    // Check if user has at least one of the required permissions
+    const hasPermission = requiredPermissions.some((permission) =>
+      roleHasPermission(user.role as any, permission)
+    )
 
     if (!hasPermission) {
       throw new ForbiddenException(
-        `You do not have permission to ${requiredPermission}. Required role: ${requiredPermission}`
+        `Missing required permission. Required one of: ${requiredPermissions.join(', ')}`
       )
     }
 

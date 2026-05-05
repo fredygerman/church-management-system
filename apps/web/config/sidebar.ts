@@ -9,6 +9,10 @@ import {
   Users2,
   Shield,
   UserCircle,
+  ClipboardCheck,
+  Megaphone,
+  Database,
+  HeartHandshake,
   type LucideIcon,
 } from "lucide-react"
 
@@ -43,6 +47,31 @@ export const sidebarConfig: SidebarSection[] = [
         title: "Analytics",
         href: "/dashboard/analytics",
         icon: BarChart2,
+      },
+      {
+        title: "Attendance",
+        href: "/dashboard/attendance",
+        icon: ClipboardCheck,
+      },
+      {
+        title: "Communications",
+        href: "/dashboard/communications",
+        icon: Megaphone,
+      },
+      {
+        title: "Data Quality",
+        href: "/dashboard/data-quality",
+        icon: Database,
+      },
+      {
+        title: "Family Lifecycle",
+        href: "/dashboard/family-lifecycle",
+        icon: HeartHandshake,
+      },
+      {
+        title: "Attendance V2",
+        href: "/dashboard/attendance/v2",
+        icon: ClipboardCheck,
       },
     ],
   },

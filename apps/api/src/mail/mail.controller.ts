@@ -5,9 +5,14 @@ import { SendEmailDto } from './dtos/send-email.dto';
 import { SendWelcomeEmailDto } from './dtos/send-welcome-email.dto';
 import { SendPasswordResetEmailDto } from './dtos/send-password-reset-email.dto';
 import { SendOrderConfirmationDto } from './dtos/send-order-confirmation.dto';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards';
+import { RequirePermission } from '../auth/decorators/require-permission.decorator';
 
 @ApiTags('Mail')
 @Controller('mail')
+@UseGuards(JwtAuthGuard)
+@RequirePermission('manage:mail')
 export class MailController {
   constructor(private readonly mailService: MailService) {}
 

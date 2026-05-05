@@ -26,6 +26,7 @@ import {
 import config from '../config';
 import { JwtAuthGuard } from '../auth/guards';
 import { Public } from '../auth/decorators/public.decorator';
+import { RequirePermission } from '../auth/decorators/require-permission.decorator';
 import { AuthenticatedRequest } from '../auth/dto/auth-request.dto';
 import { ExceptionConstants } from '../core/exceptions/exceptions.constants';
 
@@ -132,6 +133,7 @@ export class FileUploadController {
 
   @Post('upload')
   @UseGuards(JwtAuthGuard)
+  @RequirePermission('manage:files')
   @ApiBearerAuth('access-token')
   @ApiConsumes('multipart/form-data')
   @ApiBody({
@@ -360,6 +362,7 @@ export class FileUploadController {
 
   @Get('user')
   @UseGuards(JwtAuthGuard)
+  @RequirePermission('manage:files')
   @ApiBearerAuth('access-token')
   async getUserDocuments(
     @Req() req: AuthenticatedRequest,
@@ -402,6 +405,7 @@ export class FileUploadController {
 
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
+  @RequirePermission('manage:files')
   @ApiBearerAuth('access-token')
   async updateDocument(
     @Param('id') id: string,
@@ -428,6 +432,7 @@ export class FileUploadController {
 
   @Delete(':id')
   @UseGuards(JwtAuthGuard)
+  @RequirePermission('manage:files')
   @ApiBearerAuth('access-token')
   async deleteDocument(
     @Param('id') id: string,

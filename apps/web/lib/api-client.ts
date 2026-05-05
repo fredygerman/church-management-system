@@ -132,6 +132,13 @@ async function serverFetch<D = any>({
 
     console.log(`[API] Response data:`, data)
 
+    // Handle 403 forbidden - keep user signed in and send to forbidden page
+    const is403 = response.status === 403 || data?.statusCode === 403
+    if (is403 && !requestConfig.skipAuth) {
+      console.log("[API] 403 Forbidden detected")
+      redirect("/forbidden")
+    }
+
     // Handle 401 errors - check both HTTP status and response status code
     const is401 = response.status === 401 || data?.statusCode === 401
     

@@ -21,6 +21,10 @@ import { MembersModule } from './members/members.module'
 import { ZonesModule } from './zones/zones.module'
 import { FamiliesModule } from './families/families.module'
 import { VisitorsModule } from './visitors/visitors.module'
+import { AttendanceModule } from './attendance/attendance.module'
+import { CommunicationsModule } from './communications/communications.module'
+import { DataQualityModule } from './data-quality/data-quality.module'
+import { FamilyLifecycleModule } from './family-lifecycle/family-lifecycle.module'
 import config from './config'
 
 @Module({
@@ -40,6 +44,10 @@ import config from './config'
     ZonesModule,
     FamiliesModule,
     VisitorsModule,
+    AttendanceModule,
+    CommunicationsModule,
+    DataQualityModule,
+    FamilyLifecycleModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

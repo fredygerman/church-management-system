@@ -24,7 +24,7 @@ export default withAuth(
     // Check role-based access for protected routes
     const userRole = token.role as string
     if (!isRouteAllowed(pathname, userRole)) {
-      return NextResponse.redirect(new URL("/", req.url))
+      return NextResponse.redirect(new URL("/forbidden", req.url))
     }
 
     return NextResponse.next()

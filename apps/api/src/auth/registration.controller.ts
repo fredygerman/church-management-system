@@ -17,6 +17,7 @@ import {
 import { RegistrationService } from './registration.service';
 import { JwtAuthGuard } from './guards';
 import { GetUser } from './decorators';
+import { RequirePermission } from './decorators/require-permission.decorator';
 
 @ApiTags('Profile Management')
 @Controller('auth/profile')
@@ -31,6 +32,7 @@ export class RegistrationController {
    */
   @Patch()
   @UseGuards(JwtAuthGuard)
+  @RequirePermission('update:self')
   @ApiBearerAuth('access-token')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

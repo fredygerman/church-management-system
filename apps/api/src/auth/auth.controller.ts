@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards';
 import { Public, GetUser } from './decorators';
+import { RequirePermission } from './decorators/require-permission.decorator';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -76,6 +77,7 @@ export class AuthController {
    */
   @UseGuards(JwtAuthGuard)
   @Get('profile')
+  @RequirePermission('read:self')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get current user profile',
@@ -164,6 +166,7 @@ export class AuthController {
    */
   @UseGuards(JwtAuthGuard)
   @Post('logout')
+  @RequirePermission('read:self')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Logout user',

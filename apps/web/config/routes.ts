@@ -1,17 +1,37 @@
 /**
  * Route access configuration
- * Maps protected routes to allowed user roles
+ * Maps protected routes to required permissions
  */
 
-export type UserRole = "super_admin" | "admin" | "branch_admin" | "zone_leader" | "member"
+import type { PermissionAction } from "@/lib/permissions"
+import { hasPermission } from "@/lib/permissions"
 
-export const protectedRoutes: Record<string, UserRole[]> = {
-  "/setup": ["member"],
-  "/[churchId]/dashboard": ["super_admin", "admin", "branch_admin", "zone_leader"],
-  "/[churchId]/members": ["super_admin", "admin", "branch_admin"],
-  "/[churchId]/zones": ["super_admin", "admin", "branch_admin"],
-  "/[churchId]/families": ["super_admin", "admin", "branch_admin"],
-  "/[churchId]/visitors": ["super_admin", "admin", "branch_admin"],
+export const protectedRoutes: Record<string, PermissionAction> = {
+  "/setup": "read:self",
+  "/[churchId]/dashboard": "read:member",
+  "/[churchId]/dashboard/home": "read:member",
+  "/[churchId]/dashboard/profile": "read:self",
+  "/[churchId]/dashboard/members": "read:member",
+  "/[churchId]/dashboard/zones": "read:zone",
+  "/[churchId]/dashboard/families": "view:families",
+  "/[churchId]/dashboard/visitors": "view:visitors",
+  "/[churchId]/dashboard/permissions": "manage:users",
+  "/[churchId]/dashboard/attendance": "view:attendance",
+  "/[churchId]/dashboard/attendance/service-types": "manage:services",
+  "/[churchId]/dashboard/attendance/sessions": "manage:services",
+  "/[churchId]/dashboard/attendance/check-in": "manage:attendance",
+  "/[churchId]/dashboard/attendance/analytics": "view:attendance",
+  "/[churchId]/dashboard/attendance/at-risk": "view:risk-flags",
+  "/[churchId]/dashboard/attendance/risk-settings": "manage:risk-settings",
+  "/[churchId]/dashboard/communications": "view:communications",
+  "/[churchId]/dashboard/communications/templates": "manage:communications",
+  "/[churchId]/dashboard/communications/campaigns": "view:communications",
+  "/[churchId]/dashboard/communications/campaigns/new": "manage:communications",
+  "/[churchId]/dashboard/data-quality": "view:data-quality",
+  "/[churchId]/dashboard/data-quality/imports": "view:data-quality",
+  "/[churchId]/dashboard/data-quality/duplicates": "view:data-quality",
+  "/[churchId]/dashboard/attendance/v2": "manage:attendance-analytics",
+  "/[churchId]/dashboard/family-lifecycle": "view:lifecycle-dashboard",
 }
 
 /**
@@ -21,6 +41,7 @@ export const publicRoutes = [
   "/auth/signin",
   "/auth/callback",
   "/auth/error",
+  "/forbidden",
 ]
 
 /**
@@ -37,14 +58,14 @@ export const authRoutes = [
  * Check if a user role is allowed to access a given route
  */
 export function isRouteAllowed(pathname: string, userRole: string): boolean {
-  for (const [route, allowedRoles] of Object.entries(protectedRoutes)) {
+  for (const [route, requiredPermission] of Object.entries(protectedRoutes)) {
     // Convert route pattern to regex (e.g., /[churchId]/dashboard -> /[^/]+/dashboard)
     const routePattern = new RegExp(
       "^" + route.replace(/\[churchId\]/g, "[^/]+") + "(/|$)"
     )
 
     if (routePattern.test(pathname)) {
-      return allowedRoles.includes(userRole as UserRole)
+      return hasPermission(userRole, requiredPermission)
     }
   }
 
