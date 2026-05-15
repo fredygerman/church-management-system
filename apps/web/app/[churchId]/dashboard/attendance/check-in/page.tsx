@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { getServiceSessions, manualCheckin, qrCheckin } from '@/actions/attendance'
 import { searchMembers } from '@/actions/member'
+import { checkPermission, ensurePermission } from '@/lib/permissions-server'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -10,8 +11,10 @@ interface PageProps {
 }
 
 export default async function AttendanceCheckinPage({ params, searchParams }: PageProps) {
+  await ensurePermission('view:attendance')
   const { churchId } = await params
   const { q = '', ok = '', err = '' } = await searchParams
+  const canManageAttendance = await checkPermission('manage:attendance')
 
   const [sessions, members] = await Promise.all([
     getServiceSessions(churchId).then((rows: any[]) => rows.filter((row) => row.status === 'open')).catch(() => []),
@@ -25,6 +28,9 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
     const qParam = String(formData.get('q') || '')
     if (!sessionId || !memberId) {
       redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('Select both session and member.')}`)
+    }
+    if (!(await checkPermission('manage:attendance'))) {
+      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('You are not allowed to check in members.')}`)
     }
     try {
       await manualCheckin({ churchId, sessionId, memberId })
@@ -43,6 +49,9 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
     const qParam = String(formData.get('q') || '')
     if (!token || !memberId) {
       redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('Provide QR token and member.')}`)
+    }
+    if (!(await checkPermission('manage:attendance'))) {
+      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('You are not allowed to check in members.')}`)
     }
     try {
       await qrCheckin({ churchId, token, memberId })
@@ -93,7 +102,7 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
               <option key={member.id} value={member.id}>{member.firstName} {member.lastName} {member.phone ? `(${member.phone})` : ''}</option>
             ))}
           </select>
-          <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Check In</button>
+          <button type="submit" disabled={!canManageAttendance} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">Check In</button>
         </form>
 
         <form action={qrAction} className="space-y-2 rounded-md border p-4">
@@ -106,9 +115,13 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
               <option key={member.id} value={member.id}>{member.firstName} {member.lastName} {member.phone ? `(${member.phone})` : ''}</option>
             ))}
           </select>
-          <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Check In by QR</button>
+          <button type="submit" disabled={!canManageAttendance} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">Check In by QR</button>
         </form>
       </div>
+
+      {!canManageAttendance && (
+        <p className="text-sm text-muted-foreground">You can view check-in data, but only permitted roles can submit check-ins.</p>
+      )}
 
       {sessions.length === 0 && (
         <p className="text-sm text-muted-foreground">

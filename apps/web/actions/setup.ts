@@ -1,7 +1,6 @@
 "use server"
 
-import { apiRequest } from "@/lib/api-client"
-import { getSession } from "@/auth"
+import { apiGet, apiPost } from "@/lib/api-helpers"
 
 export async function createInitialChurch(data: {
   name: string
@@ -11,37 +10,13 @@ export async function createInitialChurch(data: {
   email?: string
   description?: string
 }) {
-  const session = await getSession()
-  
-  if (!session?.user?.email) {
-    return {
-      success: false,
-      message: "Not authenticated",
-      data: null,
-    }
-  }
-
   try {
-    const response = await apiRequest({
-      requestConfig: {
-        method: "POST",
-        url: "/churches",
-        data,
-      },
-    })
-
-    if (!response.success) {
-      return {
-        success: false,
-        message: response.message || "Failed to create church",
-        data: null,
-      }
-    }
+    const createdChurch = await apiPost("/churches", data)
 
     return {
       success: true,
       message: "Church created successfully",
-      data: response.data,
+      data: createdChurch,
     }
   } catch (error: any) {
     console.error("Error creating initial church:", error)
@@ -55,23 +30,7 @@ export async function createInitialChurch(data: {
 
 export async function checkUserSetupStatus() {
   try {
-    const response = await apiRequest({
-      requestConfig: {
-        method: "GET",
-        url: "/users/account",
-      },
-    })
-
-    if (!response.success) {
-      return {
-        needsSetup: true,
-        hasChurch: false,
-        user: null,
-      }
-    }
-
-    // Check if user has a church assigned
-    const user = response.data
+    const user = await apiGet("/users/account")
     return {
       needsSetup: !user?.church_id,
       hasChurch: !!user?.church_id,

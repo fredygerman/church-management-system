@@ -2,6 +2,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { qrCheckin } from '@/actions/attendance'
 import { searchMembers } from '@/actions/member'
+import { checkPermission, ensurePermission } from '@/lib/permissions-server'
 
 interface PageProps {
   params: Promise<{ churchId: string; token: string }>
@@ -9,8 +10,10 @@ interface PageProps {
 }
 
 export default async function QrCheckinTokenPage({ params, searchParams }: PageProps) {
+  await ensurePermission('view:attendance')
   const { churchId, token } = await params
   const { q = '', ok = '', err = '' } = await searchParams
+  const canManageAttendance = await checkPermission('manage:attendance')
   const members = q ? await searchMembers(churchId, q).catch(() => []) as any[] : []
 
   async function submitAction(formData: FormData) {
@@ -19,6 +22,9 @@ export default async function QrCheckinTokenPage({ params, searchParams }: PageP
     const qParam = String(formData.get('q') || '')
     if (!memberId) {
       redirect(`/${churchId}/dashboard/attendance/check-in/${token}?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('Select a member.')}`)
+    }
+    if (!(await checkPermission('manage:attendance'))) {
+      redirect(`/${churchId}/dashboard/attendance/check-in/${token}?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('You are not allowed to check in members.')}`)
     }
     try {
       await qrCheckin({ churchId, token, memberId })
@@ -59,8 +65,11 @@ export default async function QrCheckinTokenPage({ params, searchParams }: PageP
             <option key={member.id} value={member.id}>{member.firstName} {member.lastName}</option>
           ))}
         </select>
-        <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Check In</button>
+        <button disabled={!canManageAttendance} type="submit" className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">Check In</button>
       </form>
+      {!canManageAttendance && (
+        <p className="text-sm text-muted-foreground">You can search members, but only permitted roles can submit check-ins.</p>
+      )}
     </div>
   )
 }

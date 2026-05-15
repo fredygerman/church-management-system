@@ -1,4 +1,5 @@
 import { getZones } from "@/actions/zone"
+import { ensurePermission } from "@/lib/permissions-server"
 
 import { MemberForm } from "@/components/form/MemberForm"
 
@@ -7,6 +8,7 @@ export default async function NewMemberPage({
 }: {
   params: Promise<{ churchId: string }>
 }) {
+  await ensurePermission('create:member')
   const { churchId } = await params
   const zones = await getZones(churchId)
 

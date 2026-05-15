@@ -1,52 +1,15 @@
 'use server'
 
-import { apiRequest } from '@/lib/api-client'
-import { handleApiError } from '@/lib/error-handler'
+import { apiDelete, apiGet, apiPost, apiPut } from '@/lib/api-helpers'
 
 export async function getChurches() {
-  try {
-    const response = await apiRequest({
-      requestConfig: {
-        method: 'GET',
-        url: '/churches',
-      },
-    })
-
-    if (!response.success) {
-      handleApiError(response)
-    }
-
-    return response.data || []
-  } catch (error) {
-    // Re-throw Next.js control flow errors (redirect, notFound, etc.)
-    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
-      throw error
-    }
-    throw error
-  }
+  const data = await apiGet('/churches')
+  return data || []
 }
 
 export async function getChurchById(churchId: string) {
-  try {
-    const response = await apiRequest({
-      requestConfig: {
-        method: 'GET',
-        url: `/churches/${churchId}`,
-      },
-    })
-
-    if (!response.success) {
-      handleApiError(response)
-    }
-
-    return response.data || null
-  } catch (error) {
-    // Re-throw Next.js control flow errors (redirect, notFound, etc.)
-    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
-      throw error
-    }
-    throw error
-  }
+  const data = await apiGet(`/churches/${churchId}`)
+  return data || null
 }
 
 export async function setupChurch(data: {
@@ -57,27 +20,7 @@ export async function setupChurch(data: {
   email?: string
   description?: string
 }) {
-  try {
-    const response = await apiRequest({
-      requestConfig: {
-        method: 'POST',
-        url: '/auth/setup',
-        data,
-      },
-    })
-
-    if (!response.success) {
-      throw new Error(response.message || 'Failed to setup church')
-    }
-
-    return response.data
-  } catch (error) {
-    // Re-throw Next.js control flow errors
-    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
-      throw error
-    }
-    throw error
-  }
+  return apiPost('/auth/setup', data)
 }
 
 export async function createChurch(data: {
@@ -88,27 +31,7 @@ export async function createChurch(data: {
   email?: string
   description?: string
 }) {
-  try {
-    const response = await apiRequest({
-      requestConfig: {
-        method: 'POST',
-        url: '/churches',
-        data,
-      },
-    })
-
-    if (!response.success) {
-      throw new Error(response.message || 'Failed to create church')
-    }
-
-    return response.data
-  } catch (error) {
-    // Re-throw Next.js control flow errors
-    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
-      throw error
-    }
-    throw error
-  }
+  return apiPost('/churches', data)
 }
 
 export async function updateChurch(
@@ -122,41 +45,9 @@ export async function updateChurch(
     description?: string
   }
 ) {
-  try {
-    const response = await apiRequest({
-      requestConfig: {
-        method: 'PUT',
-        url: `/churches/${id}`,
-        data,
-      },
-    })
-
-    if (!response.success) {
-      throw new Error(response.message || 'Failed to update church')
-    }
-
-    return response.data
-  } catch (error) {
-    // Re-throw Next.js control flow errors
-    if (error instanceof Error && (error.message === 'NEXT_REDIRECT' || error.message?.includes('NEXT_REDIRECT'))) {
-      throw error
-    }
-    throw error
-  }
+  return apiPut(`/churches/${id}`, data)
 }
 
 export async function deleteChurch(id: string) {
-  const response = await apiRequest({
-    requestConfig: {
-      method: 'DELETE',
-      url: `/churches/${id}`,
-    },
-  })
-
-  if (!response.success) {
-    throw new Error(response.message || 'Failed to delete church')
-  }
-
-  return response.data
+  return apiDelete(`/churches/${id}`)
 }
-

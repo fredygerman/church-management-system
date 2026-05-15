@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createCampaign, getTemplates } from '@/actions/communications'
+import { ensurePermission, checkPermission } from '@/lib/permissions-server'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -7,12 +8,16 @@ interface PageProps {
 }
 
 export default async function NewCampaignPage({ params, searchParams }: PageProps) {
+  await ensurePermission('manage:communications')
   const { churchId } = await params
   const { err = '' } = await searchParams
   const templates = await getTemplates(churchId).catch(() => []) as any[]
 
   async function createAction(formData: FormData) {
     'use server'
+    if (!(await checkPermission('manage:communications'))) {
+      redirect(`/${churchId}/dashboard/communications/campaigns/new?err=${encodeURIComponent('You are not allowed to create campaigns.')}`)
+    }
     const name = String(formData.get('name') || '')
     const channel = String(formData.get('channel') || 'sms') as 'sms' | 'email'
     const templateId = String(formData.get('templateId') || '')

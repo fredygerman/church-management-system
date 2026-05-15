@@ -16,9 +16,10 @@ import { getVisitorColumns } from "./visitor-table-columns"
 interface VisitorTableProps {
   visitorPromise: ReturnType<typeof getVisitors>
   churchId: string
+  canConvert?: boolean
 }
 
-export function VisitorTable({ visitorPromise, churchId }: VisitorTableProps) {
+export function VisitorTable({ visitorPromise, churchId, canConvert = false }: VisitorTableProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   
@@ -44,7 +45,7 @@ export function VisitorTable({ visitorPromise, churchId }: VisitorTableProps) {
   }
 
   const handlers = {
-    onConvert: handleConvert,
+    onConvert: canConvert ? handleConvert : undefined,
     onDelete: async (visitorId: string) => {
       // TODO: Implement delete handler
       toast.info("Delete functionality coming soon")

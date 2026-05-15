@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { cancelCampaign, getCampaigns, sendCampaignNow } from '@/actions/communications'
+import { checkPermission, ensurePermission } from '@/lib/permissions-server'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -9,14 +10,20 @@ interface PageProps {
 }
 
 export default async function CampaignsPage({ params, searchParams }: PageProps) {
+  await ensurePermission('view:communications')
   const { churchId } = await params
   const { status, channel, ok = '', err = '' } = await searchParams
+  const canManageCampaigns = await checkPermission('manage:communications')
+  const canSendCampaigns = await checkPermission('send:communications')
   const campaigns = await getCampaigns(churchId, { status, channel }).catch(() => []) as any[]
 
   async function sendNowAction(formData: FormData) {
     'use server'
     const id = String(formData.get('id') || '')
     if (!id) redirect(`/${churchId}/dashboard/communications/campaigns?err=${encodeURIComponent('Missing campaign id.')}`)
+    if (!(await checkPermission('send:communications'))) {
+      redirect(`/${churchId}/dashboard/communications/campaigns?err=${encodeURIComponent('You are not allowed to send campaigns.')}`)
+    }
     try {
       await sendCampaignNow({ churchId, id })
       revalidatePath(`/${churchId}/dashboard/communications/campaigns`)
@@ -31,6 +38,9 @@ export default async function CampaignsPage({ params, searchParams }: PageProps)
     'use server'
     const id = String(formData.get('id') || '')
     if (!id) redirect(`/${churchId}/dashboard/communications/campaigns?err=${encodeURIComponent('Missing campaign id.')}`)
+    if (!(await checkPermission('manage:communications'))) {
+      redirect(`/${churchId}/dashboard/communications/campaigns?err=${encodeURIComponent('You are not allowed to cancel campaigns.')}`)
+    }
     try {
       await cancelCampaign({ churchId, id })
       revalidatePath(`/${churchId}/dashboard/communications/campaigns`)
@@ -48,7 +58,9 @@ export default async function CampaignsPage({ params, searchParams }: PageProps)
           <h1 className="text-2xl font-semibold">Campaigns</h1>
           <p className="text-sm text-muted-foreground">Schedule or send campaigns and monitor delivery outcomes.</p>
         </div>
-        <Link href={`/${churchId}/dashboard/communications/campaigns/new`} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">New Campaign</Link>
+        {canManageCampaigns && (
+          <Link href={`/${churchId}/dashboard/communications/campaigns/new`} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">New Campaign</Link>
+        )}
       </div>
 
       <form method="get" className="grid gap-2 rounded-md border p-4 md:grid-cols-3">
@@ -102,13 +114,13 @@ export default async function CampaignsPage({ params, searchParams }: PageProps)
                 <td className="px-3 py-2">{campaign.scheduledAt || '-'}</td>
                 <td className="px-3 py-2">
                   <div className="flex items-center gap-2">
-                    {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
+                    {canSendCampaigns && (campaign.status === 'draft' || campaign.status === 'scheduled') && (
                       <form action={sendNowAction}>
                         <input type="hidden" name="id" value={campaign.id} />
                         <button className="rounded border px-2 py-1 text-xs" type="submit">Send Now</button>
                       </form>
                     )}
-                    {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
+                    {canManageCampaigns && (campaign.status === 'draft' || campaign.status === 'scheduled') && (
                       <form action={cancelAction}>
                         <input type="hidden" name="id" value={campaign.id} />
                         <button className="rounded border px-2 py-1 text-xs" type="submit">Cancel</button>

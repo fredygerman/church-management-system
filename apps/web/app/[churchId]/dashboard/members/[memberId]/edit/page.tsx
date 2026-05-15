@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import { getMemberById } from '@/actions/member'
 import { MemberEditForm } from '@/components/member/member-edit-form'
+import { ensurePermission } from '@/lib/permissions-server'
 
 interface MemberEditPageProps {
   params: {
@@ -12,6 +13,7 @@ interface MemberEditPageProps {
 }
 
 export default async function MemberEditPage({ params }: MemberEditPageProps) {
+  await ensurePermission('update:member')
   const { churchId, memberId } = params
 
   let member = null

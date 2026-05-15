@@ -4,6 +4,7 @@
  */
 
 import { getSession } from "@/auth"
+import { redirect } from "next/navigation"
 import { 
   UserRole, 
   PERMISSION_MAP, 
@@ -106,4 +107,15 @@ export async function checkIsSuperAdmin(): Promise<boolean> {
 export async function getUserRole(): Promise<string | undefined> {
   const session = await getSession()
   return session?.user?.role
+}
+
+/**
+ * Redirect to forbidden page when the current user lacks permission.
+ * Use in server components and server actions for graceful UX.
+ */
+export async function ensurePermission(permission: PermissionAction): Promise<void> {
+  const hasAccess = await checkPermission(permission)
+  if (!hasAccess) {
+    redirect("/forbidden")
+  }
 }

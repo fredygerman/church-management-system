@@ -1,6 +1,7 @@
 import React from "react"
 import Link from "next/link"
 import { getVisitors } from "@/actions/visitor"
+import { checkPermission, ensurePermission } from "@/lib/permissions-server"
 
 import { Button } from "@/components/ui/button"
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
@@ -14,8 +15,11 @@ interface PageProps {
 }
 
 export default async function VisitorsPage(props: PageProps) {
+  await ensurePermission('view:visitors')
   const { churchId } = await props.params
   const visitorPromise = getVisitors(churchId)
+  const canCreateVisitor = await checkPermission('create:visitor')
+  const canConvertVisitor = await checkPermission('convert:visitor')
 
   return (
     <div className="flex flex-col space-y-6">
@@ -26,11 +30,13 @@ export default async function VisitorsPage(props: PageProps) {
             Manage and track visitor information and follow-ups.
           </p>
         </div>
-        <div className="flex items-center gap-4">
-          <Link href={`/${churchId}/dashboard/visitors/add`}>
-            <Button>Add Visitor</Button>
-          </Link>
-        </div>
+        {canCreateVisitor && (
+          <div className="flex items-center gap-4">
+            <Link href={`/${churchId}/dashboard/visitors/add`}>
+              <Button>Add Visitor</Button>
+            </Link>
+          </div>
+        )}
       </div>
       <Separator />
 
@@ -45,7 +51,7 @@ export default async function VisitorsPage(props: PageProps) {
           />
         }
       >
-        <VisitorTable visitorPromise={visitorPromise} churchId={churchId} />
+        <VisitorTable visitorPromise={visitorPromise} churchId={churchId} canConvert={canConvertVisitor} />
       </React.Suspense>
     </div>
   )

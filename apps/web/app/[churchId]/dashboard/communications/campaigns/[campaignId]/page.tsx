@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { getCampaign, scheduleCampaign, sendCampaignNow, cancelCampaign } from '@/actions/communications'
+import { checkPermission, ensurePermission } from '@/lib/permissions-server'
 
 interface PageProps {
   params: Promise<{ churchId: string; campaignId: string }>
@@ -8,13 +9,19 @@ interface PageProps {
 }
 
 export default async function CampaignDetailPage({ params, searchParams }: PageProps) {
+  await ensurePermission('view:communications')
   const { churchId, campaignId } = await params
   const { ok = '', err = '' } = await searchParams
+  const canManageCampaigns = await checkPermission('manage:communications')
+  const canSendCampaigns = await checkPermission('send:communications')
   const data = await getCampaign(churchId, campaignId) as any
 
   async function scheduleAction(formData: FormData) {
     'use server'
     const scheduledAt = String(formData.get('scheduledAt') || '')
+    if (!(await checkPermission('manage:communications'))) {
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?err=${encodeURIComponent('You are not allowed to schedule campaigns.')}`)
+    }
     if (!scheduledAt) {
       redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?err=${encodeURIComponent('Provide a schedule date and time.')}`)
     }
@@ -30,6 +37,9 @@ export default async function CampaignDetailPage({ params, searchParams }: PageP
 
   async function sendNowAction() {
     'use server'
+    if (!(await checkPermission('send:communications'))) {
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?err=${encodeURIComponent('You are not allowed to send campaigns.')}`)
+    }
     try {
       await sendCampaignNow({ churchId, id: campaignId })
       revalidatePath(`/${churchId}/dashboard/communications/campaigns/${campaignId}`)
@@ -42,6 +52,9 @@ export default async function CampaignDetailPage({ params, searchParams }: PageP
 
   async function cancelAction() {
     'use server'
+    if (!(await checkPermission('manage:communications'))) {
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?err=${encodeURIComponent('You are not allowed to cancel campaigns.')}`)
+    }
     try {
       await cancelCampaign({ churchId, id: campaignId })
       revalidatePath(`/${churchId}/dashboard/communications/campaigns/${campaignId}`)
@@ -63,12 +76,12 @@ export default async function CampaignDetailPage({ params, searchParams }: PageP
           <p className="text-sm text-muted-foreground">{campaign.channel.toUpperCase()} campaign • {campaign.status}</p>
         </div>
         <div className="flex items-center gap-2">
-          {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
+          {canSendCampaigns && (campaign.status === 'draft' || campaign.status === 'scheduled') && (
             <form action={sendNowAction}>
               <button className="rounded-md border px-3 py-2 text-sm" type="submit">Send Now</button>
             </form>
           )}
-          {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
+          {canManageCampaigns && (campaign.status === 'draft' || campaign.status === 'scheduled') && (
             <form action={cancelAction}>
               <button className="rounded-md border px-3 py-2 text-sm" type="submit">Cancel</button>
             </form>
@@ -92,7 +105,7 @@ export default async function CampaignDetailPage({ params, searchParams }: PageP
           Schedule At
           <input name="scheduledAt" type="datetime-local" className="rounded-md border px-3 py-2 text-sm" required />
         </label>
-        <button className="rounded-md border px-3 py-2 text-sm" type="submit">Schedule</button>
+        <button disabled={!canManageCampaigns} className="rounded-md border px-3 py-2 text-sm disabled:opacity-50" type="submit">Schedule</button>
       </form>
 
       <div className="grid gap-3 md:grid-cols-3">
