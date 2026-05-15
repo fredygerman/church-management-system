@@ -84,7 +84,6 @@ async function serverFetch<D = any>({
 
   if (token) {
     headers.set("Authorization", `Bearer ${token}`)
-    // console.log(`[API] Token (first 50 chars): ${token.substring(0, 50)}...`)
   }
 
   const method = (requestConfig.method || "GET").toUpperCase()
@@ -99,22 +98,12 @@ async function serverFetch<D = any>({
       }
     }
 
-    console.log(`[API] ${method} ${url.toString()} with token: ${token ? "yes" : "no"}`)
-    console.log(`[API] Base URL: ${baseUrl}`)
-    if (requestConfig.data) {
-      console.log(`[API] Request body:`, requestConfig.data)
-    }
-
     const response = await fetch(url.toString(), {
       method,
       headers,
       body,
       cache: requestConfig.skipAuth ? "default" : ("no-store" as RequestCache),
     })
-
-    console.log(`[API] Response status: ${response.status}`)
-    const contentType = response.headers.get('content-type')
-    console.log(`[API] Response Content-Type: ${contentType || 'unknown'}`)
 
     let data: ApiResponse<D> = {} as ApiResponse<D>
     try {
@@ -130,12 +119,9 @@ async function serverFetch<D = any>({
       }
     }
 
-    console.log(`[API] Response data:`, data)
-
     // Handle 403 forbidden - keep user signed in and send to forbidden page
     const is403 = response.status === 403 || data?.statusCode === 403
     if (is403 && !requestConfig.skipAuth) {
-      console.log("[API] 403 Forbidden detected")
       redirect("/forbidden")
     }
 
@@ -143,11 +129,8 @@ async function serverFetch<D = any>({
     const is401 = response.status === 401 || data?.statusCode === 401
     
     if (is401 && !requestConfig.skipAuth) {
-      console.log("[API] 401 Unauthorized detected")
-      
       // Only attempt token refresh if we have a token and refresh token
       if (token) {
-        console.log("[API] Attempting token refresh")
         try {
           // Get the session to access the refresh token
           const { getSession } = await import("@/auth")
@@ -176,7 +159,6 @@ async function serverFetch<D = any>({
                 refreshData?.data?.accessToken
               ) {
                 const newAccessToken = refreshData.data.accessToken
-                console.log("[API] Token refresh successful, retrying request")
 
                 // Retry original request with new token
                 const retryHeaders = new Headers(headers)
@@ -196,7 +178,6 @@ async function serverFetch<D = any>({
                 // Check if the retry also failed with 401
                 const retryIs401 = retryResponse.status === 401 || retryData?.statusCode === 401
                 if (retryIs401) {
-                  console.log("[API] Retry after token refresh also failed with 401, redirecting to signin")
                   redirect("/auth/signin?error=session_expired")
                 }
                 
@@ -212,7 +193,6 @@ async function serverFetch<D = any>({
       }
 
       // If we get here, either no token, no refresh token, or refresh failed
-      console.log("[API] Redirecting to signin due to 401")
       redirect("/auth/signin?error=session_expired")
     }
 
@@ -274,12 +254,6 @@ export async function apiRequest<D = any>({
       console.warn("[API] Failed to get token:", error)
     }
   }
-
-  console.log(`[API] Request config:`, {
-    method: requestConfig.method || "GET",
-    url: requestConfig.url,
-    skipAuth,
-  })
 
   return serverFetch<D>({
     requestConfig: {
