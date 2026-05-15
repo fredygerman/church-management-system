@@ -6,7 +6,6 @@ import {
   Param,
   Put,
   Delete,
-  Query,
   BadRequestException,
   UseGuards,
   Req,
@@ -28,12 +27,13 @@ export class FamiliesController {
    */
   @Post()
   @RequirePermission('manage:families')
-  async create(@Body() input: CreateFamilyInput) {
-    if (!input.churchId || !input.familyName) {
+  async create(@Req() request: Request, @Body() input: CreateFamilyInput) {
+    const churchId = request['churchId'] as string
+    if (!churchId || !input.familyName) {
       throw new BadRequestException('Missing required fields: churchId, familyName')
     }
 
-    return this.familiesService.createFamily(input)
+    return this.familiesService.createFamily({ ...input, churchId })
   }
 
   /**
@@ -55,8 +55,8 @@ export class FamiliesController {
    */
   @Get(':id')
   @RequirePermission('view:families')
-  async getOne(@Param('id') id: string) {
-    const family = await this.familiesService.getFamilyById(id)
+  async getOne(@Req() request: Request, @Param('id') id: string) {
+    const family = await this.familiesService.getFamilyById(request['churchId'] as string, id)
     if (!family) {
       throw new BadRequestException(`Family with ID ${id} not found`)
     }
@@ -69,10 +69,11 @@ export class FamiliesController {
   @Put(':id')
   @RequirePermission('manage:families')
   async update(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body() input: UpdateFamilyInput,
   ) {
-    return this.familiesService.updateFamily(id, input)
+    return this.familiesService.updateFamily(request['churchId'] as string, id, input)
   }
 
   /**
@@ -80,8 +81,8 @@ export class FamiliesController {
    */
   @Delete(':id')
   @RequirePermission('manage:families')
-  async delete(@Param('id') id: string) {
-    await this.familiesService.deleteFamily(id)
+  async delete(@Req() request: Request, @Param('id') id: string) {
+    await this.familiesService.deleteFamily(request['churchId'] as string, id)
     return { message: 'Family deleted successfully' }
   }
 }

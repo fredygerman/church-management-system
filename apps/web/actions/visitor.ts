@@ -43,14 +43,14 @@ export async function getVisitors(churchId: string): Promise<any[]> {
 }
 
 // Function to get a single visitor by ID
-export async function getVisitorById(visitorId: string): Promise<any> {
+export async function getVisitorById(churchId: string, visitorId: string): Promise<any> {
   const session = await getSession()
   if (!session?.accessToken) {
     throw new Error('Unauthorized')
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/visitors/${visitorId}`, {
+    const response = await fetch(`${API_BASE_URL}/visitors/${visitorId}?churchId=${churchId}`, {
       headers: {
         Authorization: `Bearer ${session.accessToken}`,
       },
@@ -108,6 +108,7 @@ export async function createVisitor(data: {
 
 // Function to create a followup for a visitor
 export async function createVisitorFollowup(data: {
+  churchId: string
   visitorId: string
   followupDate: string
   notes?: string
@@ -118,7 +119,7 @@ export async function createVisitorFollowup(data: {
     throw new Error('Unauthorized')
   }
 
-  const response = await fetch(`${API_BASE_URL}/visitors/${data.visitorId}/followup`, {
+  const response = await fetch(`${API_BASE_URL}/visitors/${data.visitorId}/followup?churchId=${data.churchId}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${session.accessToken}`,
@@ -137,6 +138,7 @@ export async function createVisitorFollowup(data: {
 
 // Convert visitor to member (soft-deletes visitor on backend)
 export async function convertVisitorToMember(data: {
+  churchId: string
   visitorId: string
   zoneId?: string
 }): Promise<any> {
@@ -145,7 +147,7 @@ export async function convertVisitorToMember(data: {
     throw new Error('Unauthorized')
   }
 
-  const response = await fetch(`${API_BASE_URL}/visitors/${data.visitorId}/convert`, {
+  const response = await fetch(`${API_BASE_URL}/visitors/${data.visitorId}/convert?churchId=${data.churchId}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${session.accessToken}`,

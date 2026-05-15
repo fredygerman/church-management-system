@@ -18,7 +18,7 @@ export default async function MemberEditPage({ params }: MemberEditPageProps) {
   let error = null
 
   try {
-    member = await getMemberById(memberId)
+    member = await getMemberById(churchId, memberId)
   } catch (err) {
     error = err instanceof Error ? err.message : 'Failed to load member'
   }

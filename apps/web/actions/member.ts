@@ -124,9 +124,9 @@ export async function getMembers(
 }
 
 // Function to get a single member by ID
-export async function getMemberById(id: string): Promise<any> {
+export async function getMemberById(churchId: string, id: string): Promise<any> {
   try {
-    return await apiGet(`/members/${id}`)
+    return await apiGet(`/members/${id}`, { churchId })
   } catch (error) {
     console.error('Error fetching member:', error)
     throw error
@@ -134,9 +134,9 @@ export async function getMemberById(id: string): Promise<any> {
 }
 
 // Function to get zones for a member
-export async function getMemberZones(memberId: string): Promise<any[]> {
+export async function getMemberZones(churchId: string, memberId: string): Promise<any[]> {
   try {
-    const data = await apiGet(`/members/${memberId}/zones`)
+    const data = await apiGet(`/members/${memberId}/zones`, { churchId })
     
     // Map the response to extract zone info
     if (Array.isArray(data)) {
@@ -156,6 +156,7 @@ export async function getMemberZones(memberId: string): Promise<any[]> {
 
 // Function to update a member
 export async function updateMember(
+  churchId: string,
   id: string,
   data: {
     firstName?: string
@@ -166,7 +167,7 @@ export async function updateMember(
   }
 ): Promise<any> {
   try {
-    return await apiPut(`/members/${id}`, data)
+    return await apiPut(`/members/${id}`, { ...data, churchId })
   } catch (error) {
     console.error('Error updating member:', error)
     throw error
@@ -174,9 +175,9 @@ export async function updateMember(
 }
 
 // Function to delete a member
-export async function deleteMember(id: string): Promise<void> {
+export async function deleteMember(churchId: string, id: string): Promise<void> {
   try {
-    await apiDelete(`/members/${id}`)
+    await apiDelete(`/members/${id}`, { churchId })
   } catch (error) {
     console.error('Error deleting member:', error)
     throw error

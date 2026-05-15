@@ -19,8 +19,8 @@ interface PageProps {
 export default async function ZoneDetailPage({ params }: PageProps) {
   const { churchId, id: zoneId } = await params
   
-  const zonePromise = getZoneById(zoneId)
-  const membersPromise = getZoneMembers(zoneId)
+  const zonePromise = getZoneById(churchId, zoneId)
+  const membersPromise = getZoneMembers(churchId, zoneId)
 
   const zone = await zonePromise
   const { members: zoneMembers = [] } = await membersPromise
@@ -28,11 +28,11 @@ export default async function ZoneDetailPage({ params }: PageProps) {
   // Fetch leader details if leaderId exists
   let leader = null
   if (zone.leaderId) {
-    leader = await getZoneLeader(zone.leaderId)
+    leader = await getZoneLeader(churchId, zone.leaderId)
   }
 
   // Fetch zone statistics
-  const stats = await getZoneStats(zoneId)
+  const stats = await getZoneStats(churchId, zoneId)
 
   return (
     <div className="flex flex-col space-y-6">

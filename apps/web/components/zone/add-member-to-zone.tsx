@@ -28,12 +28,14 @@ interface Member {
 }
 
 interface AddMemberToZoneProps {
+  churchId: string
   zoneId: string
   availableMembers: Member[]
   onMemberAdded?: () => void
 }
 
 export function AddMemberToZone({ 
+  churchId,
   zoneId, 
   availableMembers, 
   onMemberAdded 
@@ -47,7 +49,7 @@ export function AddMemberToZone({
 
     setIsLoading(true)
     try {
-      await assignMemberToZone(zoneId, selectedMember.id, false) // Not a leader by default
+      await assignMemberToZone(zoneId, selectedMember.id, false, churchId) // Not a leader by default
       toast.success(`${selectedMember.firstName} ${selectedMember.lastName} added to zone`)
       setSelectedMember(null)
       setOpen(false)

@@ -57,7 +57,7 @@ export function ZoneMembersTable({ membersPromise, churchId, zoneId, zone }: Zon
     if (!confirmed) return
 
     try {
-      await unassignMemberFromZone(zoneId, memberId, undefined, churchId)
+      await unassignMemberFromZone(zoneId, memberId, churchId, undefined)
       toast.success("Member removed from zone")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to remove member")

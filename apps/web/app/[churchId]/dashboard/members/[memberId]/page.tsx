@@ -21,10 +21,10 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   let error: string | null = null
 
   try {
-    member = await getMemberById(memberId)
+    member = await getMemberById(churchId, memberId)
     if (member) {
       church = await getChurchById(churchId)
-      zones = await getMemberZones(memberId)
+      zones = await getMemberZones(churchId, memberId)
     }
   } catch (err) {
     error = err instanceof Error ? err.message : 'Failed to load member'

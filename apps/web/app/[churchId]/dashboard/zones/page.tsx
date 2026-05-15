@@ -16,7 +16,7 @@ interface PageProps {
 
 export default async function ZonesPage({ params }: PageProps) {
   const { churchId } = await params
-  const zonePromise = getZones()
+  const zonePromise = getZones(churchId)
 
   return (
     <div className="flex flex-col space-y-6">

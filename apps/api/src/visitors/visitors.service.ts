@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '@church/db'
-import { visitors, visitorFollowups, members, memberZones } from '@church/db'
+import { visitors, visitorFollowups, members, memberZones, zones } from '@church/db'
 import type { Visitor, VisitorFollowup } from '@church/db'
 import { toDateString, getToday } from '@church/config'
 
@@ -43,9 +43,9 @@ export class VisitorsService {
   /**
    * Get a single visitor by ID
    */
-  async getVisitorById(visitorId: string): Promise<Visitor | undefined> {
+  async getVisitorById(churchId: string, visitorId: string): Promise<Visitor | undefined> {
     const [visitor] = await db.query.visitors.findMany({
-      where: eq(visitors.id, visitorId),
+      where: and(eq(visitors.id, visitorId), eq(visitors.churchId, churchId), isNull(visitors.deletedAt)),
     })
     return visitor
   }
@@ -54,6 +54,7 @@ export class VisitorsService {
    * Update visitor details
    */
   async updateVisitor(
+    churchId: string,
     visitorId: string,
     data: {
       firstName?: string
@@ -67,7 +68,7 @@ export class VisitorsService {
     const [updatedVisitor] = await db
       .update(visitors)
       .set({ ...data, updatedAt: toDateString(new Date()) as any })
-      .where(eq(visitors.id, visitorId))
+      .where(and(eq(visitors.id, visitorId), eq(visitors.churchId, churchId), isNull(visitors.deletedAt)))
       .returning()
     return updatedVisitor
   }
@@ -75,11 +76,11 @@ export class VisitorsService {
   /**
    * Soft delete visitor
    */
-  async deleteVisitor(visitorId: string): Promise<void> {
+  async deleteVisitor(churchId: string, visitorId: string): Promise<void> {
     await db
       .update(visitors)
       .set({ deletedAt: getToday() as any })
-      .where(eq(visitors.id, visitorId))
+      .where(and(eq(visitors.id, visitorId), eq(visitors.churchId, churchId), isNull(visitors.deletedAt)))
   }
 
   /**
@@ -96,10 +97,11 @@ export class VisitorsService {
    * Creates a new member record and links the visitor to it
    */
   async convertVisitorToMember(data: {
+    churchId: string
     visitorId: string
     zoneId?: string
   }): Promise<any> {
-    const visitor = await this.getVisitorById(data.visitorId)
+    const visitor = await this.getVisitorById(data.churchId, data.visitorId)
     
     if (!visitor) {
       throw new BadRequestException(`Visitor with ID ${data.visitorId} not found`)
@@ -123,6 +125,13 @@ export class VisitorsService {
 
     // Assign to zone if provided
     if (data.zoneId) {
+      const [zone] = await db.query.zones.findMany({
+        where: and(eq(zones.id, data.zoneId), eq(zones.churchId, data.churchId), isNull(zones.deletedAt)),
+        limit: 1,
+      })
+      if (!zone) {
+        throw new BadRequestException('Zone not found in church context')
+      }
       await db.insert(memberZones).values({
         memberId: newMember.id,
         zoneId: data.zoneId,
@@ -147,7 +156,7 @@ export class VisitorsService {
       .set({ status: 'converted', updatedAt: today as any })
       .where(eq(visitorFollowups.visitorId, data.visitorId))
 
-    return { visitor: await this.getVisitorById(data.visitorId), member: newMember }
+    return { visitor: await this.getVisitorById(data.churchId, data.visitorId), member: newMember }
   }
 
   /**

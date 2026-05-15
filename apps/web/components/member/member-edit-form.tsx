@@ -62,7 +62,7 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
   async function onSubmit(data: MemberEditFormValues) {
     setIsSubmitting(true)
     try {
-      await updateMember(member.id, data)
+      await updateMember(churchId, member.id, data)
       toast.success('Member updated successfully!')
       router.push(`/${churchId}/dashboard/members/${member.id}`)
     } catch (err) {

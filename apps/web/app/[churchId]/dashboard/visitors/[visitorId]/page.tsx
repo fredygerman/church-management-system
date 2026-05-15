@@ -20,7 +20,7 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
   let canEdit = false
 
   try {
-    visitor = await getVisitorById(visitorId)
+    visitor = await getVisitorById(churchId, visitorId)
     canEdit = await checkPermission('update:visitor')
   } catch (err) {
     error = err instanceof Error ? err.message : 'Failed to load visitor'

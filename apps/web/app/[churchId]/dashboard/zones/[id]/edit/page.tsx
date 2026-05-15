@@ -9,7 +9,7 @@ interface PageProps {
 
 export default async function EditZonePage({ params }: PageProps) {
   const { churchId, id } = await params
-  const zone = await getZoneById(id)
+  const zone = await getZoneById(churchId, id)
 
   return (
     <div className="flex flex-col space-y-6">

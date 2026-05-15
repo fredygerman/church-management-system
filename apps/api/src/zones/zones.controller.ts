@@ -28,12 +28,13 @@ export class ZonesController {
    */
   @Post()
   @RequirePermission('manage:zones')
-  async create(@Body() input: CreateZoneInput) {
-    if (!input.churchId || !input.name) {
+  async create(@Req() request: Request, @Body() input: CreateZoneInput) {
+    const churchId = request['churchId'] as string
+    if (!churchId || !input.name) {
       throw new BadRequestException('Missing required fields: churchId, name')
     }
 
-    return this.zonesService.createZone(input)
+    return this.zonesService.createZone({ ...input, churchId })
   }
 
   /**
@@ -56,9 +57,10 @@ export class ZonesController {
   @Get('by-meeting-day')
   @RequirePermission('manage:zones')
   async getByMeetingDay(
-    @Query('churchId') churchId: string,
+    @Req() request: Request,
     @Query('meetingDay') meetingDay: string,
   ) {
+    const churchId = request['churchId'] as string
     if (!churchId || !meetingDay) {
       throw new BadRequestException('churchId and meetingDay are required')
     }
@@ -71,8 +73,8 @@ export class ZonesController {
    */
   @Get(':id')
   @RequirePermission('manage:zones')
-  async getOne(@Param('id') id: string) {
-    const zone = await this.zonesService.getZoneById(id)
+  async getOne(@Req() request: Request, @Param('id') id: string) {
+    const zone = await this.zonesService.getZoneByIdInChurch(request['churchId'] as string, id)
     if (!zone) {
       throw new BadRequestException(`Zone with ID ${id} not found`)
     }
@@ -85,10 +87,11 @@ export class ZonesController {
   @Put(':id')
   @RequirePermission('manage:zones')
   async update(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body() input: UpdateZoneInput,
   ) {
-    return this.zonesService.updateZone(id, input)
+    return this.zonesService.updateZone(request['churchId'] as string, id, input)
   }
 
   /**
@@ -96,8 +99,8 @@ export class ZonesController {
    */
   @Delete(':id')
   @RequirePermission('manage:zones')
-  async delete(@Param('id') id: string) {
-    await this.zonesService.deleteZone(id)
+  async delete(@Req() request: Request, @Param('id') id: string) {
+    await this.zonesService.deleteZone(request['churchId'] as string, id)
     return { message: 'Zone deleted successfully' }
   }
 
@@ -106,8 +109,8 @@ export class ZonesController {
    */
   @Get(':id/members')
   @RequirePermission('manage:zones')
-  async getZoneMembers(@Param('id') id: string) {
-    return this.zonesService.getZoneMembers(id)
+  async getZoneMembers(@Req() request: Request, @Param('id') id: string) {
+    return this.zonesService.getZoneMembers(request['churchId'] as string, id)
   }
 
   /**
@@ -116,6 +119,7 @@ export class ZonesController {
   @Post(':id/members')
   @RequirePermission('manage:zones')
   async assignMember(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body('memberId') memberId: string,
     @Body('isLeader') isLeader: boolean = false,
@@ -124,7 +128,7 @@ export class ZonesController {
       throw new BadRequestException('memberId is required')
     }
 
-    return this.zonesService.assignMemberToZone(id, memberId, isLeader)
+    return this.zonesService.assignMemberToZone(request['churchId'] as string, id, memberId, isLeader)
   }
 
   /**
@@ -133,10 +137,11 @@ export class ZonesController {
   @Delete(':id/members/:memberId')
   @RequirePermission('manage:zones')
   async removeMember(
+    @Req() request: Request,
     @Param('id') id: string,
     @Param('memberId') memberId: string,
   ) {
-    await this.zonesService.removeMemberFromZone(id, memberId)
+    await this.zonesService.removeMemberFromZone(request['churchId'] as string, id, memberId)
     return { message: 'Member removed from zone' }
   }
 
@@ -146,6 +151,7 @@ export class ZonesController {
   @Post(':id/assign-leader')
   @RequirePermission('manage:zones')
   async assignLeader(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body('leaderId') leaderId: string,
   ) {
@@ -153,7 +159,7 @@ export class ZonesController {
       throw new BadRequestException('leaderId is required')
     }
 
-    return this.zonesService.assignLeader(id, leaderId)
+    return this.zonesService.assignLeader(request['churchId'] as string, id, leaderId)
   }
 
   /**
@@ -161,7 +167,7 @@ export class ZonesController {
    */
   @Get(':id/stats')
   @RequirePermission('manage:zones')
-  async getStats(@Param('id') id: string) {
-    return this.zonesService.getZoneStats(id)
+  async getStats(@Req() request: Request, @Param('id') id: string) {
+    return this.zonesService.getZoneStats(request['churchId'] as string, id)
   }
 }

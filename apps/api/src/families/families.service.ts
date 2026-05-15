@@ -33,9 +33,9 @@ export class FamiliesService {
   /**
    * Get a single family by ID
    */
-  async getFamilyById(familyId: string): Promise<Family | undefined> {
+  async getFamilyById(churchId: string, familyId: string): Promise<Family | undefined> {
     const [family] = await db.query.families.findMany({
-      where: eq(families.id, familyId),
+      where: and(eq(families.id, familyId), eq(families.churchId, churchId), isNull(families.deletedAt)),
     })
     return family
   }
@@ -43,11 +43,11 @@ export class FamiliesService {
   /**
    * Update family details
    */
-  async updateFamily(familyId: string, data: Partial<CreateFamilyInput>): Promise<Family> {
+  async updateFamily(churchId: string, familyId: string, data: Partial<CreateFamilyInput>): Promise<Family> {
     const [updatedFamily] = await db
       .update(families)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(families.id, familyId))
+      .where(and(eq(families.id, familyId), eq(families.churchId, churchId), isNull(families.deletedAt)))
       .returning()
     return updatedFamily
   }
@@ -55,10 +55,10 @@ export class FamiliesService {
   /**
    * Soft delete family
    */
-  async deleteFamily(familyId: string): Promise<void> {
+  async deleteFamily(churchId: string, familyId: string): Promise<void> {
     await db
       .update(families)
       .set({ deletedAt: new Date() })
-      .where(eq(families.id, familyId))
+      .where(and(eq(families.id, familyId), eq(families.churchId, churchId), isNull(families.deletedAt)))
   }
 }

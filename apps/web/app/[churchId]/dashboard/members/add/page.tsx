@@ -8,7 +8,7 @@ export default async function NewMemberPage({
   params: Promise<{ churchId: string }>
 }) {
   const { churchId } = await params
-  const zones = await getZones()
+  const zones = await getZones(churchId)
 
   return (
     <div className="container mx-auto py-10">

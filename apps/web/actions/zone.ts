@@ -5,13 +5,9 @@ import { getSession } from '@/auth'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api-helpers'
 
 // Function to get all zones for a church
-export async function getZones(churchId?: string): Promise<any[]> {
+export async function getZones(churchId: string): Promise<any[]> {
   try {
-    const endpoint = churchId 
-      ? `/zones?churchId=${churchId}`
-      : `/zones`
-    
-    const result = await apiGet(endpoint)
+    const result = await apiGet('/zones', { churchId })
     return Array.isArray(result) ? result : []
   } catch (error) {
     // Re-throw Next.js control flow errors (redirect, notFound, etc)
@@ -24,9 +20,9 @@ export async function getZones(churchId?: string): Promise<any[]> {
 }
 
 // Function to get a single zone by ID
-export async function getZoneById(zoneId: string): Promise<any> {
+export async function getZoneById(churchId: string, zoneId: string): Promise<any> {
   try {
-    return await apiGet(`/zones/${zoneId}`)
+    return await apiGet(`/zones/${zoneId}`, { churchId })
   } catch (error) {
     console.error('Error fetching zone:', error)
     throw error
@@ -35,6 +31,7 @@ export async function getZoneById(zoneId: string): Promise<any> {
 
 // Function to get members of a zone
 export async function getZoneMembers(
+  churchId: string,
   zoneId: string,
   queryParams?: {
     page?: number
@@ -43,13 +40,12 @@ export async function getZoneMembers(
   }
 ): Promise<{ members: any[]; pageCount: number }> {
   try {
-    const params = new URLSearchParams({
+    const result = await apiGet(`/zones/${zoneId}/members`, {
+      churchId,
       page: (queryParams?.page ?? 1).toString(),
       per_page: (queryParams?.per_page ?? 10).toString(),
       sort: queryParams?.sort ?? 'firstName.asc',
     })
-
-    const result = await apiGet(`/zones/${zoneId}/members?${params}`)
     const pageCount = result?.meta?.total_pages || 1
     
     return { 
@@ -111,9 +107,9 @@ export async function updateZone(zoneId: string, data: {
   name?: string
   leader?: string
   description?: string
-}, churchId?: string): Promise<any> {
+}, churchId: string): Promise<any> {
   try {
-    const result = await apiPut(`/zones/${zoneId}`, data)
+    const result = await apiPut(`/zones/${zoneId}`, { ...data, churchId })
     
     // Revalidate zone detail page if churchId is provided
     if (churchId) {
@@ -129,9 +125,9 @@ export async function updateZone(zoneId: string, data: {
 }
 
 // Function to delete a zone
-export async function deleteZone(zoneId: string, churchId?: string): Promise<void> {
+export async function deleteZone(zoneId: string, churchId: string): Promise<void> {
   try {
-    await apiDelete(`/zones/${zoneId}`)
+    await apiDelete(`/zones/${zoneId}`, { churchId })
     
     // Revalidate zones list page if churchId is provided
     if (churchId) {
@@ -144,9 +140,9 @@ export async function deleteZone(zoneId: string, churchId?: string): Promise<voi
 }
 
 // Function to get zone leader details
-export async function getZoneLeader(leaderId: string): Promise<any> {
+export async function getZoneLeader(churchId: string, leaderId: string): Promise<any> {
   try {
-    return await apiGet(`/members/${leaderId}`)
+    return await apiGet(`/members/${leaderId}`, { churchId })
   } catch (error) {
     console.error('Error fetching zone leader:', error)
     return null
@@ -158,12 +154,13 @@ export async function assignMemberToZone(
   zoneId: string,
   memberId: string,
   isLeader: boolean = false,
-  churchId?: string
+  churchId: string
 ): Promise<any> {
   try {
     const result = await apiPost(`/zones/${zoneId}/members`, {
       memberId,
       isLeader,
+      churchId,
     })
     
     // Revalidate zone detail page if churchId is provided
@@ -182,12 +179,12 @@ export async function assignMemberToZone(
 export async function unassignMemberFromZone(
   zoneId: string,
   memberId: string,
+  churchId: string,
   newLeaderId?: string,
-  churchId?: string
 ): Promise<void> {
   try {
     // If member is a leader, check if there's a replacement
-    const zone = await getZoneById(zoneId)
+    const zone = await getZoneById(churchId, zoneId)
     if (zone.leaderId === memberId && !newLeaderId) {
       throw new Error('Cannot remove the zone leader without assigning a replacement leader')
     }
@@ -198,7 +195,7 @@ export async function unassignMemberFromZone(
     }
 
     // Remove member from zone
-    await apiDelete(`/zones/${zoneId}/members/${memberId}`)
+    await apiDelete(`/zones/${zoneId}/members/${memberId}`, { churchId })
     
     // Revalidate zone detail page if churchId is provided
     if (churchId) {
@@ -211,9 +208,9 @@ export async function unassignMemberFromZone(
 }
 
 // Function to get zone statistics
-export async function getZoneStats(zoneId: string): Promise<any> {
+export async function getZoneStats(churchId: string, zoneId: string): Promise<any> {
   try {
-    return await apiGet(`/zones/${zoneId}/stats`)
+    return await apiGet(`/zones/${zoneId}/stats`, { churchId })
   } catch (error) {
     console.error('Error fetching zone stats:', error)
     return { totalMembers: 0, leaders: 0, regularMembers: 0 }

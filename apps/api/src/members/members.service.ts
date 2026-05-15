@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { eq, and, isNull, or, ilike } from 'drizzle-orm'
 import { db } from '@church/db'
-import { members, memberZones, type NewMember, type Member, type MemberZone } from '@church/db'
+import { members, memberZones, zones, type Member, type MemberZone } from '@church/db'
 
 export type CreateMemberInput = {
   churchId: string
@@ -46,9 +46,9 @@ export class MembersService {
   /**
    * Get a single member by ID
    */
-  async getMemberById(memberId: string): Promise<Member | undefined> {
+  async getMemberById(churchId: string, memberId: string): Promise<Member | undefined> {
     const [member] = await db.query.members.findMany({
-      where: eq(members.id, memberId),
+      where: and(eq(members.id, memberId), eq(members.churchId, churchId), isNull(members.deletedAt)),
     })
     return member
   }
@@ -56,11 +56,11 @@ export class MembersService {
   /**
    * Update member details
    */
-  async updateMember(memberId: string, data: Partial<CreateMemberInput>): Promise<Member> {
+  async updateMember(churchId: string, memberId: string, data: Partial<CreateMemberInput>): Promise<Member> {
     const [updatedMember] = await db
       .update(members)
       .set({ ...data, updatedAt: new Date() })
-      .where(eq(members.id, memberId))
+      .where(and(eq(members.id, memberId), eq(members.churchId, churchId), isNull(members.deletedAt)))
       .returning()
     return updatedMember
   }
@@ -68,11 +68,11 @@ export class MembersService {
   /**
    * Soft delete member
    */
-  async deleteMember(memberId: string): Promise<void> {
+  async deleteMember(churchId: string, memberId: string): Promise<void> {
     await db
       .update(members)
       .set({ deletedAt: new Date() })
-      .where(eq(members.id, memberId))
+      .where(and(eq(members.id, memberId), eq(members.churchId, churchId), isNull(members.deletedAt)))
   }
 
   /**
@@ -97,20 +97,33 @@ export class MembersService {
   /**
    * Get members by zone (via memberZones junction table)
    */
-  async getMembersByZone(zoneId: string): Promise<Member[]> {
+  async getMembersByZone(churchId: string, zoneId: string): Promise<Member[]> {
     const memberRecords = await db.query.memberZones.findMany({
       where: eq(memberZones.zoneId, zoneId),
-      with: { member: true },
+      with: { member: true, zone: true },
     })
     return memberRecords
-      .map(record => record.member)
-      .filter(member => !member.deletedAt)
+      .filter((record) => record.zone?.churchId === churchId)
+      .map((record) => record.member)
+      .filter((member) => member.churchId === churchId && !member.deletedAt)
   }
 
   /**
    * Assign member to zone
    */
-  async assignToZone(memberId: string, zoneId: string, isLeader: boolean = false): Promise<MemberZone> {
+  async assignToZone(churchId: string, memberId: string, zoneId: string, isLeader: boolean = false): Promise<MemberZone> {
+    const [member] = await db.query.members.findMany({
+      where: and(eq(members.id, memberId), eq(members.churchId, churchId), isNull(members.deletedAt)),
+      limit: 1,
+    })
+    const [zone] = await db.query.zones.findMany({
+      where: and(eq(zones.id, zoneId), eq(zones.churchId, churchId), isNull(zones.deletedAt)),
+      limit: 1,
+    })
+    if (!member || !zone) {
+      throw new Error('Member or zone not found in church context')
+    }
+
     const [assignment] = await db
       .insert(memberZones)
       .values({ memberId, zoneId, isLeader })
@@ -133,19 +146,20 @@ export class MembersService {
   /**
    * Get zones for a member
    */
-  async getMemberZones(memberId: string): Promise<MemberZone[]> {
+  async getMemberZones(churchId: string, memberId: string): Promise<MemberZone[]> {
     return db.query.memberZones.findMany({
       where: eq(memberZones.memberId, memberId),
       with: { zone: true },
-    })
+    }).then((rows) => rows.filter((row) => row.zone?.churchId === churchId))
   }
 
   /**
    * Get members by family
    */
-  async getMembersByFamily(familyId: string): Promise<Member[]> {
+  async getMembersByFamily(churchId: string, familyId: string): Promise<Member[]> {
     return db.query.members.findMany({
       where: and(
+        eq(members.churchId, churchId),
         eq(members.familyId, familyId),
         isNull(members.deletedAt),
       ),
@@ -155,14 +169,13 @@ export class MembersService {
   /**
    * Link member to family
    */
-  async linkToFamily(memberId: string, familyId: string): Promise<Member> {
+  async linkToFamily(churchId: string, memberId: string, familyId: string): Promise<Member> {
     const [updatedMember] = await db
       .update(members)
       .set({ familyId, updatedAt: new Date() })
-      .where(eq(members.id, memberId))
+      .where(and(eq(members.id, memberId), eq(members.churchId, churchId), isNull(members.deletedAt)))
       .returning()
     return updatedMember
   }
 }
-
 

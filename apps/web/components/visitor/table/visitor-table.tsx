@@ -29,7 +29,7 @@ export function VisitorTable({ visitorPromise, churchId }: VisitorTableProps) {
   const handleConvert = async (visitorId: string) => {
     setIsLoading(true)
     try {
-      await convertVisitorToMember({ visitorId })
+      await convertVisitorToMember({ churchId, visitorId })
       toast.success("Visitor converted to member successfully")
       router.refresh()
     } catch (error) {

@@ -53,7 +53,7 @@ export function ZoneEditForm({ zone, churchId }: ZoneEditFormProps) {
   async function onSubmit(data: ZoneEditFormValues) {
     setIsSubmitting(true)
     try {
-      await updateZone(zone.id, data)
+      await updateZone(zone.id, data, churchId)
       toast.success('Zone updated successfully!')
       router.push(`/${churchId}/dashboard/zones/${zone.id}`)
     } catch (err) {

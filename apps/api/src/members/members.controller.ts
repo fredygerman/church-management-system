@@ -28,12 +28,13 @@ export class MembersController {
    */
   @Post()
   @RequirePermission('create:member')
-  async create(@Body() input: CreateMemberInput) {
-    if (!input.churchId || !input.firstName || !input.lastName || !input.dateOfBirth || !input.gender || !input.maritalStatus) {
+  async create(@Req() request: Request, @Body() input: CreateMemberInput) {
+    const churchId = request['churchId'] as string
+    if (!churchId || !input.firstName || !input.lastName || !input.dateOfBirth || !input.gender || !input.maritalStatus) {
       throw new BadRequestException('Missing required fields')
     }
 
-    return this.membersService.createMember(input)
+    return this.membersService.createMember({ ...input, churchId })
   }
 
   /**
@@ -72,8 +73,8 @@ export class MembersController {
    */
   @Get('zone/:zoneId')
   @RequirePermission('read:member')
-  async getByZone(@Param('zoneId') zoneId: string) {
-    return this.membersService.getMembersByZone(zoneId)
+  async getByZone(@Req() request: Request, @Param('zoneId') zoneId: string) {
+    return this.membersService.getMembersByZone(request['churchId'] as string, zoneId)
   }
 
   /**
@@ -81,8 +82,8 @@ export class MembersController {
    */
   @Get('family/:familyId')
   @RequirePermission('view:families')
-  async getByFamily(@Param('familyId') familyId: string) {
-    return this.membersService.getMembersByFamily(familyId)
+  async getByFamily(@Req() request: Request, @Param('familyId') familyId: string) {
+    return this.membersService.getMembersByFamily(request['churchId'] as string, familyId)
   }
 
   /**
@@ -90,8 +91,8 @@ export class MembersController {
    */
   @Get(':id')
   @RequirePermission('read:member')
-  async getOne(@Param('id') id: string) {
-    const member = await this.membersService.getMemberById(id)
+  async getOne(@Req() request: Request, @Param('id') id: string) {
+    const member = await this.membersService.getMemberById(request['churchId'] as string, id)
     if (!member) {
       throw new BadRequestException(`Member with ID ${id} not found`)
     }
@@ -104,10 +105,11 @@ export class MembersController {
   @Put(':id')
   @RequirePermission('update:member')
   async update(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body() input: UpdateMemberInput,
   ) {
-    return this.membersService.updateMember(id, input)
+    return this.membersService.updateMember(request['churchId'] as string, id, input)
   }
 
   /**
@@ -115,8 +117,8 @@ export class MembersController {
    */
   @Delete(':id')
   @RequirePermission('delete:member')
-  async delete(@Param('id') id: string) {
-    await this.membersService.deleteMember(id)
+  async delete(@Req() request: Request, @Param('id') id: string) {
+    await this.membersService.deleteMember(request['churchId'] as string, id)
     return { message: 'Member deleted successfully' }
   }
 
@@ -125,8 +127,8 @@ export class MembersController {
    */
   @Get(':id/zones')
   @RequirePermission('read:member')
-  async getMemberZones(@Param('id') id: string) {
-    return this.membersService.getMemberZones(id)
+  async getMemberZones(@Req() request: Request, @Param('id') id: string) {
+    return this.membersService.getMemberZones(request['churchId'] as string, id)
   }
 
   /**
@@ -135,6 +137,7 @@ export class MembersController {
   @Post(':id/assign-zone')
   @RequirePermission('manage:zones')
   async assignToZone(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body('zoneId') zoneId: string,
   ) {
@@ -142,7 +145,7 @@ export class MembersController {
       throw new BadRequestException('zoneId is required')
     }
 
-    return this.membersService.assignToZone(id, zoneId)
+    return this.membersService.assignToZone(request['churchId'] as string, id, zoneId)
   }
 
   /**
@@ -151,6 +154,7 @@ export class MembersController {
   @Post(':id/link-family')
   @RequirePermission('manage:families')
   async linkToFamily(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body('familyId') familyId: string,
   ) {
@@ -158,6 +162,6 @@ export class MembersController {
       throw new BadRequestException('familyId is required')
     }
 
-    return this.membersService.linkToFamily(id, familyId)
+    return this.membersService.linkToFamily(request['churchId'] as string, id, familyId)
   }
 }

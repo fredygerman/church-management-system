@@ -109,6 +109,7 @@ export async function apiPut<T = any>(
  */
 export async function apiDelete<T = any>(
   endpoint: string,
+  params?: Record<string, any>,
   options?: { skipAuth?: boolean }
 ): Promise<T> {
   try {
@@ -116,6 +117,7 @@ export async function apiDelete<T = any>(
       requestConfig: {
         method: "DELETE",
         url: endpoint,
+        params,
       },
       skipAuth: options?.skipAuth,
     })

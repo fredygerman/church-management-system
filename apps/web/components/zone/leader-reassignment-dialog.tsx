@@ -64,7 +64,7 @@ export function LeaderReassignmentDialog({
 
     setIsRemoving(true)
     try {
-      await unassignMemberFromZone(zoneId, memberId, selectedLeaderId, churchId)
+      await unassignMemberFromZone(zoneId, memberId, churchId, selectedLeaderId)
       toast.success("Member removed and new leader assigned")
       
       setSelectedLeaderId("")

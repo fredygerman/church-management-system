@@ -70,7 +70,7 @@ export function ZoneForm({ churchId, initialData, isEditMode = false }: ZoneForm
     setIsSubmitting(true)
     try {
       if (isEditMode && initialData?.id) {
-        await updateZone(initialData.id, data)
+        await updateZone(initialData.id, data, churchId)
         toast.success("Zone updated successfully!")
         router.push(`/${churchId}/dashboard/zones/${initialData.id}`)
       } else {

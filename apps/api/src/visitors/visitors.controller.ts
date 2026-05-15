@@ -6,7 +6,6 @@ import {
   Param,
   Put,
   Delete,
-  Query,
   BadRequestException,
   UseGuards,
   Req,
@@ -32,13 +31,15 @@ export class VisitorsController {
    */
   @Post()
   @RequirePermission('create:visitor')
-  async create(@Body() createVisitorDto: CreateVisitorDto) {
-    if (!createVisitorDto.churchId || !createVisitorDto.firstName || !createVisitorDto.lastName) {
+  async create(@Req() request: Request, @Body() createVisitorDto: CreateVisitorDto) {
+    const churchId = request['churchId'] as string
+    if (!churchId || !createVisitorDto.firstName || !createVisitorDto.lastName) {
       throw new BadRequestException('Missing required fields: churchId, firstName, lastName')
     }
 
     return this.visitorsService.createVisitor({
       ...createVisitorDto,
+      churchId,
       visitDate: createVisitorDto.visitDate ? new Date(createVisitorDto.visitDate) : undefined,
     })
   }
@@ -62,8 +63,8 @@ export class VisitorsController {
    */
   @Get(':id')
   @RequirePermission('view:visitors')
-  async getOne(@Param('id') id: string) {
-    const visitor = await this.visitorsService.getVisitorById(id)
+  async getOne(@Req() request: Request, @Param('id') id: string) {
+    const visitor = await this.visitorsService.getVisitorById(request['churchId'] as string, id)
     if (!visitor) {
       throw new BadRequestException(`Visitor with ID ${id} not found`)
     }
@@ -76,10 +77,11 @@ export class VisitorsController {
   @Put(':id')
   @RequirePermission('update:visitor')
   async update(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body() updateVisitorDto: UpdateVisitorDto,
   ) {
-    return this.visitorsService.updateVisitor(id, updateVisitorDto)
+    return this.visitorsService.updateVisitor(request['churchId'] as string, id, updateVisitorDto)
   }
 
   /**
@@ -87,8 +89,8 @@ export class VisitorsController {
    */
   @Delete(':id')
   @RequirePermission('update:visitor')
-  async delete(@Param('id') id: string) {
-    await this.visitorsService.deleteVisitor(id)
+  async delete(@Req() request: Request, @Param('id') id: string) {
+    await this.visitorsService.deleteVisitor(request['churchId'] as string, id)
     return { message: 'Visitor deleted successfully' }
   }
 
@@ -98,10 +100,12 @@ export class VisitorsController {
   @Post(':id/convert')
   @RequirePermission('update:visitor')
   async convertToMember(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body() convertVisitorDto: ConvertVisitorToMemberDto,
   ) {
     return this.visitorsService.convertVisitorToMember({
+      churchId: request['churchId'] as string,
       visitorId: id,
       zoneId: convertVisitorDto.zoneId,
     })
@@ -113,14 +117,10 @@ export class VisitorsController {
   @Get('status/:status')
   @RequirePermission('view:visitors')
   async getByStatus(
+    @Req() request: Request,
     @Param('status') status: string,
-    @Query('churchId') churchId: string,
   ) {
-    if (!churchId) {
-      throw new BadRequestException('churchId query parameter is required')
-    }
-
-    return this.visitorsService.getVisitorsByStatus(churchId, status)
+    return this.visitorsService.getVisitorsByStatus(request['churchId'] as string, status)
   }
 
   /**

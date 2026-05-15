@@ -7,7 +7,7 @@ export async function createFamilyRelationship(input: { churchId: string; family
 }
 
 export async function removeFamilyRelationship(churchId: string, relationshipId: string) {
-  return apiDelete(`/family-lifecycle/relationships/${relationshipId}`)
+  return apiDelete(`/family-lifecycle/relationships/${relationshipId}`, { churchId })
 }
 
 export async function listFamilyRelationships(churchId: string, familyId?: string) {

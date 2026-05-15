@@ -31,21 +31,12 @@ export class ChurchContextGuard implements CanActivate {
       throw new ForbiddenException('User context not found')
     }
 
-    console.log('[ChurchContextGuard] User role:', user.role, 'User churchId:', user.churchId, 'Request path:', request.path)
-
-    // Get churchId from:
-    // 1. Request params (/churches/:churchId/members)
-    // 2. Query string (?churchId=xxx)
-    // 3. Request body (POST/PUT)
-    // 4. User's assigned church (for regular users)
-    const churchIdFromParams = request.params.churchId
-    const churchIdFromQuery = request.query.churchId
-    const churchIdFromBody = (request.body as any)?.churchId
+    const churchIdFromParams = request.params.churchId as string | undefined
+    const churchIdFromQuery = request.query.churchId as string | undefined
+    const churchIdFromBody = (request.body as any)?.churchId as string | undefined
 
     let requestedChurchId =
       churchIdFromParams || churchIdFromQuery || churchIdFromBody
-
-    console.log('[ChurchContextGuard] Query params:', request.query, 'churchIdFromQuery:', churchIdFromQuery)
 
     // Super admin can view all churches
     if (user.role === UserRole.SUPER_ADMIN) {
@@ -53,15 +44,23 @@ export class ChurchContextGuard implements CanActivate {
       if (!requestedChurchId && user.churchId) {
         requestedChurchId = user.churchId
       }
-      // Set the churchId on request for controllers to use
+
       if (requestedChurchId) {
         request['churchId'] = requestedChurchId
-        console.log('[ChurchContextGuard] Super admin, set churchId:', requestedChurchId)
+        if (request.body && typeof request.body === 'object') {
+          request.body.churchId = requestedChurchId
+        }
       }
       return true
     }
 
-    // If no churchId in request, check if it's a safe endpoint
+    // Non-super-admin users are church-bound. If no explicit churchId is provided,
+    // consistently default to the church assigned on the authenticated user.
+    if (!requestedChurchId && user.churchId) {
+      requestedChurchId = user.churchId
+    }
+
+    // If still no churchId in request, check if it's a safe endpoint
     if (!requestedChurchId) {
       // Allow profile endpoints and GET /churches without churchId (for new users)
       const safePaths = ['/profile', '/users/me']
@@ -96,6 +95,9 @@ export class ChurchContextGuard implements CanActivate {
 
     // Store churchId in request for use in controllers
     request['churchId'] = requestedChurchId
+    if (request.body && typeof request.body === 'object') {
+      request.body.churchId = requestedChurchId
+    }
 
     return true
   }

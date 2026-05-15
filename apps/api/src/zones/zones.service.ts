@@ -43,14 +43,22 @@ export class ZonesService {
     return zone
   }
 
+  async getZoneByIdInChurch(churchId: string, zoneId: string): Promise<Zone | undefined> {
+    const [zone] = await db.query.zones.findMany({
+      where: and(eq(zones.id, zoneId), eq(zones.churchId, churchId), isNull(zones.deletedAt)),
+      limit: 1,
+    })
+    return zone
+  }
+
   /**
    * Update zone details
    */
-  async updateZone(zoneId: string, data: Partial<CreateZoneInput>): Promise<Zone> {
+  async updateZone(churchId: string, zoneId: string, data: Partial<CreateZoneInput>): Promise<Zone> {
     const [updatedZone] = await db
       .update(zones)
       .set({ ...data, updatedAt: new Date().toISOString().split('T')[0] as any })
-      .where(eq(zones.id, zoneId))
+      .where(and(eq(zones.id, zoneId), eq(zones.churchId, churchId), isNull(zones.deletedAt)))
       .returning()
     return updatedZone
   }
@@ -58,21 +66,21 @@ export class ZonesService {
   /**
    * Soft delete zone
    */
-  async deleteZone(zoneId: string): Promise<void> {
+  async deleteZone(churchId: string, zoneId: string): Promise<void> {
     await db
       .update(zones)
       .set({ deletedAt: new Date().toISOString().split('T')[0] as any })
-      .where(eq(zones.id, zoneId))
+      .where(and(eq(zones.id, zoneId), eq(zones.churchId, churchId), isNull(zones.deletedAt)))
   }
 
   /**
    * Assign a leader to a zone
    */
-  async assignLeader(zoneId: string, leaderId: string): Promise<Zone> {
+  async assignLeader(churchId: string, zoneId: string, leaderId: string): Promise<Zone> {
     const [updatedZone] = await db
       .update(zones)
       .set({ leaderId, updatedAt: new Date().toISOString().split('T')[0] as any })
-      .where(eq(zones.id, zoneId))
+      .where(and(eq(zones.id, zoneId), eq(zones.churchId, churchId), isNull(zones.deletedAt)))
       .returning()
     return updatedZone
   }
@@ -93,7 +101,7 @@ export class ZonesService {
   /**
    * Get members in a zone
    */
-  async getZoneMembers(zoneId: string): Promise<any[]> {
+  async getZoneMembers(churchId: string, zoneId: string): Promise<any[]> {
     // Use a join query instead of relational query to avoid relation issues
     const result = await db
       .select({
@@ -116,9 +124,11 @@ export class ZonesService {
         isLeader: memberZones.isLeader,
       })
       .from(memberZones)
+      .innerJoin(zones, eq(memberZones.zoneId, zones.id))
       .innerJoin(members, eq(memberZones.memberId, members.id))
       .where(and(
         eq(memberZones.zoneId, zoneId),
+        eq(zones.churchId, churchId),
         isNull(members.deletedAt)
       ))
     
@@ -128,7 +138,19 @@ export class ZonesService {
   /**
    * Assign a member to a zone
    */
-  async assignMemberToZone(zoneId: string, memberId: string, isLeader: boolean = false): Promise<any> {
+  async assignMemberToZone(churchId: string, zoneId: string, memberId: string, isLeader: boolean = false): Promise<any> {
+    const [zone] = await db.query.zones.findMany({
+      where: and(eq(zones.id, zoneId), eq(zones.churchId, churchId), isNull(zones.deletedAt)),
+      limit: 1,
+    })
+    const [member] = await db.query.members.findMany({
+      where: and(eq(members.id, memberId), eq(members.churchId, churchId), isNull(members.deletedAt)),
+      limit: 1,
+    })
+    if (!zone || !member) {
+      throw new Error('Zone or member not found in church context')
+    }
+
     // Use insert with onConflict to handle upsert
     const [assignment] = await db
       .insert(memberZones)
@@ -144,7 +166,7 @@ export class ZonesService {
       await db
         .update(zones)
         .set({ leaderId: memberId, updatedAt: new Date().toISOString().split('T')[0] as any })
-        .where(eq(zones.id, zoneId))
+        .where(and(eq(zones.id, zoneId), eq(zones.churchId, churchId), isNull(zones.deletedAt)))
     }
     
     return assignment
@@ -153,7 +175,15 @@ export class ZonesService {
   /**
    * Remove a member from a zone
    */
-  async removeMemberFromZone(zoneId: string, memberId: string): Promise<void> {
+  async removeMemberFromZone(churchId: string, zoneId: string, memberId: string): Promise<void> {
+    const [zone] = await db.query.zones.findMany({
+      where: and(eq(zones.id, zoneId), eq(zones.churchId, churchId), isNull(zones.deletedAt)),
+      limit: 1,
+    })
+    if (!zone) {
+      throw new Error('Zone not found in church context')
+    }
+
     await db
       .delete(memberZones)
       .where(and(
@@ -165,8 +195,8 @@ export class ZonesService {
   /**
    * Get zone statistics
    */
-  async getZoneStats(zoneId: string): Promise<any> {
-    const members = await this.getZoneMembers(zoneId)
+  async getZoneStats(churchId: string, zoneId: string): Promise<any> {
+    const members = await this.getZoneMembers(churchId, zoneId)
     
     const totalMembers = members.length
     const leaders = members.filter(m => m.isLeader).length
