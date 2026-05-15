@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { boolean, index, integer, pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { boolean, index, integer, pgEnum, pgTable, text, timestamp, uniqueIndex, uuid, varchar } from 'drizzle-orm/pg-core'
 import { churches } from './churches'
 import { users } from './user'
 import { members } from './members'
@@ -27,7 +27,12 @@ export const importJobs = pgTable('import_jobs', {
   summary: text('summary'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-})
+}, (table) => ({
+  churchIdx: index('idx_import_jobs_church').on(table.churchId),
+  statusIdx: index('idx_import_jobs_status').on(table.status),
+  idempotencyIdx: index('idx_import_jobs_idempotency').on(table.idempotencyKey),
+  uniqueChurchIdempotencyKeyIdx: uniqueIndex('ux_import_jobs_church_idempotency').on(table.churchId, table.idempotencyKey),
+}))
 
 export const importRows = pgTable('import_rows', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`).notNull(),

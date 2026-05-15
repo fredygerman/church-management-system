@@ -84,6 +84,8 @@ export const campaigns = pgTable(
     statusIdx: index('idx_campaigns_status').on(table.status),
     scheduledIdx: index('idx_campaigns_scheduled_at').on(table.scheduledAt),
     channelIdx: index('idx_campaigns_channel').on(table.channel),
+    uniqueScheduledCampaignPerChurchIdx: uniqueIndex('ux_campaigns_church_name_scheduled')
+      .on(table.churchId, table.name, table.scheduledAt),
   })
 )
 

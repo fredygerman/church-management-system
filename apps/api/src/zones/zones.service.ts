@@ -154,10 +154,10 @@ export class ZonesService {
     // Use insert with onConflict to handle upsert
     const [assignment] = await db
       .insert(memberZones)
-      .values({ zoneId, memberId, isLeader })
+      .values({ churchId, zoneId, memberId, isLeader })
       .onConflictDoUpdate({
         target: [memberZones.memberId, memberZones.zoneId],
-        set: { isLeader },
+        set: { churchId, isLeader },
       })
       .returning()
     

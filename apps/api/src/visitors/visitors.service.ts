@@ -133,6 +133,7 @@ export class VisitorsService {
         throw new BadRequestException('Zone not found in church context')
       }
       await db.insert(memberZones).values({
+        churchId: data.churchId,
         memberId: newMember.id,
         zoneId: data.zoneId,
         isLeader: false,

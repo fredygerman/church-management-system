@@ -1,7 +1,6 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { getSession } from '@/auth'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api-helpers'
 
 // Function to get all zones for a church
@@ -67,28 +66,18 @@ export async function createZone(data: {
   meetingDay?: string
 }): Promise<any> {
   try {
-    // Get current user session
-    const session = await getSession()
-    const userId = session?.user?.id
+    const zone = await apiPost('/zones', data)
 
-    // Create zone with auto-assigned leader if user is logged in
-    const zoneData = {
-      ...data,
-      leaderId: userId || data.leader,
-    }
-
-    const zone = await apiPost('/zones', zoneData)
-
-    // Auto-add creator as leader to the zone members
-    if (userId) {
+    // Add explicit leader membership when a leader is provided
+    if (data.leader) {
       try {
         await apiPost(`/zones/${zone.id}/members`, {
-          memberId: userId,
+          churchId: data.churchId,
+          memberId: data.leader,
           isLeader: true,
         })
       } catch (error) {
-        console.error('Error auto-assigning creator as leader:', error)
-        // Continue even if this fails - zone is created
+        console.error('Error assigning initial leader to zone:', error)
       }
     }
 

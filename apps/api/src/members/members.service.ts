@@ -126,7 +126,7 @@ export class MembersService {
 
     const [assignment] = await db
       .insert(memberZones)
-      .values({ memberId, zoneId, isLeader })
+      .values({ churchId, memberId, zoneId, isLeader })
       .returning()
     return assignment
   }
@@ -178,4 +178,3 @@ export class MembersService {
     return updatedMember
   }
 }
-

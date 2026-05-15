@@ -3,6 +3,7 @@ import { boolean, date, pgTable, uuid, index, uniqueIndex } from "drizzle-orm/pg
 
 import { members } from "./members"
 import { zones } from "./zones"
+import { churches } from "./churches"
 
 export const memberZones = pgTable(
   "member_zones",
@@ -17,6 +18,9 @@ export const memberZones = pgTable(
     zoneId: uuid("zone_id")
       .references(() => zones.id, { onDelete: "cascade" })
       .notNull(),
+    churchId: uuid("church_id")
+      .references(() => churches.id, { onDelete: "cascade" })
+      .notNull(),
     isLeader: boolean("is_leader").default(false),
     createdAt: date("created_at").defaultNow(),
     updatedAt: date("updated_at").defaultNow(),
@@ -24,8 +28,10 @@ export const memberZones = pgTable(
   },
   (table) => ({
     uniqueMemberZone: uniqueIndex("ux_member_zone").on(table.memberId, table.zoneId),
+    uniqueChurchMemberZone: uniqueIndex("ux_member_zone_church_member_zone").on(table.churchId, table.memberId, table.zoneId),
     memberIdx: index("idx_member_zones_member").on(table.memberId),
     zoneIdx: index("idx_member_zones_zone").on(table.zoneId),
+    churchIdx: index("idx_member_zones_church").on(table.churchId),
   })
 )
 
