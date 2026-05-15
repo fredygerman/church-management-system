@@ -1,32 +1,55 @@
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { getCampaign, scheduleCampaign, sendCampaignNow, cancelCampaign } from '@/actions/communications'
 
 interface PageProps {
   params: Promise<{ churchId: string; campaignId: string }>
+  searchParams: Promise<{ ok?: string; err?: string }>
 }
 
-export default async function CampaignDetailPage({ params }: PageProps) {
+export default async function CampaignDetailPage({ params, searchParams }: PageProps) {
   const { churchId, campaignId } = await params
+  const { ok = '', err = '' } = await searchParams
   const data = await getCampaign(churchId, campaignId) as any
 
   async function scheduleAction(formData: FormData) {
     'use server'
     const scheduledAt = String(formData.get('scheduledAt') || '')
-    if (!scheduledAt) return
-    await scheduleCampaign({ churchId, id: campaignId, scheduledAt })
-    revalidatePath(`/${churchId}/dashboard/communications/campaigns/${campaignId}`)
+    if (!scheduledAt) {
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?err=${encodeURIComponent('Provide a schedule date and time.')}`)
+    }
+    try {
+      await scheduleCampaign({ churchId, id: campaignId, scheduledAt })
+      revalidatePath(`/${churchId}/dashboard/communications/campaigns/${campaignId}`)
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?ok=scheduled`)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to schedule campaign.'
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?err=${encodeURIComponent(message)}`)
+    }
   }
 
   async function sendNowAction() {
     'use server'
-    await sendCampaignNow({ churchId, id: campaignId })
-    revalidatePath(`/${churchId}/dashboard/communications/campaigns/${campaignId}`)
+    try {
+      await sendCampaignNow({ churchId, id: campaignId })
+      revalidatePath(`/${churchId}/dashboard/communications/campaigns/${campaignId}`)
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?ok=sent`)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to send campaign.'
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?err=${encodeURIComponent(message)}`)
+    }
   }
 
   async function cancelAction() {
     'use server'
-    await cancelCampaign({ churchId, id: campaignId })
-    revalidatePath(`/${churchId}/dashboard/communications/campaigns/${campaignId}`)
+    try {
+      await cancelCampaign({ churchId, id: campaignId })
+      revalidatePath(`/${churchId}/dashboard/communications/campaigns/${campaignId}`)
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?ok=cancelled`)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to cancel campaign.'
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaignId}?err=${encodeURIComponent(message)}`)
+    }
   }
 
   const campaign = data.campaign
@@ -52,6 +75,17 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           )}
         </div>
       </div>
+
+      {ok && (
+        <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {ok === 'scheduled' ? 'Campaign scheduled.' : ok === 'sent' ? 'Campaign send started.' : 'Campaign cancelled.'}
+        </div>
+      )}
+      {err && (
+        <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {err}
+        </div>
+      )}
 
       <form action={scheduleAction} className="flex max-w-xl items-end gap-2 rounded-md border p-4">
         <label className="grid gap-1 text-sm">

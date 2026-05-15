@@ -100,13 +100,20 @@ export function getVisitorColumns(
           </Link>
 
           {handlers?.onConvert && (
-            <button
-              onClick={() => handlers.onConvert?.(row.original.id)}
-              className="flex items-center gap-2 text-green-600 hover:underline text-sm cursor-pointer"
-            >
-              <UserCheck className="h-4 w-4" />
-              Convert to Member
-            </button>
+            row.original.convertedToMemberId ? (
+              <span className="flex items-center gap-2 text-emerald-700 text-sm">
+                <UserCheck className="h-4 w-4" />
+                Converted
+              </span>
+            ) : (
+              <button
+                onClick={() => handlers.onConvert?.(row.original.id)}
+                className="flex items-center gap-2 text-green-600 hover:underline text-sm cursor-pointer"
+              >
+                <UserCheck className="h-4 w-4" />
+                Convert to Member
+              </button>
+            )
           )}
 
           {handlers?.onDelete && (

@@ -1,10 +1,14 @@
 import { redirect } from 'next/navigation'
 import { createCampaign, getTemplates } from '@/actions/communications'
 
-interface PageProps { params: Promise<{ churchId: string }> }
+interface PageProps {
+  params: Promise<{ churchId: string }>
+  searchParams: Promise<{ err?: string }>
+}
 
-export default async function NewCampaignPage({ params }: PageProps) {
+export default async function NewCampaignPage({ params, searchParams }: PageProps) {
   const { churchId } = await params
+  const { err = '' } = await searchParams
   const templates = await getTemplates(churchId).catch(() => []) as any[]
 
   async function createAction(formData: FormData) {
@@ -18,21 +22,30 @@ export default async function NewCampaignPage({ params }: PageProps) {
     const zoneIdsRaw = String(formData.get('zoneIds') || '')
     const gendersRaw = String(formData.get('genders') || '')
 
-    const campaign = await createCampaign({
-      churchId,
-      name,
-      channel,
-      templateId: templateId || undefined,
-      subject: subject || undefined,
-      body: body || undefined,
-      scheduledAt: scheduledAt || undefined,
-      audienceFilters: {
-        zoneIds: zoneIdsRaw ? zoneIdsRaw.split(',').map((v) => v.trim()).filter(Boolean) : [],
-        genders: gendersRaw ? gendersRaw.split(',').map((v) => v.trim()).filter(Boolean) : [],
-      },
-    }) as any
+    if (!templateId && !body.trim()) {
+      redirect(`/${churchId}/dashboard/communications/campaigns/new?err=${encodeURIComponent('Provide a message body or choose a template.')}`)
+    }
 
-    redirect(`/${churchId}/dashboard/communications/campaigns/${campaign.id}`)
+    try {
+      const campaign = await createCampaign({
+        churchId,
+        name,
+        channel,
+        templateId: templateId || undefined,
+        subject: subject || undefined,
+        body: body || undefined,
+        scheduledAt: scheduledAt || undefined,
+        audienceFilters: {
+          zoneIds: zoneIdsRaw ? zoneIdsRaw.split(',').map((v) => v.trim()).filter(Boolean) : [],
+          genders: gendersRaw ? gendersRaw.split(',').map((v) => v.trim()).filter(Boolean) : [],
+        },
+      }) as any
+
+      redirect(`/${churchId}/dashboard/communications/campaigns/${campaign.id}?ok=created`)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to create campaign.'
+      redirect(`/${churchId}/dashboard/communications/campaigns/new?err=${encodeURIComponent(message)}`)
+    }
   }
 
   return (
@@ -41,6 +54,12 @@ export default async function NewCampaignPage({ params }: PageProps) {
         <h1 className="text-2xl font-semibold">New Campaign</h1>
         <p className="text-sm text-muted-foreground">Create a campaign and schedule it or send immediately.</p>
       </div>
+
+      {err && (
+        <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {err}
+        </div>
+      )}
 
       <form action={createAction} className="grid gap-3 rounded-md border p-4">
         <div className="grid gap-2 md:grid-cols-2">
@@ -67,7 +86,10 @@ export default async function NewCampaignPage({ params }: PageProps) {
           <input name="scheduledAt" type="datetime-local" className="rounded-md border px-3 py-2 text-sm" />
         </div>
 
-        <button type="submit" className="w-fit rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Create Campaign</button>
+        <div className="flex items-center gap-2">
+          <button type="submit" className="w-fit rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Create Campaign</button>
+          <a href={`/${churchId}/dashboard/communications/campaigns`} className="rounded-md border px-4 py-2 text-sm">Cancel</a>
+        </div>
       </form>
     </div>
   )

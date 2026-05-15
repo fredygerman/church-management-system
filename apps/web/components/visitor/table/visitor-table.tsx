@@ -27,6 +27,9 @@ export function VisitorTable({ visitorPromise, churchId }: VisitorTableProps) {
   const pageCount = 1
 
   const handleConvert = async (visitorId: string) => {
+    const confirmed = window.confirm("Convert this visitor to a member now?")
+    if (!confirmed) return
+
     setIsLoading(true)
     try {
       await convertVisitorToMember({ churchId, visitorId })

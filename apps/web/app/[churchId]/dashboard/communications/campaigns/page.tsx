@@ -1,31 +1,44 @@
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { cancelCampaign, getCampaigns, sendCampaignNow } from '@/actions/communications'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
-  searchParams: Promise<{ status?: string; channel?: string }>
+  searchParams: Promise<{ status?: string; channel?: string; ok?: string; err?: string }>
 }
 
 export default async function CampaignsPage({ params, searchParams }: PageProps) {
   const { churchId } = await params
-  const { status, channel } = await searchParams
+  const { status, channel, ok = '', err = '' } = await searchParams
   const campaigns = await getCampaigns(churchId, { status, channel }).catch(() => []) as any[]
 
   async function sendNowAction(formData: FormData) {
     'use server'
     const id = String(formData.get('id') || '')
-    if (!id) return
-    await sendCampaignNow({ churchId, id })
-    revalidatePath(`/${churchId}/dashboard/communications/campaigns`)
+    if (!id) redirect(`/${churchId}/dashboard/communications/campaigns?err=${encodeURIComponent('Missing campaign id.')}`)
+    try {
+      await sendCampaignNow({ churchId, id })
+      revalidatePath(`/${churchId}/dashboard/communications/campaigns`)
+      redirect(`/${churchId}/dashboard/communications/campaigns?ok=sent`)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to send campaign.'
+      redirect(`/${churchId}/dashboard/communications/campaigns?err=${encodeURIComponent(message)}`)
+    }
   }
 
   async function cancelAction(formData: FormData) {
     'use server'
     const id = String(formData.get('id') || '')
-    if (!id) return
-    await cancelCampaign({ churchId, id })
-    revalidatePath(`/${churchId}/dashboard/communications/campaigns`)
+    if (!id) redirect(`/${churchId}/dashboard/communications/campaigns?err=${encodeURIComponent('Missing campaign id.')}`)
+    try {
+      await cancelCampaign({ churchId, id })
+      revalidatePath(`/${churchId}/dashboard/communications/campaigns`)
+      redirect(`/${churchId}/dashboard/communications/campaigns?ok=cancelled`)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Failed to cancel campaign.'
+      redirect(`/${churchId}/dashboard/communications/campaigns?err=${encodeURIComponent(message)}`)
+    }
   }
 
   return (
@@ -55,6 +68,17 @@ export default async function CampaignsPage({ params, searchParams }: PageProps)
         </select>
         <button type="submit" className="rounded-md border px-3 py-2 text-sm">Apply Filters</button>
       </form>
+
+      {ok && (
+        <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {ok === 'sent' ? 'Campaign send started.' : 'Campaign cancelled.'}
+        </div>
+      )}
+      {err && (
+        <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {err}
+        </div>
+      )}
 
       <div className="rounded-md border">
         <table className="w-full text-sm">

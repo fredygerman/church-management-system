@@ -119,7 +119,6 @@ export function MemberForm({
       setIsSubmitting(false)
       // scroll to top of the page
       window.scrollTo(0, 0)
-      router.push(`/${churchId}/dashboard/members`)
     }
   }
 
