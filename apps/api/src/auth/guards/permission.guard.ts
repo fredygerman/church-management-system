@@ -10,6 +10,7 @@ import {
   UserContext,
   PermissionAction,
   roleHasPermission,
+  getPermissionDenialReason,
 } from '../types/permission.types'
 
 export const REQUIRED_PERMISSION_KEY = 'required_permission'
@@ -42,8 +43,12 @@ export class PermissionGuard implements CanActivate {
     )
 
     if (!hasPermission) {
+      const userRole = user.role as any
+      const denialMessages = requiredPermissions.map((permission) =>
+        getPermissionDenialReason(permission, userRole)
+      )
       throw new ForbiddenException(
-        `Missing required permission. Required one of: ${requiredPermissions.join(', ')}`
+        `Forbidden for role '${user.role}'. ${denialMessages.join(' OR ')}`
       )
     }
 

@@ -8,6 +8,7 @@ import {
   UserRole, 
   PERMISSION_MAP, 
   roleHasPermission,
+  getPermissionDenialReason,
   type PermissionAction 
 } from "@church/config"
 
@@ -24,9 +25,7 @@ export async function checkPermission(permission: PermissionAction): Promise<boo
   }
 
   const userRole = (session.user.role || UserRole.MEMBER) as UserRole
-  const permissions = PERMISSION_MAP[userRole] || []
-
-  return permissions.includes(permission)
+  return roleHasPermission(userRole, permission)
 }
 
 /**
@@ -34,10 +33,13 @@ export async function checkPermission(permission: PermissionAction): Promise<boo
  * @throws Error if user doesn't have permission
  */
 export async function requirePermission(permission: PermissionAction): Promise<void> {
+  const session = await getSession()
+  const userRole = (session?.user?.role || UserRole.MEMBER) as UserRole
   const hasAccess = await checkPermission(permission)
   
   if (!hasAccess) {
-    throw new Error(`Forbidden: Missing permission '${permission}'`)
+    const reason = getPermissionDenialReason(permission, userRole)
+    throw new Error(`Forbidden: ${reason}`)
   }
 }
 

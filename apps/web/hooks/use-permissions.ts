@@ -90,7 +90,11 @@ export function useUserPermissions(): PermissionAction[] {
 export function useIsAdmin(): boolean {
   const { data: session } = useSession()
   const userRole = (session?.user?.role || UserRole.MEMBER) as UserRole
-  return userRole === UserRole.ADMIN || userRole === UserRole.SUPER_ADMIN
+  return (
+    userRole === UserRole.ADMIN ||
+    userRole === UserRole.SUPER_ADMIN ||
+    userRole === UserRole.BRANCH_ADMIN
+  )
 }
 
 /**

@@ -1,7 +1,7 @@
 "use client"
 
 import { type ReactNode } from "react"
-import { usePermission, useHasAnyPermission, usePermissionDenialReason } from "@/hooks/use-permissions"
+import { usePermission, useHasAnyPermission, useHasAllPermissions, usePermissionDenialReason } from "@/hooks/use-permissions"
 import type { PermissionAction } from "@church/config"
 import {
   Tooltip,
@@ -57,6 +57,7 @@ export function PermissionGate({
 }: PermissionGateProps) {
   const hasSinglePermission = usePermission(permission!)
   const hasAnyOfPermissions = useHasAnyPermission(permissions || [])
+  const hasAllOfPermissions = useHasAllPermissions(permissions || [])
   const denialReason = usePermissionDenialReason(permission!)
 
   // Single permission check
@@ -88,7 +89,7 @@ export function PermissionGate({
   // Multiple permissions check
   if (permissions && permissions.length > 0) {
     const hasPermission = requireAll 
-      ? permissions.every(perm => usePermission(perm))
+      ? hasAllOfPermissions
       : hasAnyOfPermissions
 
     if (hasPermission) {

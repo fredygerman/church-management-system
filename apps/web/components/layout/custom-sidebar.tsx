@@ -7,6 +7,8 @@ import { ChevronDown, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { sidebarConfig } from "@/config/sidebar"
 import { ChurchSwitcher } from "@/components/layout/church-switcher"
+import { useSession } from "next-auth/react"
+import { hasAnyPermission } from "@/lib/permissions"
 
 interface Church {
   id: string
@@ -30,6 +32,8 @@ export function CustomSidebar({
 }: CustomSidebarProps) {
   const { churchId } = useParams()
   const pathname = usePathname()
+  const { data: session } = useSession()
+  const userRole = session?.user?.role
   const [expandedSections, setExpandedSections] = React.useState<Set<string>>(
     new Set(sidebarConfig.map((section) => section.title))
   )
@@ -43,6 +47,18 @@ export function CustomSidebar({
     }
     setExpandedSections(newExpanded)
   }
+
+  const visibleSections = React.useMemo(() => {
+    return sidebarConfig
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => {
+          if (!item.permissions || item.permissions.length === 0) return true
+          return hasAnyPermission(userRole, item.permissions)
+        }),
+      }))
+      .filter((section) => section.items.length > 0)
+  }, [userRole])
 
   return (
     <>
@@ -84,7 +100,7 @@ export function CustomSidebar({
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           <div className="space-y-4">
-            {sidebarConfig.map((section) => {
+            {visibleSections.map((section) => {
               const isExpanded = expandedSections.has(section.title)
 
               return (
