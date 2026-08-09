@@ -5,29 +5,15 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1767595057129,
-      "tag": "0000_chubby_kid_colt",
+      "when": 1779017355598,
+      "tag": "0000_bumpy_rafael_vega",
       "breakpoints": true
     },
     {
       "idx": 1,
       "version": "7",
-      "when": 1768400201805,
-      "tag": "0001_awesome_firebird",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1768450090635,
-      "tag": "0002_high_lilandra",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1768467531296,
-      "tag": "0003_volatile_amazoness",
+      "when": 1786270510788,
+      "tag": "0001_magical_jetstream",
       "breakpoints": true
     }
   ]

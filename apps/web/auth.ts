@@ -16,6 +16,11 @@ declare module "next-auth" {
       name?: string | null
       image?: string | null
       role?: string
+      churchId?: string | null
+      activeChurchId?: string | null
+      activeMembershipId?: string | null
+      activeRole?: string
+      assignedZoneId?: string | null
     }
   }
 
@@ -24,7 +29,11 @@ declare module "next-auth" {
     refreshToken?: string
     expiresAt?: number
     role?: string
-    churchId?: string
+    churchId?: string | null
+    activeChurchId?: string | null
+    activeMembershipId?: string | null
+    activeRole?: string
+    assignedZoneId?: string | null
   }
 }
 
@@ -62,8 +71,12 @@ export const authOptions: NextAuthOptions = {
             email: payload.email,
             name: payload.name,
             image: payload.picture,
-            role: payload.role,
-            churchId: payload.churchId,
+            role: payload.activeRole || payload.role,
+            churchId: payload.activeChurchId || payload.churchId,
+            activeChurchId: payload.activeChurchId || payload.churchId,
+            activeMembershipId: payload.activeMembershipId,
+            activeRole: payload.activeRole || payload.role,
+            assignedZoneId: payload.assignedZoneId,
             accessToken: credentials.accessToken,
             refreshToken: credentials.refreshToken,
           }
@@ -92,8 +105,12 @@ export const authOptions: NextAuthOptions = {
         token.accessToken = userData.accessToken
         token.refreshToken = userData.refreshToken
         token.email = userData.email
-        token.role = userData.role
-        token.churchId = userData.churchId
+        token.role = userData.activeRole || userData.role
+        token.churchId = userData.activeChurchId || userData.churchId
+        token.activeChurchId = userData.activeChurchId || userData.churchId
+        token.activeMembershipId = userData.activeMembershipId
+        token.activeRole = userData.activeRole || userData.role
+        token.assignedZoneId = userData.assignedZoneId
         
         // Store token expiration time (1 hour from now)
         token.expiresAt = Math.floor(Date.now() / 1000) + 3600
@@ -134,8 +151,12 @@ export const authOptions: NextAuthOptions = {
               accessToken: tokens.accessToken,
               refreshToken: tokens.refreshToken,
               expiresAt: Math.floor(Date.now() / 1000) + 3600,
-              role: payload.role,
-              churchId: payload.churchId,
+              role: payload.activeRole || payload.role,
+              churchId: payload.activeChurchId || payload.churchId,
+              activeChurchId: payload.activeChurchId || payload.churchId,
+              activeMembershipId: payload.activeMembershipId,
+              activeRole: payload.activeRole || payload.role,
+              assignedZoneId: payload.assignedZoneId,
             }
           }
 
@@ -164,10 +185,14 @@ export const authOptions: NextAuthOptions = {
       // Add tokens and user info to session from JWT
       if (token.sub) {
         session.user.id = token.sub
-        session.user.role = token.role as string
+        session.user.role = (token.activeRole || token.role) as string
+        session.user.churchId = (token.activeChurchId || token.churchId) as string
+        session.user.activeChurchId = (token.activeChurchId || token.churchId) as string
+        session.user.activeMembershipId = token.activeMembershipId as string
+        session.user.activeRole = (token.activeRole || token.role) as string
+        session.user.assignedZoneId = token.assignedZoneId as string
         session.accessToken = token.accessToken as string
         session.refreshToken = token.refreshToken as string
-        console.log("[Auth] Session role:", token.role)
       } else {
         // User is not authenticated, clear the session
         return { ...session, user: { email: null, name: null, image: null } }

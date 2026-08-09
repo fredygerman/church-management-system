@@ -87,6 +87,17 @@ export class MembersController {
   }
 
   /**
+   * GET /members/me - Get the caller's own member record for this church (self-service)
+   */
+  @Get('me')
+  @RequirePermission('read:self')
+  async getMe(@Req() request: Request) {
+    const churchId = request['churchId'] as string
+    const userId = request.user['id'] as string
+    return (await this.membersService.getMemberByUserId(churchId, userId)) ?? null
+  }
+
+  /**
    * GET /members/:id - Get single member
    */
   @Get(':id')

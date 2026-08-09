@@ -246,6 +246,27 @@ export class AttendanceService {
     }))
   }
 
+  /**
+   * Get a member's own check-in history for this church (self-service)
+   */
+  async getMemberCheckins(churchId: string, memberId: string, limit = 20) {
+    return db.select({
+      checkinId: attendanceCheckins.id,
+      sessionId: attendanceCheckins.sessionId,
+      sessionTitle: serviceSessions.title,
+      sessionDate: serviceSessions.sessionDate,
+      serviceTypeName: serviceTypes.name,
+      source: attendanceCheckins.source,
+      checkedInAt: attendanceCheckins.createdAt,
+    })
+      .from(attendanceCheckins)
+      .innerJoin(serviceSessions, eq(attendanceCheckins.sessionId, serviceSessions.id))
+      .innerJoin(serviceTypes, eq(serviceSessions.serviceTypeId, serviceTypes.id))
+      .where(and(eq(attendanceCheckins.churchId, churchId), eq(attendanceCheckins.memberId, memberId)))
+      .orderBy(desc(serviceSessions.sessionDate), desc(attendanceCheckins.createdAt))
+      .limit(limit)
+  }
+
   async getRiskSettings(churchId: string) {
     const [churchSetting] = await db.query.engagementRiskSettings.findMany({ where: eq(engagementRiskSettings.churchId, churchId) })
     const [globalDefault] = await db.query.engagementRiskDefaults.findMany({ where: eq(engagementRiskDefaults.isActive, true), orderBy: [desc(engagementRiskDefaults.createdAt)] })

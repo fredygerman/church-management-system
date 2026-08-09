@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common'
 import { Request } from 'express'
 import { FamiliesService, type CreateFamilyInput } from './families.service'
+import { MembersService } from '../members/members.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
 
@@ -20,7 +21,23 @@ export type UpdateFamilyInput = Partial<CreateFamilyInput>
 @Controller('families')
 @UseGuards(ChurchContextGuard)
 export class FamiliesController {
-  constructor(private readonly familiesService: FamiliesService) {}
+  constructor(
+    private readonly familiesService: FamiliesService,
+    private readonly membersService: MembersService,
+  ) {}
+
+  /**
+   * GET /families/me - Get the caller's own family (self-service)
+   */
+  @Get('me')
+  @RequirePermission('read:self')
+  async getMyFamily(@Req() request: Request) {
+    const churchId = request['churchId'] as string
+    const userId = request.user['id'] as string
+    const member = await this.membersService.getMemberByUserId(churchId, userId)
+    if (!member?.familyId) return null
+    return this.familiesService.getFamilyForMember(churchId, member.familyId, member.id)
+  }
 
   /**
    * POST /families - Create new family

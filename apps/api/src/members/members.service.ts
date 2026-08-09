@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { eq, and, isNull, or, ilike } from 'drizzle-orm'
 import { db } from '@church/db'
-import { members, memberZones, zones, type Member, type MemberZone } from '@church/db'
+import { members, memberZones, zones, userChurchMemberships, type Member, type MemberZone } from '@church/db'
 
 export type CreateMemberInput = {
   churchId: string
@@ -51,6 +51,24 @@ export class MembersService {
       where: and(eq(members.id, memberId), eq(members.churchId, churchId), isNull(members.deletedAt)),
     })
     return member
+  }
+
+  /**
+   * Get the member record linked to the caller's own membership in this church (self-service)
+   */
+  async getMemberByUserId(churchId: string, userId: string): Promise<Member | undefined> {
+    const [membership] = await db
+      .select({ memberId: userChurchMemberships.memberId })
+      .from(userChurchMemberships)
+      .where(and(
+        eq(userChurchMemberships.userId, userId),
+        eq(userChurchMemberships.churchId, churchId),
+        isNull(userChurchMemberships.deletedAt),
+      ))
+      .limit(1)
+
+    if (!membership?.memberId) return undefined
+    return this.getMemberById(churchId, membership.memberId)
   }
 
   /**

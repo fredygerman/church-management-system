@@ -12,6 +12,10 @@ export async function getChurchById(churchId: string) {
   return data || null
 }
 
+export async function switchChurch(churchId: string) {
+  return apiPost('/auth/switch-church', { churchId })
+}
+
 export async function setupChurch(data: {
   name: string
   location: string

@@ -1,7 +1,12 @@
-import Image from "next/image"
-import Link from "next/link"
-import { ArrowRight, CheckCircle, MapPin, Users } from "lucide-react"
+"use client"
 
+import Image from "next/image"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { ArrowRight, CheckCircle, MapPin, Users } from "lucide-react"
+import { signIn } from "next-auth/react"
+
+import { switchChurch } from "@/actions/church"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -18,6 +23,8 @@ interface ChurchCardProps {
     name: string
     location?: string
     imageUrl?: string
+    membershipRole?: string
+    membershipStatus?: string
   }
   totalMembers: number
   className?: string
@@ -28,6 +35,41 @@ export function ChurchCard({
   totalMembers,
   className,
 }: ChurchCardProps) {
+  const router = useRouter()
+  const [isOpening, setIsOpening] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const isSuspended = church.membershipStatus === "suspended"
+
+  const openChurch = async () => {
+    if (isOpening || isSuspended) {
+      return
+    }
+
+    setIsOpening(true)
+    setError(null)
+
+    try {
+      const tokens = await switchChurch(church.id)
+      const result = await signIn("credentials", {
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        redirect: false,
+      })
+
+      if (result?.error) {
+        throw new Error("Could not update your session")
+      }
+
+      const isStaff = church.membershipRole && church.membershipRole !== "member"
+      router.push(`/${church.id}/${isStaff ? "dashboard" : "portal"}`)
+      router.refresh()
+    } catch (caughtError) {
+      setError(caughtError instanceof Error ? caughtError.message : "Could not open church")
+    } finally {
+      setIsOpening(false)
+    }
+  }
+
   return (
     <div className={className}>
       <Card className="overflow-hidden">
@@ -63,20 +105,19 @@ export function ChurchCard({
             </div>
             <div className="flex items-center space-x-1 text-sm font-medium text-green-600">
               <CheckCircle className="size-4" />
-              <span>Active</span>
+              <span>{church.membershipStatus || "Active"}</span>
             </div>
           </div>
+          {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
         </CardContent>
         <CardFooter className="flex justify-between p-4">
           <div className="text-sm text-muted-foreground">
-            ID: {church.id}
+            {church.membershipRole?.replace("_", " ") || "member"}
           </div>
-          <Link href={`/${church.id}/dashboard/members`}>
-            <Button>
-              Open
-              <ArrowRight className="ml-2 size-4" />
-            </Button>
-          </Link>
+          <Button onClick={openChurch} disabled={isOpening || isSuspended}>
+            {isOpening ? "Opening" : "Open"}
+            <ArrowRight className="ml-2 size-4" />
+          </Button>
         </CardFooter>
       </Card>
     </div>

@@ -7,7 +7,13 @@ import {
 } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { FileUploadService } from '../file-upload/file-upload.service';
-import { users, type User } from '../database/schema';
+import {
+  users,
+  type User,
+  userChurchMemberships,
+  userChurchMembershipRoleEvents,
+  type RoleType,
+} from '../database/schema';
 import { eq, and, ne, isNull } from 'drizzle-orm';
 import { Database } from '../database/interfaces/database.interfaces';
 
@@ -146,40 +152,112 @@ export class UsersService implements OnModuleInit {
       limit?: number;
       offset?: number;
     },
-  ): Promise<{ users: User[]; total: number }> {
+  ): Promise<{ users: any[]; total: number }> {
     const limit = filters?.limit || 20;
     const offset = filters?.offset || 0;
 
     const conditions: any[] = [
-      eq(users.churchId, churchId),
+      eq(userChurchMemberships.churchId, churchId),
+      isNull(userChurchMemberships.deletedAt),
       isNull(users.deletedAt),
     ];
 
     if (filters?.role) {
-      conditions.push(eq(users.role, filters.role as any));
+      conditions.push(eq(userChurchMemberships.role, filters.role as any));
     }
 
     if (filters?.zoneId) {
-      conditions.push(eq(users.assignedZoneId, filters.zoneId));
+      conditions.push(eq(userChurchMemberships.assignedZoneId, filters.zoneId));
     }
 
     const result = await this.db
-      .select()
-      .from(users)
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        picture: users.picture,
+        isActive: users.isActive,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+        deletedAt: users.deletedAt,
+        membershipId: userChurchMemberships.id,
+        churchId: userChurchMemberships.churchId,
+        memberId: userChurchMemberships.memberId,
+        role: userChurchMemberships.role,
+        assignedZoneId: userChurchMemberships.assignedZoneId,
+        membershipStatus: userChurchMemberships.status,
+        isDefaultChurch: userChurchMemberships.isDefaultChurch,
+      })
+      .from(userChurchMemberships)
+      .innerJoin(users, eq(userChurchMemberships.userId, users.id))
       .where(and(...conditions))
       .limit(limit)
       .offset(offset);
 
     // Get total count
     const countResult = await this.db
-      .select()
-      .from(users)
-      .where(and(eq(users.churchId, churchId), isNull(users.deletedAt)));
+      .select({ id: userChurchMemberships.id })
+      .from(userChurchMemberships)
+      .innerJoin(users, eq(userChurchMemberships.userId, users.id))
+      .where(and(...conditions));
 
     return {
       users: result,
       total: countResult.length,
     };
+  }
+
+  async updateMembershipRole(
+    userId: string,
+    churchId: string,
+    nextRole: RoleType,
+    changedBy: string,
+    reason?: string,
+  ) {
+    const [membership] = await this.db
+      .select()
+      .from(userChurchMemberships)
+      .where(
+        and(
+          eq(userChurchMemberships.userId, userId),
+          eq(userChurchMemberships.churchId, churchId),
+          isNull(userChurchMemberships.deletedAt),
+        )
+      )
+      .limit(1);
+
+    if (!membership) {
+      throw new NotFoundException('Membership not found for this church');
+    }
+
+    const previousRole = membership.role;
+
+    const [updatedMembership] = await this.db
+      .update(userChurchMemberships)
+      .set({
+        role: nextRole,
+        updatedAt: new Date(),
+      })
+      .where(eq(userChurchMemberships.id, membership.id))
+      .returning();
+
+    await this.db.insert(userChurchMembershipRoleEvents).values({
+      membershipId: membership.id,
+      userId,
+      churchId,
+      previousRole,
+      nextRole,
+      changedBy,
+      reason: reason || null,
+    });
+
+    await this.db
+      .update(users)
+      .set({ role: nextRole })
+      .where(and(eq(users.id, userId), eq(users.churchId, churchId)));
+
+    return updatedMembership;
   }
 
   /**

@@ -1,14 +1,22 @@
 import {
   Injectable,
   BadRequestException,
+  ForbiddenException,
   Logger,
   NotFoundException,
   OnModuleInit,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from '../database/database.service';
-import { eq } from 'drizzle-orm';
-import { users, type User, churches, type Church } from '../database/schema';
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import {
+  users,
+  type User,
+  churches,
+  type Church,
+  userChurchMemberships,
+  type UserChurchMembership,
+} from '../database/schema';
 import { Database } from '../database/interfaces/database.interfaces';
 
 export interface AuthTokens {
@@ -18,6 +26,14 @@ export interface AuthTokens {
 
 export interface AuthResponse extends AuthTokens {
   user: Omit<User, 'password'>;
+}
+
+export interface ActiveMembershipContext {
+  id: string;
+  churchId: string;
+  role: string;
+  assignedZoneId?: string | null;
+  status: string;
 }
 
 @Injectable()
@@ -39,12 +55,22 @@ export class AuthService implements OnModuleInit {
   /**
    * Generate JWT tokens (access and refresh)
    */
-  generateTokens(user: any): AuthTokens {
+  generateTokens(user: any, membership?: ActiveMembershipContext | null): AuthTokens {
+    const activeChurchId = membership?.churchId ?? user.activeChurchId ?? user.churchId ?? null;
+    const activeMembershipId = membership?.id ?? user.activeMembershipId ?? user.membershipId ?? null;
+    const activeRole = membership?.role ?? user.activeRole ?? user.role ?? 'member';
+    const assignedZoneId =
+      membership?.assignedZoneId ?? user.assignedZoneId ?? null;
+
     const payload = {
       sub: user.id,
       email: user.email,
-      role: user.role,
-      churchId: user.churchId,
+      role: activeRole,
+      churchId: activeChurchId,
+      activeChurchId,
+      activeMembershipId,
+      activeRole,
+      assignedZoneId,
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -68,6 +94,110 @@ export class AuthService implements OnModuleInit {
     return this.jwtService.verifyAsync(token);
   }
 
+  async getPreferredMembership(userId: string, churchId?: string | null): Promise<ActiveMembershipContext | null> {
+    const where = [
+      eq(userChurchMemberships.userId, userId),
+      eq(userChurchMemberships.status, 'active'),
+      isNull(userChurchMemberships.deletedAt),
+    ];
+
+    if (churchId) {
+      where.push(eq(userChurchMemberships.churchId, churchId));
+    }
+
+    const memberships = await this.db
+      .select()
+      .from(userChurchMemberships)
+      .where(and(...where))
+      .orderBy(desc(userChurchMemberships.isDefaultChurch), asc(userChurchMemberships.createdAt))
+      .limit(churchId ? 1 : 20);
+
+    if (churchId) {
+      return this.toMembershipContext(memberships[0]);
+    }
+
+    const defaultMembership =
+      memberships.find((membership) => membership.isDefaultChurch) ?? memberships[0];
+
+    return this.toMembershipContext(defaultMembership);
+  }
+
+  async getUserMemberships(userId: string) {
+    return this.db
+      .select({
+        id: userChurchMemberships.id,
+        churchId: userChurchMemberships.churchId,
+        memberId: userChurchMemberships.memberId,
+        role: userChurchMemberships.role,
+        assignedZoneId: userChurchMemberships.assignedZoneId,
+        status: userChurchMemberships.status,
+        isDefaultChurch: userChurchMemberships.isDefaultChurch,
+        churchName: churches.name,
+        churchLocation: churches.location,
+      })
+      .from(userChurchMemberships)
+      .innerJoin(churches, eq(userChurchMemberships.churchId, churches.id))
+      .where(
+        and(
+          eq(userChurchMemberships.userId, userId),
+          isNull(userChurchMemberships.deletedAt),
+          isNull(churches.deletedAt),
+        )
+      );
+  }
+
+  async switchChurch(userId: string, churchId: string): Promise<AuthTokens> {
+    const user = await this.getProfile(userId);
+    const [rawMembership] = await this.db
+      .select()
+      .from(userChurchMemberships)
+      .where(
+        and(
+          eq(userChurchMemberships.userId, userId),
+          eq(userChurchMemberships.churchId, churchId),
+          isNull(userChurchMemberships.deletedAt),
+        )
+      )
+      .limit(1);
+
+    if (!rawMembership) {
+      throw new ForbiddenException('You do not have access to this church');
+    }
+
+    if (rawMembership.status !== 'active') {
+      throw new ForbiddenException('Your membership in this church is not active');
+    }
+
+    const membership = this.toMembershipContext(rawMembership);
+    return this.generateTokens(user, membership);
+  }
+
+  async refreshTokensForPayload(payload: any): Promise<AuthTokens> {
+    const user = await this.getProfile(payload.sub);
+    const membership = await this.getPreferredMembership(
+      user.id,
+      payload.activeChurchId ?? payload.churchId ?? null,
+    );
+
+    return this.generateTokens(user, membership);
+  }
+
+  private toMembershipContext(
+    membership?: UserChurchMembership,
+  ): ActiveMembershipContext | null {
+    if (!membership) {
+      return null;
+    }
+
+    return {
+      id: membership.id,
+      churchId: membership.churchId,
+      role: membership.role,
+      assignedZoneId: membership.assignedZoneId,
+      status: membership.status,
+    };
+  }
+
   /**
    * Get user profile
    */
@@ -89,7 +219,8 @@ export class AuthService implements OnModuleInit {
    * Refresh access token
    */
   async refreshToken(user: Omit<User, 'password'>): Promise<AuthTokens> {
-    const tokens = this.generateTokens(user);
+    const membership = await this.getPreferredMembership(user.id, user.churchId);
+    const tokens = this.generateTokens(user, membership);
     this.logger.log(`Token refreshed for user: ${user.id}`);
     return tokens;
   }
@@ -188,6 +319,17 @@ export class AuthService implements OnModuleInit {
       if (!updatedUser) {
         throw new BadRequestException('Failed to assign user to church');
       }
+
+      await this.db
+        .insert(userChurchMemberships)
+        .values({
+          userId,
+          churchId: church.id,
+          role: 'super_admin' as const,
+          status: 'active' as const,
+          isDefaultChurch: true,
+        })
+        .onConflictDoNothing();
 
       this.logger.log(
         `Church setup completed: Church ${church.id} created and user ${userId} assigned as super_admin`

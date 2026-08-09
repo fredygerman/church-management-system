@@ -63,7 +63,7 @@ export class AuthController {
     // Verify refresh token and return new tokens
     try {
       const decoded = await this.authService.verifyRefreshToken(body.refreshToken);
-      const tokens = this.authService.generateTokens(decoded as any);
+      const tokens = await this.authService.refreshTokensForPayload(decoded);
       
       return tokens;
     } catch (error) {
@@ -151,7 +151,8 @@ export class AuthController {
       throw new BadRequestException('Failed to create or update user');
     }
 
-    const tokens = this.authService.generateTokens(user);
+    const membership = await this.authService.getPreferredMembership(user.id, user.churchId);
+    const tokens = this.authService.generateTokens(user, membership);
     
     return {
       ...tokens,
@@ -192,6 +193,24 @@ export class AuthController {
       success: true,
       message: 'Logged out successfully',
     };
+  }
+
+  /**
+   * Switch active church context
+   * POST /auth/switch-church
+   */
+  @UseGuards(JwtAuthGuard)
+  @Post('switch-church')
+  @HttpCode(HttpStatus.OK)
+  async switchChurch(
+    @GetUser() user: any,
+    @Body() body: { churchId: string },
+  ) {
+    if (!body.churchId) {
+      throw new BadRequestException('churchId is required');
+    }
+
+    return this.authService.switchChurch(user.id, body.churchId);
   }
 
   /**
@@ -292,7 +311,8 @@ export class AuthController {
       }
 
       // Generate tokens
-      const tokens = this.authService.generateTokens(user);
+      const membership = await this.authService.getPreferredMembership(user.id, user.churchId);
+      const tokens = this.authService.generateTokens(user, membership);
 
       // Redirect to frontend with tokens in query params
       // Frontend will extract these and create a session
@@ -413,7 +433,8 @@ export class AuthController {
       const updatedUser = await this.authService.getProfile(user.id);
 
       // Generate new tokens with updated user info
-      const tokens = this.authService.generateTokens(updatedUser);
+      const membership = await this.authService.getPreferredMembership(updatedUser.id, church.id);
+      const tokens = this.authService.generateTokens(updatedUser, membership);
 
       this.logger.log(`Church setup completed for user: ${user.id}, church: ${church.id}`);
 

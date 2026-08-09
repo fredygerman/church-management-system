@@ -82,6 +82,8 @@ export type PermissionAction =
   | 'view:lifecycle-dashboard'
   | 'read:self'
   | 'update:self'
+  | 'create:prayer-request'
+  | 'read:own-prayer-requests'
 
 // ============================================================================
 // ROLE TO PERMISSIONS MAPPING
@@ -101,7 +103,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
-    'read:self', 'update:self',
+    'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
   ],
 
   [UserRole.ADMIN]: [
@@ -116,7 +118,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
-    'manage:files', 'manage:mail', 'manage:sms', 'read:self', 'update:self',
+    'manage:files', 'manage:mail', 'manage:sms', 'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
   ],
 
   [UserRole.BRANCH_ADMIN]: [
@@ -130,7 +132,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
-    'manage:files', 'manage:sms', 'read:self', 'update:self',
+    'manage:files', 'manage:sms', 'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
   ],
 
   [UserRole.ZONE_LEADER]: [
@@ -143,7 +145,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'view:lifecycle-dashboard',
     'view:families',
     'create:visitation', 'read:visitation',
-    'read:self', 'update:self',
+    'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
   ],
 
   [UserRole.MEMBER]: [
@@ -152,7 +154,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'view:attendance',
     'view:communications',
     'view:lifecycle-dashboard',
-    'read:self', 'update:self',
+    'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
   ],
 }
 
@@ -455,6 +457,18 @@ export const PERMISSION_METADATA: Record<PermissionAction, PermissionMetadata> =
     description: 'Update own user profile/account',
     category: 'admin',
     riskLevel: 'medium',
+  },
+  'create:prayer-request': {
+    label: 'Create Prayer Request',
+    description: 'Submit a personal prayer request',
+    category: 'member',
+    riskLevel: 'low',
+  },
+  'read:own-prayer-requests': {
+    label: 'Read Own Prayer Requests',
+    description: 'View own submitted prayer requests',
+    category: 'member',
+    riskLevel: 'low',
   },
 }
 

@@ -1,20 +1,49 @@
-import { members, type Member, type NewMember } from "./tables/members"
-import { users, type User, type NewUser } from "./tables/user"
+import {
+  members,
+  baptismStatusEnum,
+  memberGenderEnum,
+  memberMaritalStatusEnum,
+  type Member,
+  type NewMember,
+} from "./tables/members"
+import { users, roleEnum, type User, type NewUser, type RoleType } from "./tables/user"
+import {
+  userChurchMemberships,
+  userChurchMembershipRoleEvents,
+  membershipStatusEnum,
+  type UserChurchMembership,
+  type NewUserChurchMembership,
+  type UserChurchMembershipRoleEvent,
+  type NewUserChurchMembershipRoleEvent,
+} from "./tables/userChurchMemberships"
 import { zones, type Zone, type NewZone } from "./tables/zones"
 import { churches, type Church, type NewChurch } from "./tables/churches"
 import { families, type Family, type NewFamily } from "./tables/families"
-import { visitors, visitorFollowups, type Visitor, type NewVisitor, type VisitorFollowup, type NewVisitorFollowup } from "./tables/visitors"
+import {
+  visitors,
+  visitorFollowups,
+  visitorFollowupStatusEnum,
+  visitorSourceEnum,
+  type Visitor,
+  type NewVisitor,
+  type VisitorFollowup,
+  type NewVisitorFollowup,
+} from "./tables/visitors"
 import { memberZones, type MemberZone, type NewMemberZone } from "./tables/memberZones"
 import { notifications, type Notification, type NewNotification } from "./tables/notifications"
 import { importJobs, importRows, duplicateCandidates, mergeActions, type ImportJob, type ImportRow, type DuplicateCandidate, type MergeAction } from "./tables/dataQuality"
 import { familyRelationships, familyConnectionSuggestions, milestoneNotificationRules, lifecycleMilestones, type FamilyRelationship, type FamilyConnectionSuggestion, type MilestoneNotificationRule, type LifecycleMilestone } from "./tables/familyLifecycle"
 import { attendanceSessionMetadata, attendanceSnapshots, attendanceRiskProfiles, attendanceRiskHistory } from "./tables/attendanceV2"
+import { serviceCadenceEnum, riskSeverityEnum } from "./tables/attendanceV2"
 import {
   messageTemplates,
   campaigns,
   campaignRecipients,
   messageDeliveries,
   campaignEvents,
+  communicationChannelEnum,
+  campaignStatusEnum,
+  deliveryStatusEnum,
   type MessageTemplate,
   type NewMessageTemplate,
   type Campaign,
@@ -34,6 +63,8 @@ import {
   engagementRiskDefaults,
   engagementRiskSettings,
   engagementRiskFlags,
+  serviceSessionStatusEnum,
+  checkinSourceEnum,
   type ServiceType,
   type NewServiceType,
   type ServiceSession,
@@ -49,6 +80,26 @@ import {
   type EngagementRiskFlag,
   type NewEngagementRiskFlag,
 } from "./tables/attendance"
+import {
+  relationshipRoleEnum,
+  connectionStatusEnum,
+  suggestionStatusEnum,
+  milestoneTypeEnum,
+  milestoneChannelEnum,
+  milestoneNotifyTargetEnum,
+  milestoneStatusEnum,
+} from "./tables/familyLifecycle"
+import {
+  importJobStatusEnum,
+  importModeEnum,
+  duplicateCandidateStatusEnum,
+} from "./tables/dataQuality"
+import {
+  prayerRequests,
+  prayerRequestStatusEnum,
+  type PrayerRequest,
+  type NewPrayerRequest,
+} from "./tables/prayerRequests"
 
 // Import all relations
 import {
@@ -60,6 +111,8 @@ import {
   visitorsRelations,
   visitorFollowupsRelations,
   usersRelations,
+  userChurchMembershipsRelations,
+  userChurchMembershipRoleEventsRelations,
   serviceTypesRelations,
   serviceSessionsRelations,
   attendanceHeadcountsRelations,
@@ -71,10 +124,38 @@ import {
   campaignRecipientsRelations,
   messageDeliveriesRelations,
   campaignEventsRelations,
+  prayerRequestsRelations,
 } from "./tables/relations"
 
 export {
   users,
+  roleEnum,
+  baptismStatusEnum,
+  memberGenderEnum,
+  memberMaritalStatusEnum,
+  visitorFollowupStatusEnum,
+  visitorSourceEnum,
+  membershipStatusEnum,
+  serviceCadenceEnum,
+  riskSeverityEnum,
+  communicationChannelEnum,
+  campaignStatusEnum,
+  deliveryStatusEnum,
+  serviceSessionStatusEnum,
+  checkinSourceEnum,
+  relationshipRoleEnum,
+  connectionStatusEnum,
+  suggestionStatusEnum,
+  milestoneTypeEnum,
+  milestoneChannelEnum,
+  milestoneNotifyTargetEnum,
+  milestoneStatusEnum,
+  importJobStatusEnum,
+  importModeEnum,
+  duplicateCandidateStatusEnum,
+  prayerRequestStatusEnum,
+  userChurchMemberships,
+  userChurchMembershipRoleEvents,
   zones,
   members,
   churches,
@@ -107,6 +188,7 @@ export {
   campaignRecipients,
   messageDeliveries,
   campaignEvents,
+  prayerRequests,
   // Export relations for Drizzle ORM
   churchesRelations,
   zonesRelations,
@@ -116,6 +198,8 @@ export {
   visitorsRelations,
   visitorFollowupsRelations,
   usersRelations,
+  userChurchMembershipsRelations,
+  userChurchMembershipRoleEventsRelations,
   serviceTypesRelations,
   serviceSessionsRelations,
   attendanceHeadcountsRelations,
@@ -127,9 +211,15 @@ export {
   campaignRecipientsRelations,
   messageDeliveriesRelations,
   campaignEventsRelations,
+  prayerRequestsRelations,
   // Type exports
   type User,
   type NewUser,
+  type RoleType,
+  type UserChurchMembership,
+  type NewUserChurchMembership,
+  type UserChurchMembershipRoleEvent,
+  type NewUserChurchMembershipRoleEvent,
   type Member,
   type NewMember,
   type Zone,
@@ -178,4 +268,6 @@ export {
   type NewMessageDelivery,
   type CampaignEvent,
   type NewCampaignEvent,
+  type PrayerRequest,
+  type NewPrayerRequest,
 }
