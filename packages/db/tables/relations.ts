@@ -7,6 +7,10 @@ import { families } from "./families"
 import { visitors, visitorFollowups } from "./visitors"
 import { users } from "./user"
 import {
+  userChurchMemberships,
+  userChurchMembershipRoleEvents,
+} from "./userChurchMemberships"
+import {
   serviceTypes,
   serviceSessions,
   attendanceHeadcounts,
@@ -40,6 +44,7 @@ export const churchesRelations = relations(churches, ({ many }) => ({
   campaignRecipients: many(campaignRecipients),
   messageDeliveries: many(messageDeliveries),
   campaignEvents: many(campaignEvents),
+  userChurchMemberships: many(userChurchMemberships),
 }))
 
 // Zone relations
@@ -70,6 +75,7 @@ export const membersRelations = relations(members, ({ one, many }) => ({
   attendanceCheckins: many(attendanceCheckins),
   engagementRiskFlags: many(engagementRiskFlags),
   campaignRecipients: many(campaignRecipients),
+  userChurchMemberships: many(userChurchMemberships),
 }))
 
 // MemberZone relations (junction table)
@@ -123,7 +129,7 @@ export const visitorFollowupsRelations = relations(visitorFollowups, ({ one }) =
 }))
 
 // User relations
-export const usersRelations = relations(users, ({ one }) => ({
+export const usersRelations = relations(users, ({ one, many }) => ({
   church: one(churches, {
     fields: [users.churchId],
     references: [churches.id],
@@ -131,6 +137,46 @@ export const usersRelations = relations(users, ({ one }) => ({
   assignedZone: one(zones, {
     fields: [users.assignedZoneId],
     references: [zones.id],
+  }),
+  churchMemberships: many(userChurchMemberships),
+}))
+
+export const userChurchMembershipsRelations = relations(userChurchMemberships, ({ one, many }) => ({
+  user: one(users, {
+    fields: [userChurchMemberships.userId],
+    references: [users.id],
+  }),
+  church: one(churches, {
+    fields: [userChurchMemberships.churchId],
+    references: [churches.id],
+  }),
+  member: one(members, {
+    fields: [userChurchMemberships.memberId],
+    references: [members.id],
+  }),
+  assignedZone: one(zones, {
+    fields: [userChurchMemberships.assignedZoneId],
+    references: [zones.id],
+  }),
+  roleEvents: many(userChurchMembershipRoleEvents),
+}))
+
+export const userChurchMembershipRoleEventsRelations = relations(userChurchMembershipRoleEvents, ({ one }) => ({
+  membership: one(userChurchMemberships, {
+    fields: [userChurchMembershipRoleEvents.membershipId],
+    references: [userChurchMemberships.id],
+  }),
+  user: one(users, {
+    fields: [userChurchMembershipRoleEvents.userId],
+    references: [users.id],
+  }),
+  church: one(churches, {
+    fields: [userChurchMembershipRoleEvents.churchId],
+    references: [churches.id],
+  }),
+  changedByUser: one(users, {
+    fields: [userChurchMembershipRoleEvents.changedBy],
+    references: [users.id],
   }),
 }))
 
