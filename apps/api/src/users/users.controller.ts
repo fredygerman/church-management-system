@@ -22,6 +22,7 @@ import { JwtAuthGuard, RoleGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 import { UserRole } from '../auth/types/permission.types';
 import { RequirePermission } from '../auth/decorators/require-permission.decorator';
+import type { RoleType } from '../database/schema';
 
 @ApiTags('User Account Management')
 @Controller('users')
@@ -167,6 +168,38 @@ export class UsersController {
     });
 
     return result;
+  }
+
+  /**
+   * PATCH /api/users/:userId/membership
+   * Update a user's church-scoped membership role
+   */
+  @Patch(':userId/membership')
+  @UseGuards(RoleGuard)
+  @Roles(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.BRANCH_ADMIN)
+  @RequirePermission('manage:users')
+  @HttpCode(HttpStatus.OK)
+  async updateMembershipRole(
+    @Request() req: any,
+    @Body() dto: { role: RoleType; reason?: string },
+  ) {
+    const updatedMembership = await this.usersService.updateMembershipRole(
+      req.params.userId,
+      req.user.churchId,
+      dto.role,
+      req.user.id,
+      dto.reason,
+    );
+
+    this.logger.log(
+      `User ${req.params.userId} membership role updated by ${req.user.id}`,
+    );
+
+    return {
+      success: true,
+      message: 'Membership role updated successfully',
+      membership: updatedMembership,
+    };
   }
 
   /**

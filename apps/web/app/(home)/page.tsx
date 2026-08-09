@@ -4,6 +4,7 @@ import { redirect } from "next/navigation"
 
 import { CreateChurchDialog } from "@/components/church-management/create-church-dialog"
 import { ChurchCard } from "@/components/church-management/church-card"
+import { hasPermission } from "@/lib/permissions"
 
 export default async function HomePage() {
   const session = await getSession()
@@ -21,21 +22,22 @@ export default async function HomePage() {
   }
 
   const churches = churchesResult
+  const canManageChurches = hasPermission(session.user.role, "manage:churches")
 
   return (
     <div className="mx-auto flex min-h-screen max-w-7xl flex-col items-center justify-start gap-4 p-8">
       <div className="mb-8 flex w-full items-center justify-between">
         <div className="text-left">
           <h1 className="text-4xl font-bold text-foreground">
-            Available Churches
+            My Churches
           </h1>
           <p className="mt-2 text-xl text-muted-foreground">
-            Select a church to manage
+            Select a church to continue
           </p>
         </div>
-        <div className="text-right">
+        {canManageChurches ? <div className="text-right">
           <CreateChurchDialog />
-        </div>
+        </div> : null}
       </div>
       <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
         {churches.map((church: any) => (

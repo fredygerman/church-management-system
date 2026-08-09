@@ -75,8 +75,8 @@ export class ChurchController {
    */
   @Get()
   @RequirePermission('read:member')
-  async list() {
-    return this.churchService.getChurches()
+  async list(@GetUser() user: UserContext) {
+    return this.churchService.getChurches(user.id, user.role === 'super_admin')
   }
 
   /**

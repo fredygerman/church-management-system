@@ -28,6 +28,8 @@ export interface UserContext {
   email: string
   role: string
   churchId: string
+  activeChurchId?: string
+  activeMembershipId?: string
   assignedZoneId?: string
   workspaceId: string
   isActive: boolean

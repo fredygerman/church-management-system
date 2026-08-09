@@ -11,6 +11,12 @@ export interface JwtPayload {
   sub: string; // user id
   email?: string;
   phone?: string;
+  role?: string;
+  churchId?: string | null;
+  activeChurchId?: string | null;
+  activeMembershipId?: string | null;
+  activeRole?: string;
+  assignedZoneId?: string | null;
   iat?: number;
   exp?: number;
 }
@@ -47,6 +53,13 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') implements On
       throw new UnauthorizedException('User account is deleted');
     }
 
-    return user;
+    return {
+      ...user,
+      role: payload.activeRole ?? payload.role ?? user.role,
+      churchId: payload.activeChurchId ?? payload.churchId ?? user.churchId,
+      activeChurchId: payload.activeChurchId ?? payload.churchId ?? user.churchId,
+      activeMembershipId: payload.activeMembershipId ?? null,
+      assignedZoneId: payload.assignedZoneId ?? user.assignedZoneId,
+    };
   }
 }

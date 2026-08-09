@@ -15,14 +15,14 @@ export default withAuth(
     // Check if this is a setup route
     if (pathname === "/setup") {
       // Only users without a churchId should access setup
-      if (token.churchId) {
+      if (token.activeChurchId || token.churchId) {
         return NextResponse.redirect(new URL("/", req.url))
       }
       return NextResponse.next()
     }
 
     // Check role-based access for protected routes
-    const userRole = token.role as string
+    const userRole = (token.activeRole || token.role) as string
     if (!isRouteAllowed(pathname, userRole)) {
       return NextResponse.redirect(new URL("/forbidden", req.url))
     }

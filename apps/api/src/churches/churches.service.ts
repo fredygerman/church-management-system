@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '@church/db'
-import { churches, NewChurch, Church, users } from '@church/db'
+import { churches, NewChurch, Church, users, userChurchMemberships } from '@church/db'
 
 @Injectable()
 export class ChurchService {
@@ -22,6 +22,17 @@ export class ChurchService {
             role: 'super_admin',
           })
           .where(eq(users.id, creatorUserId))
+
+        await db
+          .insert(userChurchMemberships)
+          .values({
+            userId: creatorUserId,
+            churchId: church.id,
+            role: 'super_admin',
+            status: 'active',
+            isDefaultChurch: false,
+          })
+          .onConflictDoNothing()
       } catch (error) {
         console.error('Failed to assign creator as super_admin:', error)
         throw new BadRequestException('Failed to assign church admin')
@@ -34,7 +45,40 @@ export class ChurchService {
   /**
    * Get all churches for current user
    */
-  async getChurches(): Promise<Church[]> {
+  async getChurches(userId: string, isSuperAdmin = false) {
+    const membershipChurches = await db
+      .select({
+        id: churches.id,
+        name: churches.name,
+        location: churches.location,
+        leadPastorName: churches.leadPastorName,
+        phone: churches.phone,
+        email: churches.email,
+        description: churches.description,
+        createdAt: churches.createdAt,
+        updatedAt: churches.updatedAt,
+        deletedAt: churches.deletedAt,
+        membershipId: userChurchMemberships.id,
+        membershipRole: userChurchMemberships.role,
+        membershipStatus: userChurchMemberships.status,
+        memberId: userChurchMemberships.memberId,
+        assignedZoneId: userChurchMemberships.assignedZoneId,
+        isDefaultChurch: userChurchMemberships.isDefaultChurch,
+      })
+      .from(userChurchMemberships)
+      .innerJoin(churches, eq(userChurchMemberships.churchId, churches.id))
+      .where(
+        and(
+          eq(userChurchMemberships.userId, userId),
+          isNull(userChurchMemberships.deletedAt),
+          isNull(churches.deletedAt),
+        )
+      )
+
+    if (membershipChurches.length > 0 || !isSuperAdmin) {
+      return membershipChurches
+    }
+
     return db.query.churches.findMany({
       where: isNull(churches.deletedAt),
     })

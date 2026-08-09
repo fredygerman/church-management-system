@@ -8,6 +8,12 @@ import { hasPermission } from "@/lib/permissions"
 
 export const protectedRoutes: Record<string, PermissionAction> = {
   "/setup": "read:self",
+  "/[churchId]/portal": "read:self",
+  "/[churchId]/portal/profile": "read:self",
+  "/[churchId]/portal/family": "read:self",
+  "/[churchId]/portal/attendance": "read:self",
+  "/[churchId]/portal/prayer": "read:self",
+  "/[churchId]/portal/announcements": "read:self",
   "/[churchId]/dashboard": "read:member",
   "/[churchId]/dashboard/home": "read:member",
   "/[churchId]/dashboard/profile": "read:self",
