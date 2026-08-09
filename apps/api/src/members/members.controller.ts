@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   BadRequestException,
+  ForbiddenException,
   UseGuards,
   Req,
 } from '@nestjs/common'
@@ -15,6 +16,7 @@ import { Request } from 'express'
 import { MembersService, type CreateMemberInput } from './members.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
+import { UserRole } from '../auth/types/permission.types'
 
 export type UpdateMemberInput = Partial<CreateMemberInput>
 
@@ -103,7 +105,18 @@ export class MembersController {
   @Get(':id')
   @RequirePermission('read:member')
   async getOne(@Req() request: Request, @Param('id') id: string) {
-    const member = await this.membersService.getMemberById(request['churchId'] as string, id)
+    const churchId = request['churchId'] as string
+
+    // The MEMBER role's read:member grant is "own profile only" (see permissions.ts) —
+    // enforce that here since the permission system itself is action-based, not row-scoped.
+    if (request.user['role'] === UserRole.MEMBER) {
+      const ownMember = await this.membersService.getMemberByUserId(churchId, request.user['id'] as string)
+      if (!ownMember || ownMember.id !== id) {
+        throw new ForbiddenException('You can only view your own member profile')
+      }
+    }
+
+    const member = await this.membersService.getMemberById(churchId, id)
     if (!member) {
       throw new BadRequestException(`Member with ID ${id} not found`)
     }
