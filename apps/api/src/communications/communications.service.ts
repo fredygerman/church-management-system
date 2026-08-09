@@ -205,6 +205,23 @@ export class CommunicationsService {
     })
   }
 
+  /**
+   * List sent campaigns visible to members as announcements (self-service, safe fields only)
+   */
+  async listPublishedAnnouncements(churchId: string) {
+    return db.select({
+      id: campaigns.id,
+      name: campaigns.name,
+      channel: campaigns.channel,
+      subject: campaigns.subject,
+      body: campaigns.body,
+      sentAt: campaigns.completedAt,
+    })
+      .from(campaigns)
+      .where(and(eq(campaigns.churchId, churchId), eq(campaigns.status, 'completed'), isNull(campaigns.deletedAt)))
+      .orderBy(desc(campaigns.completedAt))
+  }
+
   async getCampaignDetail(churchId: string, campaignId: string) {
     const [campaign] = await this.getCampaignRows(churchId, campaignId)
     if (!campaign) throw new NotFoundException('Campaign not found')

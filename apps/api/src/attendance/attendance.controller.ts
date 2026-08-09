@@ -13,13 +13,30 @@ import {
 } from '@nestjs/common'
 import { Request } from 'express'
 import { AttendanceService } from './attendance.service'
+import { MembersService } from '../members/members.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
 
 @Controller('attendance')
 @UseGuards(ChurchContextGuard)
 export class AttendanceController {
-  constructor(private readonly attendanceService: AttendanceService) {}
+  constructor(
+    private readonly attendanceService: AttendanceService,
+    private readonly membersService: MembersService,
+  ) {}
+
+  /**
+   * GET /attendance/me/checkins - Get the caller's own check-in history (self-service)
+   */
+  @Get('me/checkins')
+  @RequirePermission('view:attendance')
+  async getMyCheckins(@Req() request: Request) {
+    const churchId = request['churchId'] as string
+    const userId = request.user['id'] as string
+    const member = await this.membersService.getMemberByUserId(churchId, userId)
+    if (!member) return []
+    return this.attendanceService.getMemberCheckins(churchId, member.id)
+  }
 
   @Post('service-types')
   @RequirePermission('manage:services')

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '@church/db'
-import { families, NewFamily, Family } from '@church/db'
+import { families, members, NewFamily, Family } from '@church/db'
 
 export type CreateFamilyInput = {
   churchId: string
@@ -38,6 +38,30 @@ export class FamiliesService {
       where: and(eq(families.id, familyId), eq(families.churchId, churchId), isNull(families.deletedAt)),
     })
     return family
+  }
+
+  /**
+   * Get a member's own family plus spouse and other linked members (self-service)
+   */
+  async getFamilyForMember(churchId: string, familyId: string, memberId: string) {
+    const family = await this.getFamilyById(churchId, familyId)
+    if (!family) return null
+
+    const familyMembers = await db.query.members.findMany({
+      where: and(
+        eq(members.churchId, churchId),
+        eq(members.familyId, familyId),
+        isNull(members.deletedAt),
+      ),
+    })
+
+    const spouse = familyMembers.find((member) => member.id === family.spouseId) ?? null
+
+    return {
+      family,
+      spouse,
+      members: familyMembers.filter((member) => member.id !== memberId),
+    }
   }
 
   /**

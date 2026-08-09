@@ -99,6 +99,15 @@ export class CommunicationsController {
     return this.communicationsService.getCampaignDetail(request['churchId'] as string, campaignId)
   }
 
+  /**
+   * GET /communications/announcements - List sent campaigns visible to members (self-service)
+   */
+  @Get('announcements')
+  @RequirePermission('view:communications')
+  async listAnnouncements(@Req() request: Request) {
+    return this.communicationsService.listPublishedAnnouncements(request['churchId'] as string)
+  }
+
   @Post('campaigns/:id/schedule')
   @RequirePermission('send:communications')
   async scheduleCampaign(@Req() request: Request, @Param('id') campaignId: string, @Body() body: { scheduledAt: string }) {
