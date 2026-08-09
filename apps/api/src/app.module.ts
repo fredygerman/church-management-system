@@ -25,6 +25,7 @@ import { AttendanceModule } from './attendance/attendance.module'
 import { CommunicationsModule } from './communications/communications.module'
 import { DataQualityModule } from './data-quality/data-quality.module'
 import { FamilyLifecycleModule } from './family-lifecycle/family-lifecycle.module'
+import { PrayerModule } from './prayer/prayer.module'
 import config from './config'
 
 @Module({
@@ -48,6 +49,7 @@ import config from './config'
     CommunicationsModule,
     DataQualityModule,
     FamilyLifecycleModule,
+    PrayerModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

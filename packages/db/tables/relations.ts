@@ -25,6 +25,7 @@ import {
   messageDeliveries,
   campaignEvents,
 } from "./communications"
+import { prayerRequests } from "./prayerRequests"
 
 // Church relations
 export const churchesRelations = relations(churches, ({ many }) => ({
@@ -45,6 +46,7 @@ export const churchesRelations = relations(churches, ({ many }) => ({
   messageDeliveries: many(messageDeliveries),
   campaignEvents: many(campaignEvents),
   userChurchMemberships: many(userChurchMemberships),
+  prayerRequests: many(prayerRequests),
 }))
 
 // Zone relations
@@ -314,5 +316,20 @@ export const engagementRiskFlagsRelations = relations(engagementRiskFlags, ({ on
   member: one(members, {
     fields: [engagementRiskFlags.memberId],
     references: [members.id],
+  }),
+}))
+
+export const prayerRequestsRelations = relations(prayerRequests, ({ one }) => ({
+  church: one(churches, {
+    fields: [prayerRequests.churchId],
+    references: [churches.id],
+  }),
+  member: one(members, {
+    fields: [prayerRequests.memberId],
+    references: [members.id],
+  }),
+  user: one(users, {
+    fields: [prayerRequests.userId],
+    references: [users.id],
   }),
 }))

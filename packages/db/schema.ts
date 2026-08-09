@@ -94,6 +94,12 @@ import {
   importModeEnum,
   duplicateCandidateStatusEnum,
 } from "./tables/dataQuality"
+import {
+  prayerRequests,
+  prayerRequestStatusEnum,
+  type PrayerRequest,
+  type NewPrayerRequest,
+} from "./tables/prayerRequests"
 
 // Import all relations
 import {
@@ -118,6 +124,7 @@ import {
   campaignRecipientsRelations,
   messageDeliveriesRelations,
   campaignEventsRelations,
+  prayerRequestsRelations,
 } from "./tables/relations"
 
 export {
@@ -146,6 +153,7 @@ export {
   importJobStatusEnum,
   importModeEnum,
   duplicateCandidateStatusEnum,
+  prayerRequestStatusEnum,
   userChurchMemberships,
   userChurchMembershipRoleEvents,
   zones,
@@ -180,6 +188,7 @@ export {
   campaignRecipients,
   messageDeliveries,
   campaignEvents,
+  prayerRequests,
   // Export relations for Drizzle ORM
   churchesRelations,
   zonesRelations,
@@ -202,6 +211,7 @@ export {
   campaignRecipientsRelations,
   messageDeliveriesRelations,
   campaignEventsRelations,
+  prayerRequestsRelations,
   // Type exports
   type User,
   type NewUser,
@@ -258,4 +268,6 @@ export {
   type NewMessageDelivery,
   type CampaignEvent,
   type NewCampaignEvent,
+  type PrayerRequest,
+  type NewPrayerRequest,
 }
