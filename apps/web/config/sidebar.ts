@@ -13,6 +13,7 @@ import {
   Megaphone,
   Database,
   HeartHandshake,
+  Building2,
   type LucideIcon,
 } from "lucide-react"
 import type { PermissionAction } from "@church/config"
@@ -97,6 +98,12 @@ export const sidebarConfig: SidebarSection[] = [
         href: "/dashboard/zones",
         icon: MapPin,
         permissions: ["manage:zones"],
+      },
+      {
+        title: "Departments",
+        href: "/dashboard/departments",
+        icon: Building2,
+        permissions: ["read:department"],
       },
       {
         title: "Families",

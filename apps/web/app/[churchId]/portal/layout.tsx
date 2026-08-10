@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Bell, CalendarCheck, HeartHandshake, Home, UserRound, UsersRound } from "lucide-react"
+import { Bell, CalendarCheck, HeartHandshake, Home, UserRound, UsersRound, Building2 } from "lucide-react"
 
 import { getChurches } from "@/actions/church"
 import { getSession } from "@/auth"
@@ -19,6 +19,7 @@ const portalLinks = [
   { href: "attendance", label: "Attendance", icon: CalendarCheck },
   { href: "prayer", label: "Prayer", icon: HeartHandshake },
   { href: "announcements", label: "Announcements", icon: Bell },
+  { href: "departments", label: "Departments", icon: Building2 },
 ]
 
 export default async function PortalLayout({

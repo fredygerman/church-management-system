@@ -52,6 +52,7 @@ export default async function ProfilePage({
     [UserRole.ADMIN]: "Administrator",
     [UserRole.BRANCH_ADMIN]: "Branch Administrator",
     [UserRole.ZONE_LEADER]: "Zone Leader",
+    [UserRole.DEPARTMENT_LEADER]: "Department Leader",
     [UserRole.MEMBER]: "Member",
   }
 

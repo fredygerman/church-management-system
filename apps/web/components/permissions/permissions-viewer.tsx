@@ -25,6 +25,7 @@ const roleLabels: Record<UserRole, string> = {
   [UserRole.ADMIN]: "Administrator",
   [UserRole.BRANCH_ADMIN]: "Branch Administrator",
   [UserRole.ZONE_LEADER]: "Zone Leader",
+  [UserRole.DEPARTMENT_LEADER]: "Department Leader",
   [UserRole.MEMBER]: "Member",
 }
 
@@ -33,6 +34,7 @@ const roleDescriptions: Record<UserRole, string> = {
   [UserRole.ADMIN]: "Church-level administrator with full access",
   [UserRole.BRANCH_ADMIN]: "Branch administrator with limited admin access",
   [UserRole.ZONE_LEADER]: "Zone/small group leader with member management",
+  [UserRole.DEPARTMENT_LEADER]: "Department/ministry leader with department management",
   [UserRole.MEMBER]: "Regular church member with basic access",
 }
 
