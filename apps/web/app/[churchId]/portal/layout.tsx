@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { Bell, CalendarCheck, HeartHandshake, Home, UserRound, UsersRound, Building2, HandCoins } from "lucide-react"
+import { Bell, CalendarCheck, CalendarDays, HeartHandshake, Home, Target, UserRound, UsersRound, Building2, HandCoins } from "lucide-react"
 
 import { getChurches } from "@/actions/church"
 import { getSession } from "@/auth"
@@ -22,6 +22,8 @@ const portalLinks: { href: string; label: string; icon: typeof UserRound; permis
   { href: "announcements", label: "Announcements", icon: Bell },
   { href: "departments", label: "Departments", icon: Building2, permission: "read:department" },
   { href: "offerings", label: "My Giving", icon: HandCoins, permission: "read:own-giving-history" },
+  { href: "giving-goals", label: "Giving Goals", icon: Target, permission: "view:giving-goals" },
+  { href: "events", label: "Events", icon: CalendarDays, permission: "view:events" },
 ]
 
 export default async function PortalLayout({

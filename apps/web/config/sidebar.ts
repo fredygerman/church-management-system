@@ -15,6 +15,7 @@ import {
   HeartHandshake,
   Building2,
   HandCoins,
+  CalendarDays,
   type LucideIcon,
 } from "lucide-react"
 import type { PermissionAction } from "@church/config"
@@ -122,7 +123,13 @@ export const sidebarConfig: SidebarSection[] = [
         title: "Offerings",
         href: "/dashboard/offerings",
         icon: HandCoins,
-        permissions: ["manage:offerings", "view:giving-reports"],
+        permissions: ["manage:offerings", "view:giving-reports", "manage:giving-goals"],
+      },
+      {
+        title: "Events",
+        href: "/dashboard/events",
+        icon: CalendarDays,
+        permissions: ["view:events"],
       },
     ],
   },

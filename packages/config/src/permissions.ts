@@ -91,6 +91,14 @@ export type PermissionAction =
   | 'manage:offerings'
   | 'view:giving-reports'
   | 'read:own-giving-history'
+  | 'manage:giving-goals'
+  | 'view:giving-goals'
+
+  // Events
+  | 'manage:events'
+  | 'view:events'
+  | 'rsvp:event'
+  | 'manage:network-events'
 
 // ============================================================================
 // ROLE TO PERMISSIONS MAPPING
@@ -105,13 +113,14 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:family', 'read:family', 'update:family', 'delete:family', 'manage:families', 'view:families',
     'create:visitation', 'read:visitation', 'update:visitation', 'delete:visitation',
     'manage:departments', 'read:department', 'manage:settings', 'manage:users', 'manage:churches', 'view:users',
-    'manage:offerings', 'view:giving-reports',
+    'manage:offerings', 'view:giving-reports', 'manage:giving-goals', 'view:giving-goals',
     'manage:files', 'manage:mail', 'manage:sms',
     'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
     'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
+    'manage:events', 'view:events', 'rsvp:event', 'manage:network-events',
   ],
 
   [UserRole.ADMIN]: [
@@ -122,12 +131,13 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:family', 'read:family', 'update:family', 'delete:family', 'manage:families', 'view:families',
     'create:visitation', 'read:visitation', 'update:visitation', 'delete:visitation',
     'manage:departments', 'read:department', 'manage:settings', 'view:users',
-    'manage:offerings', 'view:giving-reports',
+    'manage:offerings', 'view:giving-reports', 'manage:giving-goals', 'view:giving-goals',
     'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
     'manage:files', 'manage:mail', 'manage:sms', 'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
+    'manage:events', 'view:events', 'rsvp:event', 'manage:network-events',
   ],
 
   [UserRole.BRANCH_ADMIN]: [
@@ -137,12 +147,13 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'read:family', 'view:families',
     'create:visitation', 'read:visitation',
     'manage:departments', 'read:department', 'view:users',
-    'manage:offerings', 'view:giving-reports',
+    'manage:offerings', 'view:giving-reports', 'manage:giving-goals', 'view:giving-goals',
     'manage:services', 'manage:attendance', 'view:attendance', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
     'manage:files', 'manage:sms', 'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
+    'manage:events', 'view:events', 'rsvp:event',
   ],
 
   [UserRole.ZONE_LEADER]: [
@@ -156,6 +167,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'view:families',
     'create:visitation', 'read:visitation',
     'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
+    'view:giving-goals', 'view:events', 'rsvp:event',
   ],
 
   [UserRole.DEPARTMENT_LEADER]: [
@@ -169,6 +181,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'view:families',
     'create:visitation', 'read:visitation',
     'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
+    'view:giving-goals', 'view:events', 'rsvp:event',
   ],
 
   [UserRole.MEMBER]: [
@@ -178,6 +191,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'view:communications',
     'view:lifecycle-dashboard',
     'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests', 'read:own-giving-history',
+    'view:giving-goals', 'view:events', 'rsvp:event',
   ],
 }
 
@@ -516,6 +530,42 @@ export const PERMISSION_METADATA: Record<PermissionAction, PermissionMetadata> =
     description: 'View own submitted offering/contribution history',
     category: 'member',
     riskLevel: 'low',
+  },
+  'manage:giving-goals': {
+    label: 'Manage Giving Goals',
+    description: 'Create, edit, and delete church fundraising goals',
+    category: 'admin',
+    riskLevel: 'high',
+  },
+  'view:giving-goals': {
+    label: 'View Giving Goals',
+    description: 'View public fundraising goals, their progress, and donor-wall recognition',
+    category: 'admin',
+    riskLevel: 'low',
+  },
+  'manage:events': {
+    label: 'Manage Events',
+    description: 'Create, edit, cancel, and delete events; manage RSVP rosters and attendance',
+    category: 'admin',
+    riskLevel: 'high',
+  },
+  'view:events': {
+    label: 'View Events',
+    description: 'View the church event calendar',
+    category: 'admin',
+    riskLevel: 'low',
+  },
+  'rsvp:event': {
+    label: 'RSVP to Events',
+    description: 'Self-service RSVP to church events',
+    category: 'member',
+    riskLevel: 'low',
+  },
+  'manage:network-events': {
+    label: 'Manage Network Events',
+    description: 'Publish events visible across all branches, not just one church',
+    category: 'admin',
+    riskLevel: 'high',
   },
 }
 
