@@ -1,9 +1,10 @@
 import { Injectable } from '@nestjs/common'
-import { eq, and, isNull, gte, lte, sql } from 'drizzle-orm'
+import { eq, and, isNull, gte, lte, sql, inArray } from 'drizzle-orm'
 import { db } from '@church/db'
 import {
   offerings,
   offeringCategories,
+  members,
   type Offering,
   type OfferingCategory,
 } from '@church/db'
@@ -110,8 +111,11 @@ export class OfferingsService {
     return offering
   }
 
-  async getOfferingsByChurch(churchId: string, filters: OfferingFilters = {}): Promise<Offering[]> {
-    return db.query.offerings.findMany({
+  async getOfferingsByChurch(
+    churchId: string,
+    filters: OfferingFilters = {},
+  ): Promise<(Offering & { memberName: string | null })[]> {
+    const rows = await db.query.offerings.findMany({
       where: and(
         eq(offerings.churchId, churchId),
         isNull(offerings.deletedAt),
@@ -122,6 +126,23 @@ export class OfferingsService {
         filters.to ? lte(offerings.offeringDate, filters.to as any) : undefined,
       ),
     })
+
+    const memberIds: string[] = Array.from(
+      new Set(rows.map((r) => r.memberId).filter((id): id is string => !!id)),
+    )
+    if (memberIds.length === 0) {
+      return rows.map((row) => ({ ...row, memberName: null }))
+    }
+
+    const namedMembers = await db.query.members.findMany({ where: inArray(members.id, memberIds) })
+    const nameById = new Map(
+      namedMembers.map((m: any) => [m.id, [m.firstName, m.lastName].filter(Boolean).join(' ')]),
+    )
+
+    return rows.map((row) => ({
+      ...row,
+      memberName: row.memberId ? (nameById.get(row.memberId) ?? null) : null,
+    }))
   }
 
   async getOfferingByIdInChurch(churchId: string, offeringId: string): Promise<Offering | undefined> {

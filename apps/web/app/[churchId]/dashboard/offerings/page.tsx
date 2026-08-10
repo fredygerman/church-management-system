@@ -63,9 +63,7 @@ async function OfferingsTable({
               {offering.category?.name || categoryNameById.get(offering.categoryId) || offering.categoryId}
             </TableCell>
             <TableCell className="text-muted-foreground">
-              {offering.member
-                ? [offering.member.firstName, offering.member.lastName].filter(Boolean).join(" ")
-                : "Anonymous"}
+              {offering.memberName ?? "Anonymous"}
             </TableCell>
             <TableCell className="text-right font-medium">
               {formatMoney(offering.amountCents, offering.currency)}
