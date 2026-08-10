@@ -6,6 +6,7 @@ import { getChurches } from "@/actions/church"
 import { getSession } from "@/auth"
 import { ChurchSwitcher } from "@/components/layout/church-switcher"
 import { Button } from "@/components/ui/button"
+import { hasPermission, type PermissionAction } from "@/lib/permissions"
 
 interface PageProps {
   params: Promise<{
@@ -13,13 +14,13 @@ interface PageProps {
   }>
 }
 
-const portalLinks = [
+const portalLinks: { href: string; label: string; icon: typeof UserRound; permission?: PermissionAction }[] = [
   { href: "profile", label: "Profile", icon: UserRound },
   { href: "family", label: "Family", icon: UsersRound },
   { href: "attendance", label: "Attendance", icon: CalendarCheck },
   { href: "prayer", label: "Prayer", icon: HeartHandshake },
   { href: "announcements", label: "Announcements", icon: Bell },
-  { href: "departments", label: "Departments", icon: Building2 },
+  { href: "departments", label: "Departments", icon: Building2, permission: "read:department" },
 ]
 
 export default async function PortalLayout({
@@ -59,7 +60,9 @@ export default async function PortalLayout({
 
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-6 md:grid-cols-[220px_1fr]">
         <nav className="flex gap-2 overflow-x-auto md:flex-col md:overflow-visible">
-          {portalLinks.map((item) => {
+          {portalLinks
+            .filter((item) => !item.permission || hasPermission(session.user.role, item.permission))
+            .map((item) => {
             const Icon = item.icon
             return (
               <Button key={item.href} asChild variant="ghost" className="justify-start">
