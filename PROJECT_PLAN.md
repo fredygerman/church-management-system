@@ -3,7 +3,7 @@
 ## Overview
 Multi-branch church management system with phased rollout focusing on People & Structure first, then Operations, then Finance.
 
-**Current Status:** Phase 1 - 85% Complete ✅
+**Current Status:** Phase 1 & 2 complete ✅ — Phase 3 (Giving & Events) next
 
 ---
 
@@ -44,25 +44,33 @@ Multi-branch church management system with phased rollout focusing on People & S
 
 ---
 
-## Phase 2: Ministry Operations (Engagement & Care) 🚧 NEXT
+## Phase 2: Ministry Operations (Engagement & Care)
 
-### 2.1 Attendance & Service Management 🎯 HIGH PRIORITY
-- [ ] Define service types (Sunday, Mid-week, All-night prayers)
-- [ ] Headcount tracking (Men, Women, Children, Visitors)
-- [ ] Optional: Individual check-in for leaders/workers
-- [ ] Attendance reports and trends
+### 2.1 Attendance & Service Management ✅ COMPLETE
+- [x] Define service types (Sunday, Mid-week, All-night prayers)
+- [x] Headcount tracking (Men, Women, Children, Visitors)
+- [x] Individual check-in (QR + manual) for leaders/workers
+- [x] Attendance sessions, trends, and risk insights
 
-### 2.2 Communication Hub (SMS) 🎯 HIGH PRIORITY
-- [ ] Bulk SMS by group (Choir, Zone Leaders, etc.)
-- [ ] Automated birthday SMS
-- [ ] Event reminder SMS
-- [ ] SMS templates management
+### 2.2 Communication Hub (SMS) ✅ COMPLETE
+- [x] Bulk SMS/email campaigns by recipient group
+- [x] Automated birthday & anniversary notifications (family-lifecycle milestone rules)
+- [x] Message templates (SMS + email, with variable substitution)
+- [x] Campaign tracking (recipients, events, status)
 
-### 2.3 Department/Ministry Management
-- [ ] Create ministries (Choir, Ushers, Intercessors)
-- [ ] Assign members to departments
-- [ ] Track workforce across branches
-- [ ] Department attendance tracking
+### 2.3 Department/Ministry Management ✅ COMPLETE
+- [x] Create ministries (Choir, Ushers, Intercessors) — multi-department membership, multi-leader per department (design: `docs/superpowers/specs/2026-08-09-department-ministry-management-design.md`)
+- [x] Assign members to departments, toggle leader per member (no reassignment dialog needed — multiple leaders coexist)
+- [x] Member/leader counts per department (per-church stats; no separate cross-branch aggregate view — admins switch church context to compare branches)
+- [x] Department attendance tracking (`department` groupBy on the existing attendance trends/comparison endpoints — analytics only, no separate check-in system)
+- [x] `department_leader` role, scoped read-only to their led department(s) via a live-query guard (`DepartmentContextGuard`)
+
+### 2.4 Beyond original scope (already shipped)
+- [x] Multi-church membership (a member can belong to more than one church)
+- [x] Member self-service portal (profile, attendance, prayer requests, announcements, family)
+- [x] Prayer request feature
+- [x] Data-quality workflows (import de-duplication)
+- [x] Family lifecycle milestones (birthday/anniversary/baptism notification rules)
 
 ---
 
@@ -130,10 +138,7 @@ Multi-branch church management system with phased rollout focusing on People & S
 
 ---
 
-## Next Steps (Phase 2 Priority)
+## Next Steps (Phase 3)
 
-1. **Attendance Tracking** - Service attendance with headcount
-2. **SMS Integration** - Bulk messaging and automated birthday wishes
-3. **Department Management** - Ministry assignment and tracking
-4. **Calendar & Events** - Event planning and RSVP tracking
-5. **Offering Tracking** - Simple offering and contribution history
+1. **Offering Tracking** - Simple offering and contribution history (note: `payment.service.ts` from the pre-monorepo codebase is unregistered dead code, not a head start)
+2. **Calendar & Events** - Event planning and RSVP tracking
