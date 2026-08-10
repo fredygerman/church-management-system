@@ -77,7 +77,11 @@ export class EventsService {
     churchId: string,
     filters: EventFilters = {},
     publishedOnly = false,
+    limit?: number,
+    offset?: number,
   ): Promise<Event[]> {
+    const effectiveLimit = limit ?? 200
+    const effectiveOffset = offset ?? 0
     return db.query.events.findMany({
       where: and(
         this.visibleToChurch(churchId),
@@ -88,6 +92,8 @@ export class EventsService {
         filters.from ? gte(events.startsAt, filters.from as any) : undefined,
         filters.to ? lte(events.startsAt, filters.to as any) : undefined,
       ),
+      limit: effectiveLimit,
+      offset: effectiveOffset,
     })
   }
 

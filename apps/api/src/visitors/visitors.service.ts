@@ -31,12 +31,16 @@ export class VisitorsService {
   /**
    * Get all visitors in a church
    */
-  async getVisitorsByChurch(churchId: string): Promise<Visitor[]> {
+  async getVisitorsByChurch(churchId: string, limit?: number, offset?: number): Promise<Visitor[]> {
+    const effectiveLimit = limit ?? 200
+    const effectiveOffset = offset ?? 0
     return db.query.visitors.findMany({
       where: and(
         eq(visitors.churchId, churchId),
         isNull(visitors.deletedAt),
       ),
+      limit: effectiveLimit,
+      offset: effectiveOffset,
     })
   }
 

@@ -143,7 +143,11 @@ export class OfferingsService {
   async getOfferingsByChurch(
     churchId: string,
     filters: OfferingFilters = {},
+    limit?: number,
+    offset?: number,
   ): Promise<(Offering & { memberName: string | null })[]> {
+    const effectiveLimit = limit ?? 200
+    const effectiveOffset = offset ?? 0
     const rows = await db.query.offerings.findMany({
       where: and(
         eq(offerings.churchId, churchId),
@@ -155,6 +159,8 @@ export class OfferingsService {
         filters.to ? lte(offerings.offeringDate, filters.to as any) : undefined,
         filters.goalId ? eq(offerings.goalId, filters.goalId) : undefined,
       ),
+      limit: effectiveLimit,
+      offset: effectiveOffset,
     })
 
     const memberIds: string[] = Array.from(

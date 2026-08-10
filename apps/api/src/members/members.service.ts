@@ -34,12 +34,16 @@ export class MembersService {
   /**
    * Get all members in a church
    */
-  async getMembersByChurch(churchId: string): Promise<Member[]> {
+  async getMembersByChurch(churchId: string, limit?: number, offset?: number): Promise<Member[]> {
+    const effectiveLimit = limit ?? 200
+    const effectiveOffset = offset ?? 0
     return db.query.members.findMany({
       where: and(
         eq(members.churchId, churchId),
         isNull(members.deletedAt),
       ),
+      limit: effectiveLimit,
+      offset: effectiveOffset,
     })
   }
 

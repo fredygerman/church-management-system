@@ -163,11 +163,31 @@ export class OfferingsController {
     @Query('from') from?: string,
     @Query('to') to?: string,
     @Query('goalId') goalId?: string,
+    @Query('limit') limitStr?: string,
+    @Query('offset') offsetStr?: string,
   ) {
     const churchId = request['churchId'] as string
     if (!churchId) {
       throw new BadRequestException('Church context is required')
     }
+
+    let limit: number | undefined
+    let offset: number | undefined
+
+    if (limitStr) {
+      limit = parseInt(limitStr, 10)
+      if (!Number.isInteger(limit) || limit <= 0) {
+        throw new BadRequestException('limit must be a positive integer')
+      }
+    }
+
+    if (offsetStr) {
+      offset = parseInt(offsetStr, 10)
+      if (!Number.isInteger(offset) || offset < 0) {
+        throw new BadRequestException('offset must be a non-negative integer')
+      }
+    }
+
     return this.offeringsService.getOfferingsByChurch(churchId, {
       categoryId,
       memberId,
@@ -175,7 +195,7 @@ export class OfferingsController {
       from,
       to,
       goalId,
-    })
+    }, limit, offset)
   }
 
   /**
