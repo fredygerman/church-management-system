@@ -1,5 +1,7 @@
 # Frontend Permission System
 
+**Source of truth:** `packages/config/src/permissions.ts` (re-exported by `apps/web/lib/permissions.ts`). Adding a role or permission there is enough — this file's hooks/components read from it generically, no separate frontend registration needed.
+
 ## Overview
 
 The frontend permission system mirrors the backend RBAC (Role-Based Access Control) system, providing client-side and server-side utilities for permission checking.
@@ -238,6 +240,8 @@ const role = await getUserRole()
 
 ## Available Permissions
 
+Headline ones (the complete, current list — including attendance, communications, data-quality, family-lifecycle, and prayer-request permissions — is the `PermissionAction` type in `packages/config/src/permissions.ts`):
+
 ```typescript
 'create:member'      // Create new member
 'read:member'        // View member(s)
@@ -249,7 +253,8 @@ const role = await getUserRole()
 'view:visitors'      // See visitor tracking
 'create:visitor'     // Add new visitor
 'update:visitor'     // Edit visitor followup
-'manage:departments' // Manage departments/ministries
+'manage:departments' // Full department/ministry management (admins only)
+'read:department'    // View a department's details/members/stats (department_leader + admins)
 'create:visitation'  // Log pastoral visits
 'read:visitation'    // View visitation logs
 ```
@@ -261,10 +266,11 @@ const role = await getUserRole()
 | Role | Level | Permissions |
 |------|-------|-------------|
 | super_admin | Highest | All permissions |
-| admin | High | All except delete:member |
-| branch_admin | Medium | Church-level management |
-| zone_leader | Low | Zone members only |
-| member | Lowest | Own profile only |
+| admin | High | All except delete:member restrictions branch_admin has |
+| branch_admin | Medium | Church-level management, no hard delete |
+| zone_leader | Low | Own zone: read-only member/visitor/visitation access |
+| department_leader | Low | Own led department(s): read-only, mirrors zone_leader |
+| member | Lowest | Own profile + self-service (attendance, prayer requests) only |
 
 ---
 
@@ -337,17 +343,13 @@ const role = await getUserRole()
 
 ## Sync with Backend
 
-**CRITICAL:** Frontend permissions MUST match backend permissions.
+There is only **one** definition to maintain: `packages/config/src/permissions.ts` (`@church/config`). Both `apps/api/src/auth/types/permission.types.ts` and `apps/web/lib/permissions.ts` re-export from it — neither file declares its own `PermissionAction` type or `PERMISSION_MAP`, so there is no separate frontend copy to keep in sync.
 
-Backend: `apps/api/src/auth/types/permission.types.ts`  
-Frontend: `apps/web/lib/permissions.ts`
-
-When adding new permissions:
-1. Add to backend `PermissionAction` type
-2. Add to backend `PERMISSION_MAP`
-3. Add to frontend `PermissionAction` type
-4. Add to frontend `PERMISSION_MAP`
-5. Update this documentation
+When adding a new permission or role:
+1. Add the `PermissionAction` string (and/or `UserRole` value) in `packages/config/src/permissions.ts`
+2. Add it to the relevant `PERMISSION_MAP` entries and add a `PERMISSION_METADATA` entry
+3. If the role needs single-resource scoping (only their zone/department/etc.), add a guard in `apps/api/src/auth/guards/` and register it in `app.module.ts`
+4. Update this documentation if the change is significant enough to warrant it
 
 ---
 
