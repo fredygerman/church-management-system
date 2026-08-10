@@ -7,10 +7,11 @@ A monorepo for church operations management, built with `pnpm` workspaces and `t
 This project provides tools for:
 
 - member and visitor management
-- zones and families
-- attendance sessions, check-ins, trends, and risk insights
+- zones, departments/ministries, and families
+- attendance sessions, check-ins, trends, and risk insights (with zone and department breakdowns)
 - communication templates and campaigns
 - data-quality workflows (imports and duplicate resolution)
+- member self-service portal (profile, attendance, prayer requests, announcements, departments)
 - role/permission-based access control
 
 The system is split into a web app and an API, backed by PostgreSQL via Drizzle ORM.
@@ -47,7 +48,7 @@ The system is split into a web app and an API, backed by PostgreSQL via Drizzle 
 - TypeScript
 - Drizzle ORM + PostgreSQL
 - JWT auth (access + refresh tokens)
-- global guards for auth, church context, permissions, and zone context
+- global guards for auth, church context, permissions, zone context, and department context
 
 ### Shared
 
@@ -136,12 +137,14 @@ Primary backend modules include:
 - `churches`
 - `members`
 - `zones`
+- `departments`
 - `families`
 - `visitors`
 - `attendance`
 - `communications`
 - `data-quality`
 - `family-lifecycle`
+- `prayer`
 - `mail`
 - `sms`
 - `file-upload`
