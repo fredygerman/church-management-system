@@ -156,16 +156,24 @@ export class OfferingsService {
    * Self-service: the caller's own named offerings only. Filtering strictly on
    * `memberId = :memberId` naturally excludes anonymous rows (memberId IS NULL,
    * which never equals any concrete id) and every other member's rows - no
-   * separate "is this anonymous" check is needed.
+   * separate "is this anonymous" check is needed. Joins the category name
+   * directly since a plain member has no `manage:offerings` access to resolve
+   * category names via a separate lookup.
    */
-  async getMyOfferings(churchId: string, memberId: string): Promise<Offering[]> {
-    return db.query.offerings.findMany({
+  async getMyOfferings(churchId: string, memberId: string): Promise<(Offering & { categoryName: string | null })[]> {
+    const rows = await db.query.offerings.findMany({
       where: and(
         eq(offerings.churchId, churchId),
         eq(offerings.memberId, memberId),
         isNull(offerings.deletedAt),
       ),
     })
+    const categories = await db.query.offeringCategories.findMany({
+      where: eq(offeringCategories.churchId, churchId),
+    })
+    const nameById = new Map(categories.map((c: OfferingCategory) => [c.id, c.name]))
+
+    return rows.map((row) => ({ ...row, categoryName: nameById.get(row.categoryId) ?? null }))
   }
 
   /**

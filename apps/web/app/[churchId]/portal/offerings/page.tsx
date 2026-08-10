@@ -12,10 +12,8 @@ function formatDate(value: string | null | undefined): string {
   return date.toLocaleDateString()
 }
 
-// The self-service response may or may not join the category name - fall
-// back to the raw categoryId rather than crash if it doesn't.
-function categoryLabel(offering: any): string {
-  return offering.category?.name || offering.categoryName || offering.categoryId || "—"
+function categoryLabel(offering: { categoryName: string | null; categoryId: string }): string {
+  return offering.categoryName ?? offering.categoryId
 }
 
 export default async function PortalOfferingsPage({ params }: PageProps) {

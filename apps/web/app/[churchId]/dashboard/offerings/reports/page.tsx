@@ -1,5 +1,5 @@
 import { ensurePermission } from "@/lib/permissions-server"
-import { getOfferingReportSummary } from "@/actions/offering"
+import { getOfferingReportSummary, getOfferingCategories } from "@/actions/offering"
 import { formatMoney } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import {
@@ -16,23 +16,10 @@ interface PageProps {
   searchParams: Promise<{ period?: "week" | "month" | "year"; from?: string; to?: string }>
 }
 
-// The API's exact field names for the summary rows aren't nailed down yet
-// (built concurrently) - fall back across the plausible field names rather
-// than assume one, but always keep amountCents/currency exact (integer math).
-function dimensionLabel(row: any): string {
-  return (
-    row.categoryName ??
-    row.category?.name ??
-    (typeof row.category === "string" ? row.category : undefined) ??
-    row.period ??
-    row.label ??
-    row.categoryId ??
-    "Unknown"
-  )
-}
-
-function rowAmountCents(row: any): number {
-  return row.amountCents ?? row.totalAmountCents ?? row.total ?? row.sum ?? 0
+// API returns { groupKey, currency, totalCents } for both groupBy=category and groupBy=period.
+// For groupBy=category, groupKey is the raw categoryId - resolve it to a name via categoriesById.
+function categoryLabel(row: { groupKey: string }, categoriesById: Map<string, string>): string {
+  return categoriesById.get(row.groupKey) ?? row.groupKey
 }
 
 export default async function OfferingReportsPage({ params, searchParams }: PageProps) {
@@ -40,10 +27,12 @@ export default async function OfferingReportsPage({ params, searchParams }: Page
   const { churchId } = await params
   const { period = "month", from, to } = await searchParams
 
-  const [byCategory, byPeriod] = await Promise.all([
+  const [byCategory, byPeriod, categories] = await Promise.all([
     getOfferingReportSummary(churchId, "category", { from, to }),
     getOfferingReportSummary(churchId, "period", { period, from, to }),
+    getOfferingCategories(churchId),
   ])
+  const categoriesById = new Map<string, string>(categories.map((c: any) => [c.id, c.name]))
 
   return (
     <div className="flex flex-col space-y-6">
@@ -71,10 +60,10 @@ export default async function OfferingReportsPage({ params, searchParams }: Page
             <TableBody>
               {byCategory.map((row, index) => (
                 <TableRow key={index}>
-                  <TableCell>{dimensionLabel(row)}</TableCell>
+                  <TableCell>{categoryLabel(row, categoriesById)}</TableCell>
                   <TableCell>{row.currency}</TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatMoney(rowAmountCents(row), row.currency)}
+                    {formatMoney(row.totalCents, row.currency)}
                   </TableCell>
                 </TableRow>
               ))}
@@ -99,10 +88,10 @@ export default async function OfferingReportsPage({ params, searchParams }: Page
             <TableBody>
               {byPeriod.map((row, index) => (
                 <TableRow key={index}>
-                  <TableCell>{dimensionLabel(row)}</TableCell>
+                  <TableCell>{row.groupKey}</TableCell>
                   <TableCell>{row.currency}</TableCell>
                   <TableCell className="text-right font-medium">
-                    {formatMoney(rowAmountCents(row), row.currency)}
+                    {formatMoney(row.totalCents, row.currency)}
                   </TableCell>
                 </TableRow>
               ))}
