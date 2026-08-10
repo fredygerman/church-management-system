@@ -139,8 +139,11 @@ export class OfferingsController {
         'Missing required fields: categoryId, amountCents, currency, offeringDate',
       )
     }
-    if (!Number.isInteger(input.amountCents) || input.amountCents < 0) {
-      throw new BadRequestException('amountCents must be a non-negative integer')
+    if (!Number.isInteger(input.amountCents) || input.amountCents <= 0) {
+      throw new BadRequestException('amountCents must be a positive integer')
+    }
+    if (!/^[A-Z]{3}$/.test(input.currency)) {
+      throw new BadRequestException('currency must be a 3-character uppercase code (e.g., USD)')
     }
 
     return this.offeringsService.createOffering({ ...input, churchId })
@@ -198,8 +201,11 @@ export class OfferingsController {
     @Param('id') id: string,
     @Body() input: UpdateOfferingInput,
   ) {
-    if (input?.amountCents != null && (!Number.isInteger(input.amountCents) || input.amountCents < 0)) {
-      throw new BadRequestException('amountCents must be a non-negative integer')
+    if (input?.amountCents != null && (!Number.isInteger(input.amountCents) || input.amountCents <= 0)) {
+      throw new BadRequestException('amountCents must be a positive integer')
+    }
+    if (input?.currency != null && !/^[A-Z]{3}$/.test(input.currency)) {
+      throw new BadRequestException('currency must be a 3-character uppercase code (e.g., USD)')
     }
     return this.offeringsService.updateOffering(request['churchId'] as string, id, input)
   }
