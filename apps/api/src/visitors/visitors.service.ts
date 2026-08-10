@@ -164,14 +164,22 @@ export class VisitorsService {
    * Create a followup entry
    */
   async createFollowup(data: {
+    churchId: string
     visitorId: string
     status: string
     notes?: string
     followupDate?: Date | string
     completedBy?: string
   }): Promise<VisitorFollowup> {
+    const { churchId, ...followupData } = data
+    const visitor = await this.getVisitorById(churchId, data.visitorId)
+
+    if (!visitor) {
+      throw new BadRequestException(`Visitor with ID ${data.visitorId} not found`)
+    }
+
     const [followup] = await db.insert(visitorFollowups).values({
-      ...data,
+      ...followupData,
       followupDate: toDateString(data.followupDate || new Date()) as any,
     }).returning()
     return followup
@@ -180,7 +188,10 @@ export class VisitorsService {
   /**
    * Get all followups for a visitor
    */
-  async getFollowupsByVisitor(visitorId: string): Promise<VisitorFollowup[]> {
+  async getFollowupsByVisitor(churchId: string, visitorId: string): Promise<VisitorFollowup[]> {
+    const visitor = await this.getVisitorById(churchId, visitorId)
+    if (!visitor) return []
+
     return db.query.visitorFollowups.findMany({
       where: and(
         eq(visitorFollowups.visitorId, visitorId),
@@ -192,8 +203,8 @@ export class VisitorsService {
   /**
    * Get latest followup status for a visitor
    */
-  async getLatestFollowupStatus(visitorId: string): Promise<VisitorFollowup | undefined> {
-    const followups = await this.getFollowupsByVisitor(visitorId)
+  async getLatestFollowupStatus(churchId: string, visitorId: string): Promise<VisitorFollowup | undefined> {
+    const followups = await this.getFollowupsByVisitor(churchId, visitorId)
     return followups.length > 0 ? followups[followups.length - 1] : undefined
   }
 

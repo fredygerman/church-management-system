@@ -129,6 +129,7 @@ export class VisitorsController {
   @Post(':id/followup')
   @RequirePermission('create:visitation')
   async createFollowup(
+    @Req() request: Request,
     @Param('id') id: string,
     @Body() createFollowupDto: CreateVisitorFollowupDto,
   ) {
@@ -137,6 +138,7 @@ export class VisitorsController {
     }
 
     return this.visitorsService.createFollowup({
+      churchId: request['churchId'] as string,
       visitorId: id,
       status: createFollowupDto.status,
       notes: createFollowupDto.notes,
@@ -150,8 +152,8 @@ export class VisitorsController {
    */
   @Get(':id/followups')
   @RequirePermission('read:visitation')
-  async getFollowups(@Param('id') id: string) {
-    return this.visitorsService.getFollowupsByVisitor(id)
+  async getFollowups(@Req() request: Request, @Param('id') id: string) {
+    return this.visitorsService.getFollowupsByVisitor(request['churchId'] as string, id)
   }
 
   /**
@@ -159,7 +161,7 @@ export class VisitorsController {
    */
   @Get(':id/latest-followup')
   @RequirePermission('read:visitation')
-  async getLatestFollowup(@Param('id') id: string) {
-    return this.visitorsService.getLatestFollowupStatus(id)
+  async getLatestFollowup(@Req() request: Request, @Param('id') id: string) {
+    return this.visitorsService.getLatestFollowupStatus(request['churchId'] as string, id)
   }
 }
