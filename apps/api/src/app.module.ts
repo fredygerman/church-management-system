@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './auth/guards'
 import { ChurchContextGuard } from './auth/guards/church-context.guard'
 import { PermissionGuard } from './auth/guards/permission.guard'
 import { ZoneContextGuard } from './auth/guards/zone-context.guard'
+import { DepartmentContextGuard } from './auth/guards/department-context.guard'
 import { MailModule } from './mail/mail.module'
 import { AuthModule } from './auth/auth.module'
 import { UsersModule } from './users/users.module'
@@ -80,6 +81,10 @@ import config from './config'
     {
       provide: APP_GUARD,
       useClass: ZoneContextGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: DepartmentContextGuard,
     },
   ],
 })
