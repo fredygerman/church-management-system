@@ -76,11 +76,11 @@ Multi-branch church management system with phased rollout focusing on People & S
 
 ## Phase 3: Giving & Events
 
-### 3.1 Offering Management
-- [ ] Simple offering tracking
-- [ ] Member contribution history
-- [ ] Offering categories (Tithes, Offerings, Thanksgiving)
-- [ ] Basic giving reports
+### 3.1 Offering Management ✅ COMPLETE
+- [x] Simple offering tracking
+- [x] Member contribution history
+- [x] Offering categories (per-church configurable)
+- [x] Basic giving reports
 
 ### 3.2 Calendar & Event Planning
 - [ ] Shared HQ calendar (Camp meetings, Seminars)
@@ -140,5 +140,5 @@ Multi-branch church management system with phased rollout focusing on People & S
 
 ## Next Steps (Phase 3)
 
-1. **Offering Tracking** - Simple offering and contribution history (note: `payment.service.ts` from the pre-monorepo codebase is unregistered dead code, not a head start)
+1. ~~**Offering Tracking** - Simple offering and contribution history~~ ✅ Shipped as Phase 3.1, see `docs/superpowers/specs/2026-08-10-offering-management-design.md`. Giving goals/campaigns (target amounts, progress tracking) were scoped out and deferred to a follow-up Phase 3.1b.
 2. **Calendar & Events** - Event planning and RSVP tracking

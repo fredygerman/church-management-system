@@ -255,6 +255,8 @@ Headline ones (the complete, current list — including attendance, communicatio
 'update:visitor'     // Edit visitor followup
 'manage:departments' // Full department/ministry management (admins only)
 'read:department'    // View a department's details/members/stats (department_leader + admins)
+'manage:offerings'    // Full offering/giving management (admins only)
+'view:giving-reports' // View aggregate giving reports by category/period (admins only)
 'create:visitation'  // Log pastoral visits
 'read:visitation'    // View visitation logs
 ```

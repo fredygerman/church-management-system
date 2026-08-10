@@ -22,6 +22,7 @@
 - ✅ create:visitor
 - ✅ update:visitor
 - ✅ manage:departments
+- ✅ manage:offerings / view:giving-reports
 - ✅ create:visitation
 - ✅ read:visitation
 
@@ -46,6 +47,7 @@
 - ✅ create:visitor
 - ✅ update:visitor
 - ✅ manage:departments
+- ✅ manage:offerings / view:giving-reports
 - ✅ create:visitation
 - ✅ read:visitation
 
@@ -68,6 +70,7 @@
 - ✅ create:visitor
 - ✅ update:visitor
 - ✅ manage:departments
+- ✅ manage:offerings / view:giving-reports
 - ✅ create:visitation
 - ✅ read:visitation
 
@@ -89,6 +92,7 @@
 - ✅ view:visitors / create:visitor / read:visitor
 - ❌ update:visitor
 - ❌ manage:departments / read:department
+- ❌ manage:offerings / view:giving-reports
 - ✅ create:visitation
 - ✅ read:visitation
 - ✅ view:attendance, view:communications, view:data-quality, view:lifecycle-dashboard
@@ -118,12 +122,13 @@
 - ❌ update:member
 - ❌ delete:member
 - ❌ manage:zones / manage:departments
+- ❌ manage:offerings / view:giving-reports
 - ❌ view:families
 - ✅ view:visitors / create:visitor
 - ❌ update:visitor
 - ❌ create:visitation / read:visitation
 - ✅ view:attendance, view:communications, view:lifecycle-dashboard
-- ✅ read:self, update:self, create:prayer-request, read:own-prayer-requests
+- ✅ read:self, update:self, create:prayer-request, read:own-prayer-requests, read:own-giving-history
 
 ---
 
@@ -141,6 +146,8 @@
 | Create Visitor | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Manage Departments | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Read Department | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
+| Manage Offerings | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| View Giving Reports | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | Create Visitation | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 
 This table covers the headline permissions only. `packages/config/src/permissions.ts` also has attendance, communications, data-quality, family-lifecycle, and prayer-request permissions granted per role — see that file for the complete, current list.
