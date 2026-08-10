@@ -109,6 +109,8 @@ import {
 } from "./tables/offeringCategories"
 import { offerings, type Offering, type NewOffering } from "./tables/offerings"
 import { givingGoals, type GivingGoal, type NewGivingGoal } from "./tables/givingGoals"
+import { events, eventScopeEnum, eventStatusEnum, type Event, type NewEvent } from "./tables/events"
+import { eventRsvps, eventRsvpStatusEnum, type EventRsvp, type NewEventRsvp } from "./tables/eventRsvps"
 
 // Import all relations
 import {
@@ -165,6 +167,9 @@ export {
   importModeEnum,
   duplicateCandidateStatusEnum,
   prayerRequestStatusEnum,
+  eventScopeEnum,
+  eventStatusEnum,
+  eventRsvpStatusEnum,
   userChurchMemberships,
   userChurchMembershipRoleEvents,
   zones,
@@ -205,6 +210,8 @@ export {
   offeringCategories,
   offerings,
   givingGoals,
+  events,
+  eventRsvps,
   // Export relations for Drizzle ORM
   churchesRelations,
   zonesRelations,
@@ -298,4 +305,8 @@ export {
   type NewOffering,
   type GivingGoal,
   type NewGivingGoal,
+  type Event,
+  type NewEvent,
+  type EventRsvp,
+  type NewEventRsvp,
 }
