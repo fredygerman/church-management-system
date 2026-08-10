@@ -376,14 +376,67 @@ export class AttendanceService {
   async batchManualCheckin(churchId: string, sessionId: string, memberIds: string[]) {
     const success: any[] = []
     const failed: any[] = []
-    for (const memberId of memberIds) {
-      try {
-        const row = await this.manualCheckin(churchId, sessionId, memberId)
-        success.push({ memberId, checkinId: row.id })
-      } catch (error) {
-        failed.push({ memberId, reason: error instanceof Error ? error.message : 'Failed' })
-      }
+
+    // Batch 1: Verify session exists and is open
+    const [session] = await db.query.serviceSessions.findMany({
+      where: and(eq(serviceSessions.id, sessionId), eq(serviceSessions.churchId, churchId), isNull(serviceSessions.deletedAt)),
+    })
+    if (!session) {
+      memberIds.forEach(memberId => {
+        failed.push({ memberId, reason: 'Session not found' })
+      })
+      return { success, failed, totalRequested: memberIds.length }
     }
+    if (session.status !== 'open') {
+      memberIds.forEach(memberId => {
+        failed.push({ memberId, reason: 'Session must be open for check-in' })
+      })
+      return { success, failed, totalRequested: memberIds.length }
+    }
+
+    // Batch 2: Verify which members exist in church
+    const existingMembers = await db.query.members.findMany({
+      where: and(eq(members.churchId, churchId), inArray(members.id, memberIds), isNull(members.deletedAt)),
+      columns: { id: true },
+    })
+    const validMemberIds = new Set(existingMembers.map(m => m.id))
+
+    memberIds.forEach(memberId => {
+      if (!validMemberIds.has(memberId)) {
+        failed.push({ memberId, reason: 'Member not found in church' })
+      }
+    })
+
+    // Batch 3: Check for existing checkins for this session
+    const memberIdsArray = Array.from(validMemberIds)
+    const existingCheckins = memberIdsArray.length > 0 ? await db.query.attendanceCheckins.findMany({
+      where: and(eq(attendanceCheckins.sessionId, sessionId), inArray(attendanceCheckins.memberId, memberIdsArray as any)),
+      columns: { memberId: true },
+    }) : []
+    const alreadyCheckedInSet = new Set(existingCheckins.map(c => c.memberId))
+
+    const toInsert: any[] = []
+    validMemberIds.forEach(memberId => {
+      if (alreadyCheckedInSet.has(memberId)) {
+        failed.push({ memberId, reason: 'Member already checked in for this session' })
+      } else {
+        toInsert.push({
+          churchId,
+          sessionId,
+          memberId,
+          source: 'manual',
+        })
+      }
+    })
+
+    // Batch 4: Insert all valid checkins in one query
+    if (toInsert.length > 0) {
+      const inserted = await db.insert(attendanceCheckins).values(toInsert).returning()
+      inserted.forEach(row => {
+        success.push({ memberId: row.memberId, checkinId: row.id })
+      })
+    }
+
     return { success, failed, totalRequested: memberIds.length }
   }
 
@@ -439,22 +492,44 @@ export class AttendanceService {
       orderBy: [desc(serviceSessions.sessionDate)],
     })
 
-    const health = []
-    for (const session of openSessions) {
-      const checkinCount = await db.select({ count: sql<number>`count(*)` }).from(attendanceCheckins).where(eq(attendanceCheckins.sessionId, session.id))
-      const headcount = await db.query.attendanceHeadcounts.findFirst({ where: eq(attendanceHeadcounts.sessionId, session.id) })
-      const totalCheckins = Number(checkinCount[0]?.count || 0)
-      const gap = Math.max(0, (headcount?.totalCount || 0) - totalCheckins)
-      health.push({
+    if (openSessions.length === 0) {
+      return []
+    }
+
+    const sessionIds = openSessions.map(s => s.id)
+
+    // Batch query: count checkins per session using GROUP BY
+    const checkinCounts = await db.select({
+      sessionId: attendanceCheckins.sessionId,
+      count: sql<number>`count(*)`,
+    }).from(attendanceCheckins)
+      .where(inArray(attendanceCheckins.sessionId, sessionIds))
+      .groupBy(attendanceCheckins.sessionId)
+
+    // Batch query: get all headcounts for these sessions
+    const headcounts = await db.query.attendanceHeadcounts.findMany({
+      where: inArray(attendanceHeadcounts.sessionId, sessionIds),
+      columns: { sessionId: true, totalCount: true },
+    })
+
+    // Build lookup maps
+    const checkinCountMap = new Map(checkinCounts.map(row => [row.sessionId, Number(row.count)]))
+    const headcountMap = new Map(headcounts.map(row => [row.sessionId, row.totalCount]))
+
+    // Join in memory and maintain original session order
+    return openSessions.map(session => {
+      const totalCheckins = (checkinCountMap.get(session.id) || 0) as number
+      const totalHeadcount = (headcountMap.get(session.id) || 0) as number
+      const gap = Math.max(0, totalHeadcount - totalCheckins)
+      return {
         sessionId: session.id,
         title: session.title,
         sessionDate: session.sessionDate,
         totalCheckins,
-        totalHeadcount: headcount?.totalCount || 0,
+        totalHeadcount,
         headcountGap: gap,
-      })
-    }
-    return health
+      }
+    })
   }
 
   async upsertRiskProfile(churchId: string, input: { versionLabel: string; missedWeight: number; recencyWeight: number; lowThreshold: number; mediumThreshold: number; highThreshold: number; isActive: number }) {
@@ -506,7 +581,35 @@ export class AttendanceService {
 
       const presentMemberSet = new Set(presentRows.map((row) => row.memberId))
 
-      for (const member of allMembers) {
+      // Batch compute all flag records
+      const flagRecords = allMembers.map(member => {
+        const consecutiveMissedCount = presentMemberSet.has(member.id) ? 0 : recentSessions.length
+        return {
+          churchId: church.churchId,
+          memberId: member.id,
+          consecutiveMissedCount,
+          thresholdUsed: threshold,
+          lastSessionDate,
+        }
+      })
+
+      // Batch upsert all engagement risk flags
+      if (flagRecords.length > 0) {
+        await db.insert(engagementRiskFlags)
+          .values(flagRecords)
+          .onConflictDoUpdate({
+            target: engagementRiskFlags.memberId,
+            set: {
+              consecutiveMissedCount: sql`EXCLUDED.consecutive_missed_count`,
+              thresholdUsed: sql`EXCLUDED.threshold_used`,
+              lastSessionDate: sql`EXCLUDED.last_session_date`,
+              updatedAt: new Date() as any,
+            },
+          })
+      }
+
+      // Batch compute all history records
+      const historyRecords = allMembers.map(member => {
         const consecutiveMissedCount = presentMemberSet.has(member.id) ? 0 : recentSessions.length
         const baseScore = Math.min(100, Math.round((consecutiveMissedCount / Math.max(1, threshold)) * 100))
         const riskScore = activeProfile
@@ -517,33 +620,20 @@ export class AttendanceService {
           activeProfile
             ? (riskScore >= activeProfile.highThreshold ? 'high' : riskScore >= activeProfile.mediumThreshold ? 'medium' : 'low')
             : (riskScore >= 85 ? 'high' : riskScore >= 60 ? 'medium' : 'low')
-        const [existingFlag] = await db.query.engagementRiskFlags.findMany({ where: eq(engagementRiskFlags.memberId, member.id) })
 
-        if (!existingFlag) {
-          await db.insert(engagementRiskFlags).values({
-            churchId: church.churchId,
-            memberId: member.id,
-            consecutiveMissedCount,
-            thresholdUsed: threshold,
-            lastSessionDate,
-          })
-        } else {
-          await db.update(engagementRiskFlags).set({
-            consecutiveMissedCount,
-            thresholdUsed: threshold,
-            lastSessionDate,
-            updatedAt: new Date() as any,
-          }).where(eq(engagementRiskFlags.id, existingFlag.id))
-        }
-
-        await db.insert(attendanceRiskHistory).values({
+        return {
           churchId: church.churchId,
           memberId: member.id,
           profileId: activeProfile?.id,
           riskScore,
           severity: severity as any,
           effectiveDate: new Date().toISOString().slice(0, 10),
-        })
+        }
+      })
+
+      // Batch insert all history records
+      if (historyRecords.length > 0) {
+        await db.insert(attendanceRiskHistory).values(historyRecords)
       }
     }
   }
