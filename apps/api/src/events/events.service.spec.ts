@@ -21,6 +21,7 @@ jest.mock('@church/db', () => {
   const store: Record<string, any[]> = {
     events: [],
     eventRsvps: [],
+    members: [],
   }
 
   const makeColumnRef = (tableName: string, keys: string[]) => {
@@ -35,6 +36,9 @@ jest.mock('@church/db', () => {
   ])
   const eventRsvps = makeColumnRef('eventRsvps', [
     'id', 'eventId', 'memberId', 'churchId', 'status', 'attended', 'createdAt', 'updatedAt',
+  ])
+  const members = makeColumnRef('members', [
+    'id', 'churchId', 'firstName', 'lastName', 'phone', 'email', 'createdAt', 'updatedAt', 'deletedAt',
   ])
 
   const tableArr = (table: any) => store[table.__table]
@@ -113,6 +117,7 @@ jest.mock('@church/db', () => {
     query: {
       events: { findMany: findMany(events) },
       eventRsvps: { findMany: findMany(eventRsvps) },
+      members: { findMany: findMany(members) },
     },
   }
 
@@ -120,16 +125,33 @@ jest.mock('@church/db', () => {
     db,
     events,
     eventRsvps,
+    members,
     __reset() {
       store.events = []
       store.eventRsvps = []
+      store.members = []
+    },
+    __seedMember(data: any) {
+      const member = {
+        id: data.id,
+        churchId: data.churchId,
+        firstName: data.firstName || 'First',
+        lastName: data.lastName || 'Last',
+        phone: data.phone || null,
+        email: data.email || null,
+        createdAt: now(),
+        updatedAt: now(),
+        deletedAt: null,
+      }
+      store.members.push(member)
+      return member
     },
   }
 })
 
 import { EventsService } from './events.service'
 
-const churchDb = require('@church/db') as { __reset: () => void }
+const churchDb = require('@church/db') as { __reset: () => void; __seedMember: (data: any) => void }
 
 const CHURCH_A = 'church-a'
 const CHURCH_B = 'church-b'
@@ -357,6 +379,11 @@ describe('EventsService', () => {
       startsAt: '2026-06-01T09:00:00',
       status: 'published',
     })
+
+    // Seed members into the mock store
+    churchDb.__seedMember({ id: 'member-1', churchId: CHURCH_A })
+    churchDb.__seedMember({ id: 'member-2', churchId: CHURCH_A })
+    churchDb.__seedMember({ id: 'walkup-1', churchId: CHURCH_A })
 
     await service.rsvp(CHURCH_A, 'member-1', event.id, 'going')
     await service.rsvp(CHURCH_A, 'member-2', event.id, 'going')

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { eq, and, or, isNull, gte, lte, inArray } from 'drizzle-orm'
-import { db, events, eventRsvps, type Event, type EventRsvp } from '@church/db'
+import { db, events, eventRsvps, members, type Event, type EventRsvp } from '@church/db'
 
 export type EventScope = 'church' | 'network'
 export type EventStatus = 'draft' | 'published' | 'cancelled'
@@ -234,6 +234,17 @@ export class EventsService {
     if (!event) throw new NotFoundException(`Event with ID ${eventId} not found`)
 
     if (input.attendedMemberIds && input.attendedMemberIds.length > 0) {
+      const churchMembers = await db.query.members.findMany({
+        where: and(
+          eq(members.churchId, churchId),
+          inArray(members.id, input.attendedMemberIds),
+          isNull(members.deletedAt),
+        ),
+      })
+      if (churchMembers.length !== new Set(input.attendedMemberIds).size) {
+        throw new BadRequestException('One or more members do not belong to this church')
+      }
+
       const existing = await db.query.eventRsvps.findMany({
         where: and(eq(eventRsvps.eventId, eventId), inArray(eventRsvps.memberId, input.attendedMemberIds)),
       })
