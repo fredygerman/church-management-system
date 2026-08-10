@@ -15,6 +15,13 @@
       "when": 1786270510788,
       "tag": "0001_magical_jetstream",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786344959728,
+      "tag": "0002_last_kinsey_walden",
+      "breakpoints": true
     }
   ]
 }
