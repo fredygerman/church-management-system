@@ -23,6 +23,8 @@
 - ✅ update:visitor
 - ✅ manage:departments
 - ✅ manage:offerings / view:giving-reports
+- ✅ manage:giving-goals / view:giving-goals
+- ✅ manage:events / view:events / rsvp:event / manage:network-events
 - ✅ create:visitation
 - ✅ read:visitation
 
@@ -48,6 +50,8 @@
 - ✅ update:visitor
 - ✅ manage:departments
 - ✅ manage:offerings / view:giving-reports
+- ✅ manage:giving-goals / view:giving-goals
+- ✅ manage:events / view:events / rsvp:event / manage:network-events
 - ✅ create:visitation
 - ✅ read:visitation
 
@@ -71,6 +75,9 @@
 - ✅ update:visitor
 - ✅ manage:departments
 - ✅ manage:offerings / view:giving-reports
+- ✅ manage:giving-goals / view:giving-goals
+- ✅ manage:events / view:events / rsvp:event
+- ❌ manage:network-events (super_admin/admin only)
 - ✅ create:visitation
 - ✅ read:visitation
 
@@ -93,6 +100,8 @@
 - ❌ update:visitor
 - ❌ manage:departments / read:department
 - ❌ manage:offerings / view:giving-reports
+- ❌ manage:giving-goals — ✅ view:giving-goals (public goals only, aggregate)
+- ❌ manage:events / manage:network-events — ✅ view:events / rsvp:event
 - ✅ create:visitation
 - ✅ read:visitation
 - ✅ view:attendance, view:communications, view:data-quality, view:lifecycle-dashboard
@@ -123,6 +132,8 @@
 - ❌ delete:member
 - ❌ manage:zones / manage:departments
 - ❌ manage:offerings / view:giving-reports
+- ❌ manage:giving-goals — ✅ view:giving-goals (public goals only, aggregate)
+- ❌ manage:events / manage:network-events — ✅ view:events / rsvp:event
 - ❌ view:families
 - ✅ view:visitors / create:visitor
 - ❌ update:visitor
@@ -148,6 +159,12 @@
 | Read Department | ✅ | ✅ | ✅ | ❌ | ✅ | ❌ |
 | Manage Offerings | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
 | View Giving Reports | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Manage Giving Goals | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| View Giving Goals | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Manage Events | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Manage Network Events | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| View Events | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| RSVP to Events | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Create Visitation | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ |
 
 This table covers the headline permissions only. `packages/config/src/permissions.ts` also has attendance, communications, data-quality, family-lifecycle, and prayer-request permissions granted per role — see that file for the complete, current list.

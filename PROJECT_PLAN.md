@@ -82,10 +82,16 @@ Multi-branch church management system with phased rollout focusing on People & S
 - [x] Offering categories (per-church configurable)
 - [x] Basic giving reports
 
-### 3.2 Calendar & Event Planning
-- [ ] Shared HQ calendar (Camp meetings, Seminars)
-- [ ] Branch-specific calendars
-- [ ] Event RSVP and attendance tracking
+### 3.1b Giving Goals ✅ COMPLETE
+- [x] Time-bound fundraising goals with a target amount and deadline
+- [x] Live progress tracking (offerings link to a goal independent of category)
+- [x] Per-goal public/private visibility toggle
+- [x] Opt-in donor wall (names only, never amounts)
+
+### 3.2 Calendar & Event Planning ✅ COMPLETE
+- [x] Shared HQ calendar (network-scope events, publish-gated to super_admin/admin)
+- [x] Branch-specific calendars (church-scope events, the default)
+- [x] Event RSVP and attendance tracking (RSVP-based, no service-session cloning)
 
 ---
 
@@ -140,5 +146,6 @@ Multi-branch church management system with phased rollout focusing on People & S
 
 ## Next Steps (Phase 3)
 
-1. ~~**Offering Tracking** - Simple offering and contribution history~~ ✅ Shipped as Phase 3.1, see `docs/superpowers/specs/2026-08-10-offering-management-design.md`. Giving goals/campaigns (target amounts, progress tracking) were scoped out and deferred to a follow-up Phase 3.1b.
-2. **Calendar & Events** - Event planning and RSVP tracking
+1. ~~**Offering Tracking** - Simple offering and contribution history~~ ✅ Shipped as Phase 3.1, see `docs/superpowers/specs/2026-08-10-offering-management-design.md`.
+2. ~~**Giving Goals** - Fundraising goals/campaigns with target amounts and progress tracking~~ ✅ Shipped as Phase 3.1b, see `docs/superpowers/specs/2026-08-10-giving-goals-design.md`.
+3. ~~**Calendar & Events** - Event planning and RSVP tracking~~ ✅ Shipped as Phase 3.2, see `docs/superpowers/specs/2026-08-10-calendar-events-design.md`. Phase 3 (Giving & Events) is now complete.

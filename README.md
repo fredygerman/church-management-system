@@ -9,10 +9,11 @@ This project provides tools for:
 - member and visitor management
 - zones, departments/ministries, and families
 - attendance sessions, check-ins, trends, and risk insights (with zone and department breakdowns)
-- offering/giving tracking, categories, and basic giving reports
+- offering/giving tracking, categories, basic giving reports, and time-bound fundraising goals with an opt-in donor wall
+- a calendar of one-off events (church-specific or network-wide), with RSVP and attendance tracking
 - communication templates and campaigns
 - data-quality workflows (imports and duplicate resolution)
-- member self-service portal (profile, attendance, prayer requests, announcements, departments, giving history)
+- member self-service portal (profile, attendance, prayer requests, announcements, departments, giving history, giving goals, events)
 - role/permission-based access control
 
 The system is split into a web app and an API, backed by PostgreSQL via Drizzle ORM.
@@ -139,7 +140,8 @@ Primary backend modules include:
 - `members`
 - `zones`
 - `departments`
-- `offerings`
+- `offerings` (includes giving goals)
+- `events`
 - `families`
 - `visitors`
 - `attendance`

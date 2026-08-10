@@ -257,6 +257,12 @@ Headline ones (the complete, current list — including attendance, communicatio
 'read:department'    // View a department's details/members/stats (department_leader + admins)
 'manage:offerings'    // Full offering/giving management (admins only)
 'view:giving-reports' // View aggregate giving reports by category/period (admins only)
+'manage:giving-goals'  // Create/edit/delete fundraising goals (admins only)
+'view:giving-goals'    // View public goal progress and opt-in donor names (all roles)
+'manage:events'        // Create/edit/cancel events, manage RSVPs/attendance (admins only)
+'manage:network-events' // Publish an event visible across all branches (super_admin/admin only)
+'view:events'          // View the church event calendar (all roles)
+'rsvp:event'           // Self-service RSVP to events (all roles)
 'create:visitation'  // Log pastoral visits
 'read:visitation'    // View visitation logs
 ```
