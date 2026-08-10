@@ -3,7 +3,7 @@
 ## Overview
 Multi-branch church management system with phased rollout focusing on People & Structure first, then Operations, then Finance.
 
-**Current Status:** Phase 1 & 2 complete ✅ — Phase 3 (Giving & Events) next
+**Current Status:** Phase 1, 2 & 3 complete ✅ — all originally scoped phases shipped
 
 ---
 
