@@ -17,6 +17,7 @@ import {
   type NewUserChurchMembershipRoleEvent,
 } from "./tables/userChurchMemberships"
 import { zones, type Zone, type NewZone } from "./tables/zones"
+import { departments, type Department, type NewDepartment } from "./tables/departments"
 import { churches, type Church, type NewChurch } from "./tables/churches"
 import { families, type Family, type NewFamily } from "./tables/families"
 import {
@@ -30,6 +31,7 @@ import {
   type NewVisitorFollowup,
 } from "./tables/visitors"
 import { memberZones, type MemberZone, type NewMemberZone } from "./tables/memberZones"
+import { memberDepartments, type MemberDepartment, type NewMemberDepartment } from "./tables/memberDepartments"
 import { notifications, type Notification, type NewNotification } from "./tables/notifications"
 import { importJobs, importRows, duplicateCandidates, mergeActions, type ImportJob, type ImportRow, type DuplicateCandidate, type MergeAction } from "./tables/dataQuality"
 import { familyRelationships, familyConnectionSuggestions, milestoneNotificationRules, lifecycleMilestones, type FamilyRelationship, type FamilyConnectionSuggestion, type MilestoneNotificationRule, type LifecycleMilestone } from "./tables/familyLifecycle"
@@ -105,8 +107,10 @@ import {
 import {
   churchesRelations,
   zonesRelations,
+  departmentsRelations,
   membersRelations,
   memberZonesRelations,
+  memberDepartmentsRelations,
   familiesRelations,
   visitorsRelations,
   visitorFollowupsRelations,
@@ -157,12 +161,14 @@ export {
   userChurchMemberships,
   userChurchMembershipRoleEvents,
   zones,
+  departments,
   members,
   churches,
   families,
   visitors,
   visitorFollowups,
   memberZones,
+  memberDepartments,
   notifications,
   importJobs,
   importRows,
@@ -192,8 +198,10 @@ export {
   // Export relations for Drizzle ORM
   churchesRelations,
   zonesRelations,
+  departmentsRelations,
   membersRelations,
   memberZonesRelations,
+  memberDepartmentsRelations,
   familiesRelations,
   visitorsRelations,
   visitorFollowupsRelations,
@@ -224,6 +232,8 @@ export {
   type NewMember,
   type Zone,
   type NewZone,
+  type Department,
+  type NewDepartment,
   type Church,
   type NewChurch,
   type Family,
@@ -234,6 +244,8 @@ export {
   type NewVisitorFollowup,
   type MemberZone,
   type NewMemberZone,
+  type MemberDepartment,
+  type NewMemberDepartment,
   type Notification,
   type NewNotification,
   type ImportJob,

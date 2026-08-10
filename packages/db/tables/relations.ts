@@ -2,6 +2,8 @@ import { relations } from "drizzle-orm"
 import { members } from "./members"
 import { zones } from "./zones"
 import { memberZones } from "./memberZones"
+import { departments } from "./departments"
+import { memberDepartments } from "./memberDepartments"
 import { churches } from "./churches"
 import { families } from "./families"
 import { visitors, visitorFollowups } from "./visitors"
@@ -30,6 +32,7 @@ import { prayerRequests } from "./prayerRequests"
 // Church relations
 export const churchesRelations = relations(churches, ({ many }) => ({
   zones: many(zones),
+  departments: many(departments),
   members: many(members),
   families: many(families),
   visitors: many(visitors),
@@ -46,6 +49,7 @@ export const churchesRelations = relations(churches, ({ many }) => ({
   messageDeliveries: many(messageDeliveries),
   campaignEvents: many(campaignEvents),
   userChurchMemberships: many(userChurchMemberships),
+  memberDepartments: many(memberDepartments),
   prayerRequests: many(prayerRequests),
 }))
 
@@ -62,6 +66,15 @@ export const zonesRelations = relations(zones, ({ one, many }) => ({
   memberZones: many(memberZones),
 }))
 
+// Department relations
+export const departmentsRelations = relations(departments, ({ one, many }) => ({
+  church: one(churches, {
+    fields: [departments.churchId],
+    references: [churches.id],
+  }),
+  memberDepartments: many(memberDepartments),
+}))
+
 // Member relations
 export const membersRelations = relations(members, ({ one, many }) => ({
   church: one(churches, {
@@ -73,6 +86,7 @@ export const membersRelations = relations(members, ({ one, many }) => ({
     references: [families.id],
   }),
   memberZones: many(memberZones),
+  memberDepartments: many(memberDepartments),
   ledZones: many(zones),
   attendanceCheckins: many(attendanceCheckins),
   engagementRiskFlags: many(engagementRiskFlags),
@@ -89,6 +103,22 @@ export const memberZonesRelations = relations(memberZones, ({ one }) => ({
   zone: one(zones, {
     fields: [memberZones.zoneId],
     references: [zones.id],
+  }),
+}))
+
+// MemberDepartment relations (junction table)
+export const memberDepartmentsRelations = relations(memberDepartments, ({ one }) => ({
+  member: one(members, {
+    fields: [memberDepartments.memberId],
+    references: [members.id],
+  }),
+  department: one(departments, {
+    fields: [memberDepartments.departmentId],
+    references: [departments.id],
+  }),
+  church: one(churches, {
+    fields: [memberDepartments.churchId],
+    references: [churches.id],
   }),
 }))
 
