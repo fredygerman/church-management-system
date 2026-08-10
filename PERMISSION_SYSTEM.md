@@ -1,20 +1,23 @@
-# Phase 1 Permission System Implementation
+# Permission System Implementation
+
+**Source of truth:** `packages/config/src/permissions.ts` for roles/permissions, `apps/api/src/app.module.ts` for the guard chain. This doc explains the architecture; if a code snippet below drifts from those files, the files win.
 
 ## Overview
 
-The permission system uses **Role-Based Access Control (RBAC)** with **Church Context Enforcement**. It consists of three layers of guards that work together to ensure secure data access.
+The permission system uses **Role-Based Access Control (RBAC)** with **Church Context Enforcement**. It consists of five layers of guards that work together to ensure secure data access.
 
 ---
 
 ## Architecture
 
-### Three Layers of Security
+### Guard Chain (registered in `apps/api/src/app.module.ts`)
 
 ```
 Request → JWT Guard (Authenticate)
         → Church Context Guard (Enforce churchId isolation)
         → Permission Guard (Check role permissions)
-        → Zone Context Guard (Check zone access for leaders)
+        → Zone Context Guard (Scope zone_leader to their assigned zone)
+        → Department Context Guard (Scope department_leader to their led department(s))
         → Handler (Execute)
 ```
 
@@ -22,14 +25,16 @@ Request → JWT Guard (Authenticate)
 
 ## 1. Role Enum
 
-**File:** `apps/api/src/auth/types/permission.types.ts`
+**File:** `packages/config/src/permissions.ts` (re-exported by `apps/api/src/auth/types/permission.types.ts`)
 
 ```typescript
 enum UserRole {
-  SUPER_ADMIN = 'super_admin',         // HQ - God's eye view
-  BRANCH_ADMIN = 'branch_admin',       // Local pastor/secretary
-  ZONE_LEADER = 'ZONE_LEADER',   // Small group leader
-  MEMBER = 'member',                   // Regular member
+  SUPER_ADMIN = 'super_admin',             // Global administrator - all access
+  ADMIN = 'admin',                         // Church administrator
+  BRANCH_ADMIN = 'branch_admin',           // Branch administrator
+  ZONE_LEADER = 'zone_leader',             // Zone/small group leader
+  DEPARTMENT_LEADER = 'department_leader', // Department/ministry leader
+  MEMBER = 'member',                       // Regular church member
 }
 ```
 
@@ -38,8 +43,10 @@ enum UserRole {
 | Role | Can Create | Can Read | Can Update | Can Delete | Can Manage |
 |------|---|---|---|---|---|
 | super_admin | ✓ All | ✓ All | ✓ All | ✓ All | ✓ All |
+| admin | ✓ All (church-scoped) | ✓ All | ✓ All | ✓ (unlike branch_admin) | ✓ All |
 | branch_admin | ✓ Own church | ✓ Own church | ✓ Own church | ✗ | ✓ Own church |
-| ZONE_LEADER | ✗ | ✓ Own zone | ✗ | ✗ | ✗ |
+| zone_leader | ✗ | ✓ Own zone | ✗ | ✗ | ✗ |
+| department_leader | ✗ | ✓ Own led department(s) | ✗ | ✗ | ✗ |
 | member | ✗ | ✓ Own profile | ✓ Own profile | ✗ | ✗ |
 
 ---
@@ -52,13 +59,17 @@ Every authenticated user has a context attached:
 interface UserContext {
   id: string                    // User ID
   email: string                 // Email
-  role: UserRole               // One of the 4 roles
-  churchId: string             // Church they belong to (mandatory)
-  assignedZoneId?: string      // Zone they manage (ZONE_LEADER only)
-  workspaceId: string          // Workspace/organization
-  isActive: boolean            // Account active status
+  role: string                  // One of the UserRole values
+  churchId: string              // Church they belong to (mandatory)
+  activeChurchId?: string       // Active church in a multi-church membership
+  activeMembershipId?: string   // Active membership row id (NOT a member id)
+  assignedZoneId?: string       // Zone they manage (zone_leader only, JWT-baked at login)
+  workspaceId: string
+  isActive: boolean
 }
 ```
+
+Note there is **no `memberId` field**. To resolve the caller's actual member record (needed for department-leader scoping, prayer-request self-service, etc.), guards/controllers call `MembersService.getMemberByUserId(churchId, userId)` — a live DB lookup, not a JWT field.
 
 ---
 
@@ -109,9 +120,9 @@ createMember(@Body() dto: CreateMemberDto) { ... }
 **File:** `apps/api/src/auth/guards/zone-context.guard.ts`
 
 **What it does:**
-- Only enforces for `ZONE_LEADER` role
+- Only enforces for `zone_leader` role
 - Ensures leader only accesses their assigned zone
-- Automatically injects `user.assignedZoneId` if not specified
+- Automatically injects `user.assignedZoneId` if not specified — this field is baked into the JWT at login (from `userChurchMemberships.assignedZoneId`), so it can go stale until the user's token refreshes
 
 **Example:**
 ```typescript
@@ -120,6 +131,26 @@ GET /api/zones/zone-001/members  // ALLOWED (matches assignedZoneId)
 
 // Zone Leader trying to access another zone
 GET /api/zones/zone-002/members  // FORBIDDEN
+```
+
+### Guard 5: Department Context Guard
+
+**File:** `apps/api/src/auth/guards/department-context.guard.ts`
+
+**What it does:**
+- Only enforces for `department_leader` role
+- Resolves the caller's member id via `MembersService.getMemberByUserId`, then queries `member_departments` (`isLeader = true`) **live, every request** — deliberately not a JWT-baked field like zone's `assignedZoneId`, to avoid that staleness class
+- Exactly one led department + no id in the request → auto-injects it
+- Zero or multiple led departments + no id in the request → passes through; the controller's own list-scoping logic handles filtering
+- An explicit id outside the led set → 403
+
+**Example:**
+```typescript
+// Department leader trying to view their own department's members
+GET /api/departments/dept-001/members  // ALLOWED (dept-001 is in their led set)
+
+// Department leader trying to access a department they don't lead
+GET /api/departments/dept-002/members  // FORBIDDEN
 ```
 
 ---
@@ -163,6 +194,8 @@ deleteMember(@Param('id') id: string) { ... }
 
 ## 5. Available Permissions
 
+The full, current list lives in `packages/config/src/permissions.ts` (`PermissionAction` type) — grouped there as: Members, Visitors, Zones, Families, Visitation, and Administration (settings/users/churches/departments/files/mail/sms/services/attendance/risk/communications/data-quality/lifecycle/self/prayer-requests). Headline ones:
+
 ```typescript
 'create:member'      // Create new member
 'read:member'        // View member(s)
@@ -174,7 +207,8 @@ deleteMember(@Param('id') id: string) { ... }
 'view:visitors'      // See visitor tracking
 'create:visitor'     // Add new visitor
 'update:visitor'     // Edit visitor followup
-'manage:departments' // Manage departments/ministries
+'manage:departments' // Full department/ministry management (admins only)
+'read:department'    // View a department's details/members/stats (department_leader + admins)
 'create:visitation'  // Log pastoral visits
 'read:visitation'    // View visitation logs
 ```
@@ -305,33 +339,34 @@ Caused by: Zone leader accessing wrong zone
 
 ---
 
-## 9. Phase 2 & 3 Expansion
+## 9. Extending Roles & Permissions
 
-### Adding New Roles (Phase 2)
+### Worked example: `department_leader` (shipped in Phase 2.3)
+
+This is the real pattern used when `department_leader` was added — follow it for the next department/ministry-shaped role:
 
 ```typescript
 enum UserRole {
   // ... existing roles
-  PASTOR = 'pastor',              // Can visit members
-  DEPARTMENT_HEAD = 'department_head',  // Can manage dept
+  DEPARTMENT_LEADER = 'department_leader',
 }
 
-// Add their permissions
 const PERMISSION_MAP = {
   // ... existing
-  [UserRole.PASTOR]: [
-    'read:member',
-    'create:visitation',
-    'read:visitation',
-  ],
-  [UserRole.DEPARTMENT_HEAD]: [
-    'read:member',  // Dept members only
-    'manage:departments',
+  [UserRole.DEPARTMENT_LEADER]: [
+    // verbatim copy of ZONE_LEADER's array, with read:zone -> read:department
+    'read:member', 'view:visitors', 'create:visitor', 'read:visitor',
+    'read:department', 'view:attendance', 'view:communications',
+    'view:data-quality', 'view:lifecycle-dashboard', 'view:families',
+    'create:visitation', 'read:visitation',
+    'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
   ],
 }
 ```
 
-### Adding New Permissions (Phase 3)
+Steps: add the enum value, add the `PermissionAction` string(s) it needs, add its `PERMISSION_MAP` entry, add `PERMISSION_METADATA` entries for any new permission strings, then (if the role needs single-resource scoping like "only their zone/department") add a guard modeled on `DepartmentContextGuard`/`ZoneContextGuard` and register it in `app.module.ts`'s `APP_GUARD` chain.
+
+### Adding New Permissions (Phase 3 — Giving & Events, not yet started)
 
 ```typescript
 type PermissionAction =
@@ -380,10 +415,11 @@ describe('PermissionGuard', () => {
 
 ## Summary
 
-**Three guards, three questions:**
+**Five guards, five questions:**
 1. **JWT Guard:** Are you who you say you are?
 2. **Church Context Guard:** Do you belong to this church?
 3. **Permission Guard:** Does your role allow this action?
-4. **Zone Guard:** Are you accessing only your zone?
+4. **Zone Guard:** Are you accessing only your zone (if you're a zone leader)?
+5. **Department Guard:** Are you accessing only a department you lead (if you're a department leader)?
 
 Simple. Secure. Scalable.
