@@ -89,7 +89,7 @@ export class ChurchService {
    */
   async getChurchById(churchId: string): Promise<Church | undefined> {
     const [church] = await db.query.churches.findMany({
-      where: eq(churches.id, churchId),
+      where: and(eq(churches.id, churchId), isNull(churches.deletedAt)),
     })
     return church
   }
