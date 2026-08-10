@@ -81,11 +81,12 @@ Service behavior:
 
 - New role `department_leader` added to `UserRole` enum (`packages/config/src/permissions.ts`).
 - New permission `read:department`, granted to: `department_leader`, and alongside existing `manage:departments` grants for `super_admin`/`admin`/`branch_admin`. Not granted to `zone_leader` or plain `member`.
-- `department_leader`'s permission set otherwise mirrors `zone_leader`'s baseline (read-only: `read:member`, `view:attendance`, `view:communications`, `read:self`, `update:self`, `create:prayer-request`, `read:own-prayer-requests`, etc.) — view access only, no member add/remove, matching what `zone_leader` actually has today despite the guard existing.
+- `department_leader`'s permission set is a **verbatim copy of `zone_leader`'s `PERMISSION_MAP` array** (`read:member`, `view:visitors`, `create:visitor`, `read:visitor`, `view:attendance`, `view:communications`, `view:data-quality`, `view:lifecycle-dashboard`, `view:families`, `create:visitation`, `read:visitation`, `read:self`, `update:self`, `create:prayer-request`, `read:own-prayer-requests`), with `read:zone` swapped for `read:department` — not a hand-picked subset. View access only, no member add/remove, matching what `zone_leader` actually has today despite the guard existing.
 - New `DepartmentContextGuard`, registered in the global `APP_GUARD` chain in `app.module.ts` immediately after `ZoneContextGuard`. Only engages for role `department_leader` (all other roles pass through untouched):
-  1. Query `member_departments` for rows where `memberId` = caller's linked member id, `isLeader = true`, `churchId` = current church context → set of led department ids. Live query, no stored column, no JWT/session array.
-  2. No `departmentId` in the request: exactly one led department → auto-inject it (mirrors `ZoneContextGuard`'s single-zone UX); zero or multiple → pass through, service layer filters `GET /departments` to the led set for this role.
-  3. Explicit `departmentId` in the request that isn't in the led set → 403, matching `ZoneContextGuard`.
+  1. Resolve the caller's member id via `MembersService.getMemberByUserId(churchId, userId)` — the same DB lookup `prayer.controller.ts` uses for self-service, since `UserContext`/JWT only carries `activeMembershipId` (a membership row id), not a member id. Requires injecting `MembersService` into the guard.
+  2. Query `member_departments` for rows where `memberId` = the resolved id, `isLeader = true`, `churchId` = current church context → set of led department ids. Live query, no stored column, no JWT/session array.
+  3. No `departmentId` in the request: exactly one led department → auto-inject it (mirrors `ZoneContextGuard`'s single-zone UX); zero or multiple → pass through, service layer filters `GET /departments` to the led set for this role.
+  4. Explicit `departmentId` in the request that isn't in the led set → 403, matching `ZoneContextGuard`.
 - Frontend (`apps/web/lib/permissions.ts`, sidebar config) mirrors the new role/permission. Sidebar nav item gated on `read:department` (not `manage:departments`), so both admins and department leaders see it — avoiding the zones sidebar/route/API permission-string mismatch for this module.
 
 ## Web UI (`apps/web/app/[churchId]/dashboard/departments`)
