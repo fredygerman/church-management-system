@@ -6,6 +6,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { ResponseInterceptor } from './common/interceptors/response.interceptor';
 import config from './config';
 import * as express from 'express';
+import helmet from 'helmet';
 import { IncomingMessage, ServerResponse } from 'http';
 import { getServiceStatus } from './helpers/util';
 
@@ -20,6 +21,9 @@ async function bootstrap() {
   const { enabledFeatures, disabledFeatures } = getServiceStatus();
 
   const app = await NestFactory.create(AppModule);
+
+  // Apply security headers early
+  app.use(helmet());
 
   // Configure express middleware directly
   app.use(
@@ -69,10 +73,10 @@ async function bootstrap() {
 
   // CORS configuration
   app.enableCors({
-    origin: '*',
+    origin: config.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
     allowedHeaders: 'Content-Type, Authorization',
-    credentials: true,
+    credentials: false,
   });
 
   // Listen to 0.0.0.0 for Docker container accessibility

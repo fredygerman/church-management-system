@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core'
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler'
 import { AppService } from './app.service'
 import { ResponseInterceptor, ErrorInterceptor } from './common/interceptors'
 import { SmsModule } from './sms/sms.module'
@@ -34,6 +35,7 @@ import config from './config'
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     ScheduleModule.forRoot(),
     DatabaseModule.forRoot({
       driver: 'node-postgres',
@@ -62,6 +64,10 @@ import config from './config'
   providers: [
     AppService,
     ServiceStatusUtil,
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
     {
       provide: APP_INTERCEPTOR,
       useClass: ErrorInterceptor,
