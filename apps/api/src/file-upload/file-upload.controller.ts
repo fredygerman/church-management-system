@@ -70,7 +70,7 @@ export class FileUploadController {
   }
 
   @Post('diagnostics')
-  @Public()
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(FileInterceptor('file'))
   async runDiagnostics(@UploadedFile() file?: MulterFile): Promise<any> {
     this.logger.log('========== DIAGNOSTICS START ==========');
@@ -209,7 +209,27 @@ export class FileUploadController {
   }
 
   @Post('public-upload')
-  @Public()
+  @UseGuards(JwtAuthGuard)
+  @RequirePermission('manage:files')
+  @ApiBearerAuth('access-token')
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: { type: 'string' },
+        displayName: { type: 'string' },
+        metadata: { type: 'string' },
+        folderPath: { type: 'string' },
+        tags: { type: 'string' },
+        directory: { type: 'string' },
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
   @UseInterceptors(FileInterceptor('file'))
   async uploadPublicFile(
     @UploadedFile() file: MulterFile,
@@ -218,9 +238,17 @@ export class FileUploadController {
     @Body('metadata') metadata?: string,
     @Body('folderPath') folderPath?: string,
     @Body('tags') tags?: string,
-    @Body('directory') directory?: DirectoryType
+    @Body('directory') directory?: DirectoryType,
+    @Req() req?: AuthenticatedRequest
   ): Promise<FileUploadResult> {
     this.logger.log('Uploading public file, name:', name);
+
+    if (!req?.user?.id) {
+      throw new BadRequestException({
+        message: 'User information not found',
+        code: ExceptionConstants.BadRequestCodes.VALIDATION_ERROR,
+      });
+    }
 
     // Validate file and name
     this.validateFileUpload(file, name);
@@ -232,6 +260,11 @@ export class FileUploadController {
       tags,
       isPublic: true,
     });
+
+    // Add user data to metadata
+    parsedMetadata.userId = req.user.id;
+    parsedMetadata.userRole = req.user.role || 'visitor';
+    parsedMetadata.userEmail = req.user.email;
 
     // Add flag to indicate this is a public upload
     parsedMetadata.isPublicUpload = true;
