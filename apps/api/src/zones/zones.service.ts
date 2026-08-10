@@ -38,7 +38,7 @@ export class ZonesService {
    */
   async getZoneById(zoneId: string): Promise<Zone | undefined> {
     const [zone] = await db.query.zones.findMany({
-      where: eq(zones.id, zoneId),
+      where: and(eq(zones.id, zoneId), isNull(zones.deletedAt)),
     })
     return zone
   }
