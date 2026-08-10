@@ -15,22 +15,22 @@ export const milestoneStatusEnum = pgEnum('milestone_status', ['pending', 'notif
 
 export const familyRelationships = pgTable('family_relationships', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`).notNull(),
-  churchId: uuid('church_id').references(() => churches.id).notNull(),
-  familyId: uuid('family_id').references(() => families.id).notNull(),
-  memberId: uuid('member_id').references(() => members.id).notNull(),
+  churchId: uuid('church_id').references(() => churches.id, { onDelete: "cascade" }).notNull(),
+  familyId: uuid('family_id').references(() => families.id, { onDelete: "cascade" }).notNull(),
+  memberId: uuid('member_id').references(() => members.id, { onDelete: "cascade" }).notNull(),
   role: relationshipRoleEnum('role').default('other').notNull(),
   status: connectionStatusEnum('status').default('confirmed').notNull(),
-  createdBy: uuid('created_by').references(() => users.id),
+  createdBy: uuid('created_by').references(() => users.id, { onDelete: "set null" }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
 export const familyConnectionSuggestions = pgTable('family_connection_suggestions', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`).notNull(),
-  churchId: uuid('church_id').references(() => churches.id).notNull(),
-  familyId: uuid('family_id').references(() => families.id),
-  memberId: uuid('member_id').references(() => members.id).notNull(),
-  suggestedFamilyId: uuid('suggested_family_id').references(() => families.id),
+  churchId: uuid('church_id').references(() => churches.id, { onDelete: "cascade" }).notNull(),
+  familyId: uuid('family_id').references(() => families.id, { onDelete: "set null" }),
+  memberId: uuid('member_id').references(() => members.id, { onDelete: "cascade" }).notNull(),
+  suggestedFamilyId: uuid('suggested_family_id').references(() => families.id, { onDelete: "set null" }),
   reason: text('reason').notNull(),
   status: suggestionStatusEnum('status').default('pending').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -39,7 +39,7 @@ export const familyConnectionSuggestions = pgTable('family_connection_suggestion
 
 export const milestoneNotificationRules = pgTable('milestone_notification_rules', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`).notNull(),
-  churchId: uuid('church_id').references(() => churches.id).notNull(),
+  churchId: uuid('church_id').references(() => churches.id, { onDelete: "cascade" }).notNull(),
   milestoneType: milestoneTypeEnum('milestone_type').notNull(),
   customMilestoneName: varchar('custom_milestone_name', { length: 100 }),
   channel: milestoneChannelEnum('channel').notNull(),
@@ -52,14 +52,14 @@ export const milestoneNotificationRules = pgTable('milestone_notification_rules'
 
 export const lifecycleMilestones = pgTable('lifecycle_milestones', {
   id: uuid('id').primaryKey().default(sql`gen_random_uuid()`).notNull(),
-  churchId: uuid('church_id').references(() => churches.id).notNull(),
-  memberId: uuid('member_id').references(() => members.id).notNull(),
-  familyId: uuid('family_id').references(() => families.id),
+  churchId: uuid('church_id').references(() => churches.id, { onDelete: "cascade" }).notNull(),
+  memberId: uuid('member_id').references(() => members.id, { onDelete: "cascade" }).notNull(),
+  familyId: uuid('family_id').references(() => families.id, { onDelete: "set null" }),
   milestoneType: milestoneTypeEnum('milestone_type').notNull(),
   label: varchar('label', { length: 150 }).notNull(),
   milestoneDate: date('milestone_date').notNull(),
   status: milestoneStatusEnum('status').default('pending').notNull(),
-  notificationRuleId: uuid('notification_rule_id').references(() => milestoneNotificationRules.id),
+  notificationRuleId: uuid('notification_rule_id').references(() => milestoneNotificationRules.id, { onDelete: "set null" }),
   details: text('details'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),

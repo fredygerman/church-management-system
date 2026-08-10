@@ -65,7 +65,7 @@ export const visitorFollowups = pgTable(
       .default(sql`gen_random_uuid()`)
       .notNull(),
     visitorId: uuid("visitor_id")
-      .references(() => visitors.id)
+      .references(() => visitors.id, { onDelete: "cascade" })
       .notNull(),
     status: visitorFollowupStatusEnum("status").default("none"),
     notes: text("notes"),
