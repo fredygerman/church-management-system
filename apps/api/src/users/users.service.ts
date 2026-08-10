@@ -263,11 +263,11 @@ export class UsersService implements OnModuleInit {
   /**
    * Soft delete user
    */
-  async deleteUser(userId: string): Promise<void> {
+  async deleteUser(userId: string, churchId: string): Promise<void> {
     const [user] = await this.db
       .update(users)
       .set({ deletedAt: new Date().toISOString() })
-      .where(eq(users.id, userId))
+      .where(and(eq(users.id, userId), eq(users.churchId, churchId)))
       .returning();
 
     if (!user) {
@@ -280,11 +280,11 @@ export class UsersService implements OnModuleInit {
   /**
    * Restore soft deleted user
    */
-  async restoreUser(userId: string): Promise<User> {
+  async restoreUser(userId: string, churchId: string): Promise<User> {
     const [user] = await this.db
       .update(users)
       .set({ deletedAt: null })
-      .where(eq(users.id, userId))
+      .where(and(eq(users.id, userId), eq(users.churchId, churchId)))
       .returning();
 
     if (!user) {

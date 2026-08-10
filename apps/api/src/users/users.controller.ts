@@ -232,7 +232,7 @@ export class UsersController {
     description: 'User not found',
   })
   async deleteUser(@Request() req: any) {
-    await this.usersService.deleteUser(req.params.userId);
+    await this.usersService.deleteUser(req.params.userId, req.user.churchId);
 
     this.logger.log(`User deleted by ${req.user.id}`);
 
@@ -272,7 +272,7 @@ export class UsersController {
     description: 'User not found',
   })
   async restoreUser(@Request() req: any) {
-    const user = await this.usersService.restoreUser(req.params.userId);
+    const user = await this.usersService.restoreUser(req.params.userId, req.user.churchId);
 
     this.logger.log(`User restored by ${req.user.id}`);
 
