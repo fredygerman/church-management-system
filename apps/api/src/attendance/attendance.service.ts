@@ -9,9 +9,11 @@ import {
   attendanceRiskProfiles,
   attendanceSessionMetadata,
   attendanceSnapshots,
+  departments,
   engagementRiskDefaults,
   engagementRiskFlags,
   engagementRiskSettings,
+  memberDepartments,
   memberZones,
   members,
   serviceSessions,
@@ -189,30 +191,59 @@ export class AttendanceService {
     return this.checkin(churchId, session.id, memberId, 'qr')
   }
 
-  async getTrends(churchId: string, input: { from: string; to: string; groupBy: 'branch' | 'zone' | 'gender' | 'age_band' }) {
-    const checkinRows = await db.select({
-      sessionId: attendanceCheckins.sessionId,
-      memberId: attendanceCheckins.memberId,
-      sessionDate: serviceSessions.sessionDate,
-      gender: members.gender,
-      dateOfBirth: members.dateOfBirth,
-      zoneId: memberZones.zoneId,
-      zoneName: zones.name,
-    })
-      .from(attendanceCheckins)
-      .innerJoin(serviceSessions, eq(attendanceCheckins.sessionId, serviceSessions.id))
-      .innerJoin(members, eq(attendanceCheckins.memberId, members.id))
-      .leftJoin(memberZones, eq(memberZones.memberId, members.id))
-      .leftJoin(zones, eq(memberZones.zoneId, zones.id))
-      .where(and(
-        eq(attendanceCheckins.churchId, churchId),
-        gte(serviceSessions.sessionDate, input.from as any),
-        lte(serviceSessions.sessionDate, input.to as any),
-      ))
+  async getTrends(churchId: string, input: { from: string; to: string; groupBy: 'branch' | 'zone' | 'department' | 'gender' | 'age_band' }) {
+    const whereClause = and(
+      eq(attendanceCheckins.churchId, churchId),
+      gte(serviceSessions.sessionDate, input.from as any),
+      lte(serviceSessions.sessionDate, input.to as any),
+    )
 
-    const keyOf = (row: typeof checkinRows[number]) => {
+    // A member can belong to multiple departments, so joining member_departments fans out
+    // one row per department per check-in. Only join it when actually grouping by
+    // department, otherwise gender/age_band/branch counts would be silently inflated.
+    const checkinRows = input.groupBy === 'department'
+      ? await db.select({
+          sessionId: attendanceCheckins.sessionId,
+          memberId: attendanceCheckins.memberId,
+          sessionDate: serviceSessions.sessionDate,
+          gender: members.gender,
+          dateOfBirth: members.dateOfBirth,
+          zoneId: memberZones.zoneId,
+          zoneName: zones.name,
+          departmentId: memberDepartments.departmentId,
+          departmentName: departments.name,
+        })
+          .from(attendanceCheckins)
+          .innerJoin(serviceSessions, eq(attendanceCheckins.sessionId, serviceSessions.id))
+          .innerJoin(members, eq(attendanceCheckins.memberId, members.id))
+          .leftJoin(memberZones, eq(memberZones.memberId, members.id))
+          .leftJoin(zones, eq(memberZones.zoneId, zones.id))
+          .leftJoin(memberDepartments, eq(memberDepartments.memberId, members.id))
+          .leftJoin(departments, eq(memberDepartments.departmentId, departments.id))
+          .where(whereClause)
+      : await db.select({
+          sessionId: attendanceCheckins.sessionId,
+          memberId: attendanceCheckins.memberId,
+          sessionDate: serviceSessions.sessionDate,
+          gender: members.gender,
+          dateOfBirth: members.dateOfBirth,
+          zoneId: memberZones.zoneId,
+          zoneName: zones.name,
+        })
+          .from(attendanceCheckins)
+          .innerJoin(serviceSessions, eq(attendanceCheckins.sessionId, serviceSessions.id))
+          .innerJoin(members, eq(attendanceCheckins.memberId, members.id))
+          .leftJoin(memberZones, eq(memberZones.memberId, members.id))
+          .leftJoin(zones, eq(memberZones.zoneId, zones.id))
+          .where(whereClause)
+
+    const keyOf = (row: any) => {
       if (input.groupBy === 'gender') return row.gender || 'unknown'
       if (input.groupBy === 'age_band') return ageBandFromDateOfBirth(row.dateOfBirth)
+      // Department groupBy is fanned out (one row per department a member belongs to), so
+      // summed totals across department buckets can exceed total attendance for a session.
+      // That's expected ("how many choir members attended"), not a bug.
+      if (input.groupBy === 'department') return row.departmentName || 'unassigned'
       if (input.groupBy === 'branch') return row.zoneName || 'unassigned'
       return row.zoneName || 'unassigned'
     }
@@ -356,7 +387,7 @@ export class AttendanceService {
     return { success, failed, totalRequested: memberIds.length }
   }
 
-  async getPeriodComparison(churchId: string, input: { from: string; to: string; groupBy: 'branch' | 'zone' | 'gender' | 'age_band' }) {
+  async getPeriodComparison(churchId: string, input: { from: string; to: string; groupBy: 'branch' | 'zone' | 'department' | 'gender' | 'age_band' }) {
     const current = await this.getTrends(churchId, input)
     const fromDate = new Date(input.from)
     const toDate = new Date(input.to)
