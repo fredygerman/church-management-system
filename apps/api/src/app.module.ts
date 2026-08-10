@@ -28,6 +28,7 @@ import { CommunicationsModule } from './communications/communications.module'
 import { DataQualityModule } from './data-quality/data-quality.module'
 import { FamilyLifecycleModule } from './family-lifecycle/family-lifecycle.module'
 import { PrayerModule } from './prayer/prayer.module'
+import { OfferingsModule } from './offerings/offerings.module'
 import config from './config'
 
 @Module({
@@ -53,6 +54,7 @@ import config from './config'
     DataQualityModule,
     FamilyLifecycleModule,
     PrayerModule,
+    OfferingsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
