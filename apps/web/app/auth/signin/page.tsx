@@ -6,10 +6,6 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 
-const getApiBaseUrl = (): string => {
-  return process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3001"
-}
-
 export default function SignInPage() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl")
@@ -22,8 +18,11 @@ export default function SignInPage() {
 
   const handleGoogleSignIn = () => {
     try {
-      const apiBase = getApiBaseUrl()
-      
+      const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+      if (!apiBase) {
+        throw new Error("NEXT_PUBLIC_API_BASE_URL is not configured")
+      }
+
       // Create callback URL with callbackUrl param if present
       const callback = new URL(`${apiBase}/auth/google`)
       if (callbackUrl) {

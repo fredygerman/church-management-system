@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-
-// Use localhost for better compatibility with local dev servers
-const API_BASE_URL = process.env.API_BASE_URL || "http://localhost:3001"
+import { env } from "@/env.mjs"
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +16,7 @@ export async function POST(request: NextRequest) {
     console.log(`[Auth Callback] Syncing user with backend: ${email}`)
 
     // Call backend OAuth endpoint
-    const response = await fetch(`${API_BASE_URL}/auth/oauth-login`, {
+    const response = await fetch(`${env.API_BASE_URL}/auth/oauth-login`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
