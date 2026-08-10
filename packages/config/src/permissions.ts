@@ -15,6 +15,7 @@ export enum UserRole {
   ADMIN = 'admin',                   // Church administrator
   BRANCH_ADMIN = 'branch_admin',     // Branch administrator
   ZONE_LEADER = 'zone_leader',       // Zone/small group leader
+  DEPARTMENT_LEADER = 'department_leader', // Department/ministry leader
   MEMBER = 'member',                 // Regular church member
 }
 
@@ -60,6 +61,7 @@ export type PermissionAction =
   
   // Administration
   | 'manage:departments'
+  | 'read:department'
   | 'manage:settings'
   | 'manage:users'
   | 'manage:churches'
@@ -97,7 +99,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:zone', 'read:zone', 'update:zone', 'delete:zone', 'manage:zones',
     'create:family', 'read:family', 'update:family', 'delete:family', 'manage:families', 'view:families',
     'create:visitation', 'read:visitation', 'update:visitation', 'delete:visitation',
-    'manage:departments', 'manage:settings', 'manage:users', 'manage:churches', 'view:users',
+    'manage:departments', 'read:department', 'manage:settings', 'manage:users', 'manage:churches', 'view:users',
     'manage:files', 'manage:mail', 'manage:sms',
     'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
@@ -113,7 +115,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:zone', 'read:zone', 'update:zone', 'delete:zone', 'manage:zones',
     'create:family', 'read:family', 'update:family', 'delete:family', 'manage:families', 'view:families',
     'create:visitation', 'read:visitation', 'update:visitation', 'delete:visitation',
-    'manage:departments', 'manage:settings', 'view:users',
+    'manage:departments', 'read:department', 'manage:settings', 'view:users',
     'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
@@ -127,7 +129,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:zone', 'read:zone', 'update:zone', 'manage:zones',
     'read:family', 'view:families',
     'create:visitation', 'read:visitation',
-    'manage:departments', 'view:users',
+    'manage:departments', 'read:department', 'view:users',
     'manage:services', 'manage:attendance', 'view:attendance', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
@@ -139,6 +141,19 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'read:member',
     'view:visitors', 'create:visitor', 'read:visitor',
     'read:zone',
+    'view:attendance',
+    'view:communications',
+    'view:data-quality',
+    'view:lifecycle-dashboard',
+    'view:families',
+    'create:visitation', 'read:visitation',
+    'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
+  ],
+
+  [UserRole.DEPARTMENT_LEADER]: [
+    'read:member',
+    'view:visitors', 'create:visitor', 'read:visitor',
+    'read:department',
     'view:attendance',
     'view:communications',
     'view:data-quality',
@@ -325,6 +340,12 @@ export const PERMISSION_METADATA: Record<PermissionAction, PermissionMetadata> =
     description: 'Manage church departments',
     category: 'admin',
     riskLevel: 'high',
+  },
+  'read:department': {
+    label: 'View Department',
+    description: 'View department details and members',
+    category: 'admin',
+    riskLevel: 'low',
   },
   'manage:settings': {
     label: 'Manage Settings',
