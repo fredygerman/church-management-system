@@ -102,6 +102,12 @@ import {
   type PrayerRequest,
   type NewPrayerRequest,
 } from "./tables/prayerRequests"
+import {
+  offeringCategories,
+  type OfferingCategory,
+  type NewOfferingCategory,
+} from "./tables/offeringCategories"
+import { offerings, type Offering, type NewOffering } from "./tables/offerings"
 
 // Import all relations
 import {
@@ -195,6 +201,8 @@ export {
   messageDeliveries,
   campaignEvents,
   prayerRequests,
+  offeringCategories,
+  offerings,
   // Export relations for Drizzle ORM
   churchesRelations,
   zonesRelations,
@@ -282,4 +290,8 @@ export {
   type NewCampaignEvent,
   type PrayerRequest,
   type NewPrayerRequest,
+  type OfferingCategory,
+  type NewOfferingCategory,
+  type Offering,
+  type NewOffering,
 }
