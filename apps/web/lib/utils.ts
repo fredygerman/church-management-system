@@ -52,6 +52,23 @@ export function formatNumber(num: number): string {
   return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")
 }
 
+// Format integer minor-unit (cents) amounts for display, e.g. (150000, "KES") -> "KES 1,500.00"
+export function formatMoney(amountCents: number, currency: string): string {
+  const amount = (amountCents ?? 0) / 100
+  return `${currency} ${amount.toLocaleString("en-US", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`
+}
+
+// Convert a decimal string typed by a user (e.g. "1500.50") into integer cents.
+// Never send a raw float amount to the API - this is the one conversion point.
+export function centsFromDecimal(value: string | number): number {
+  const parsed = typeof value === "number" ? value : parseFloat(value)
+  if (Number.isNaN(parsed)) return 0
+  return Math.round(parsed * 100)
+}
+
 // Function to check if a string is a UUID
 export function isUUID(str: string) {
   const uuidRegex =

@@ -14,6 +14,7 @@ import {
   Database,
   HeartHandshake,
   Building2,
+  HandCoins,
   type LucideIcon,
 } from "lucide-react"
 import type { PermissionAction } from "@church/config"
@@ -116,6 +117,12 @@ export const sidebarConfig: SidebarSection[] = [
         href: "/dashboard/visitors",
         icon: Users2,
         permissions: ["view:visitors"],
+      },
+      {
+        title: "Offerings",
+        href: "/dashboard/offerings",
+        icon: HandCoins,
+        permissions: ["manage:offerings", "view:giving-reports"],
       },
     ],
   },
