@@ -159,6 +159,7 @@ export class OfferingsController {
     @Query('sessionId') sessionId?: string,
     @Query('from') from?: string,
     @Query('to') to?: string,
+    @Query('goalId') goalId?: string,
   ) {
     const churchId = request['churchId'] as string
     if (!churchId) {
@@ -170,6 +171,7 @@ export class OfferingsController {
       sessionId,
       from,
       to,
+      goalId,
     })
   }
 

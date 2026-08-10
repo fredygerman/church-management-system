@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { ensurePermission } from "@/lib/permissions-server"
 import { getOfferingCategories } from "@/actions/offering"
+import { getGivingGoals } from "@/actions/giving-goal"
 import { getMembers } from "@/actions/member"
 import { getServiceSessions } from "@/actions/attendance"
 import { OfferingForm } from "@/components/form/OfferingForm"
@@ -15,7 +16,7 @@ export default async function OfferingAddPage({ params }: PageProps) {
   await ensurePermission("manage:offerings")
   const { churchId } = await params
 
-  const [categories, membersResult, sessions] = await Promise.all([
+  const [categories, membersResult, sessions, goals] = await Promise.all([
     getOfferingCategories(churchId),
     getMembers(
       {
@@ -33,6 +34,7 @@ export default async function OfferingAddPage({ params }: PageProps) {
       churchId
     ),
     getServiceSessions(churchId).catch(() => []),
+    getGivingGoals(churchId).catch(() => []),
   ])
 
   return (
@@ -55,6 +57,7 @@ export default async function OfferingAddPage({ params }: PageProps) {
         categories={categories}
         members={membersResult.members}
         sessions={Array.isArray(sessions) ? sessions : []}
+        goals={goals.filter((goal: any) => goal.status === "active")}
       />
     </div>
   )

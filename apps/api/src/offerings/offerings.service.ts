@@ -1,10 +1,11 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, BadRequestException } from '@nestjs/common'
 import { eq, and, isNull, gte, lte, sql, inArray } from 'drizzle-orm'
 import { db } from '@church/db'
 import {
   offerings,
   offeringCategories,
   members,
+  givingGoals,
   type Offering,
   type OfferingCategory,
 } from '@church/db'
@@ -24,6 +25,8 @@ export type CreateOfferingInput = {
   currency: string
   offeringDate: string
   note?: string
+  goalId?: string | null
+  showOnDonorWall?: boolean
 }
 
 export type OfferingFilters = {
@@ -32,6 +35,7 @@ export type OfferingFilters = {
   sessionId?: string
   from?: string
   to?: string
+  goalId?: string
 }
 
 export type SummaryReportInput = {
@@ -106,7 +110,32 @@ export class OfferingsService {
 
   // ---- Offerings ----
 
+  /**
+   * A goalId must point at a real, same-church, non-soft-deleted giving goal -
+   * the FK alone doesn't know about churches. showOnDonorWall can only be true
+   * when a member is attached; an anonymous offering has no name to show.
+   */
+  private async validateGoalLink(churchId: string, goalId: string | null | undefined): Promise<void> {
+    if (!goalId) return
+    const [goal] = await db.query.givingGoals.findMany({
+      where: and(eq(givingGoals.id, goalId), eq(givingGoals.churchId, churchId), isNull(givingGoals.deletedAt)),
+      limit: 1,
+    })
+    if (!goal) {
+      throw new BadRequestException(`Giving goal with ID ${goalId} not found in this church`)
+    }
+  }
+
+  private validateDonorWall(showOnDonorWall: boolean | undefined, memberId: string | null | undefined): void {
+    if (showOnDonorWall === true && !memberId) {
+      throw new BadRequestException('showOnDonorWall requires a memberId - anonymous offerings cannot be shown')
+    }
+  }
+
   async createOffering(data: CreateOfferingInput): Promise<Offering> {
+    await this.validateGoalLink(data.churchId, data.goalId)
+    this.validateDonorWall(data.showOnDonorWall, data.memberId)
+
     const [offering] = await db.insert(offerings).values(data).returning()
     return offering
   }
@@ -124,6 +153,7 @@ export class OfferingsService {
         filters.sessionId ? eq(offerings.sessionId, filters.sessionId) : undefined,
         filters.from ? gte(offerings.offeringDate, filters.from as any) : undefined,
         filters.to ? lte(offerings.offeringDate, filters.to as any) : undefined,
+        filters.goalId ? eq(offerings.goalId, filters.goalId) : undefined,
       ),
     })
 
@@ -158,6 +188,17 @@ export class OfferingsService {
     offeringId: string,
     data: Partial<CreateOfferingInput>,
   ): Promise<Offering> {
+    if (data.goalId !== undefined) {
+      await this.validateGoalLink(churchId, data.goalId)
+    }
+    if (data.showOnDonorWall === true) {
+      // memberId may not be part of this patch - fall back to the record's
+      // current memberId to determine the effective (post-update) value.
+      const effectiveMemberId =
+        data.memberId !== undefined ? data.memberId : (await this.getOfferingByIdInChurch(churchId, offeringId))?.memberId
+      this.validateDonorWall(data.showOnDonorWall, effectiveMemberId)
+    }
+
     const [updated] = await db
       .update(offerings)
       .set({ ...data, updatedAt: today() as any })

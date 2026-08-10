@@ -75,7 +75,14 @@ export async function deleteOfferingCategory(id: string, churchId: string): Prom
 
 export async function getOfferings(
   churchId: string,
-  filters?: { categoryId?: string; memberId?: string; sessionId?: string; from?: string; to?: string }
+  filters?: {
+    categoryId?: string
+    memberId?: string
+    sessionId?: string
+    goalId?: string
+    from?: string
+    to?: string
+  }
 ): Promise<any[]> {
   try {
     const result = await apiGet("/offerings", { churchId, ...filters })
@@ -107,6 +114,8 @@ export async function createOffering(data: {
   memberId?: string
   sessionId?: string
   note?: string
+  goalId?: string | null
+  showOnDonorWall?: boolean
 }): Promise<any> {
   try {
     const offering = await apiPost("/offerings", data)
@@ -128,6 +137,8 @@ export async function updateOffering(
     memberId?: string
     sessionId?: string
     note?: string
+    goalId?: string | null
+    showOnDonorWall?: boolean
   },
   churchId: string
 ): Promise<any> {

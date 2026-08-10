@@ -1,5 +1,6 @@
 import { ensurePermission } from "@/lib/permissions-server"
 import { getOfferingById, getOfferingCategories } from "@/actions/offering"
+import { getGivingGoals } from "@/actions/giving-goal"
 import { getMembers } from "@/actions/member"
 import { getServiceSessions } from "@/actions/attendance"
 import { OfferingForm } from "@/components/form/OfferingForm"
@@ -13,7 +14,7 @@ export default async function EditOfferingPage({ params }: PageProps) {
   await ensurePermission("manage:offerings")
   const { churchId, id } = await params
 
-  const [offering, categories, membersResult, sessions] = await Promise.all([
+  const [offering, categories, membersResult, sessions, allGoals] = await Promise.all([
     getOfferingById(churchId, id),
     getOfferingCategories(churchId),
     getMembers(
@@ -32,7 +33,14 @@ export default async function EditOfferingPage({ params }: PageProps) {
       churchId
     ),
     getServiceSessions(churchId).catch(() => []),
+    getGivingGoals(churchId).catch(() => []),
   ])
+
+  // Active goals for the picker, plus this offering's already-linked goal
+  // (even if it has since ended) so the current selection still renders.
+  const goals = allGoals.filter(
+    (goal: any) => goal.status === "active" || goal.id === offering?.goalId
+  )
 
   return (
     <div className="flex flex-col space-y-6">
@@ -55,6 +63,7 @@ export default async function EditOfferingPage({ params }: PageProps) {
         categories={categories}
         members={membersResult.members}
         sessions={Array.isArray(sessions) ? sessions : []}
+        goals={goals}
         initialData={offering}
         isEditMode
       />

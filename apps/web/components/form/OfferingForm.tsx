@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createOffering, updateOffering } from "@/actions/offering"
 import { centsFromDecimal } from "@/lib/utils"
@@ -9,6 +9,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Select,
   SelectContent,
@@ -45,6 +46,8 @@ const offeringFormSchema = z.object({
   offeringDate: z.string().min(1, "Date is required"),
   memberId: z.string().optional(),
   sessionId: z.string().optional(),
+  goalId: z.string().optional(),
+  showOnDonorWall: z.boolean(),
   note: z.string().optional(),
 })
 
@@ -55,6 +58,7 @@ interface OfferingFormProps {
   categories: { id: string; name: string }[]
   members: { id: string; firstName?: string; lastName?: string }[]
   sessions: { id: string; title?: string; sessionDate?: string }[]
+  goals: { id: string; name: string }[]
   initialData?: any
   isEditMode?: boolean
 }
@@ -64,6 +68,7 @@ export function OfferingForm({
   categories,
   members,
   sessions,
+  goals,
   initialData,
   isEditMode = false,
 }: OfferingFormProps) {
@@ -82,9 +87,22 @@ export function OfferingForm({
       offeringDate: initialData?.offeringDate ? String(initialData.offeringDate).slice(0, 10) : "",
       memberId: initialData?.memberId || UNSET,
       sessionId: initialData?.sessionId || UNSET,
+      goalId: initialData?.goalId || UNSET,
+      showOnDonorWall: initialData?.showOnDonorWall ?? false,
       note: initialData?.note || "",
     },
   })
+
+  const memberId = form.watch("memberId")
+  const hasMember = Boolean(memberId && memberId !== UNSET)
+
+  // showOnDonorWall requires a named giver server-side - keep the checkbox
+  // in sync when the member is cleared rather than letting it submit stale.
+  useEffect(() => {
+    if (!hasMember && form.getValues("showOnDonorWall")) {
+      form.setValue("showOnDonorWall", false)
+    }
+  }, [hasMember, form])
 
   const onSubmit = async (data: OfferingFormData) => {
     setIsSubmitting(true)
@@ -98,6 +116,11 @@ export function OfferingForm({
         offeringDate: data.offeringDate,
         memberId: data.memberId && data.memberId !== UNSET ? data.memberId : undefined,
         sessionId: data.sessionId && data.sessionId !== UNSET ? data.sessionId : undefined,
+        // null (not undefined) so editing an offering can explicitly unlink a goal.
+        goalId: data.goalId && data.goalId !== UNSET ? data.goalId : null,
+        // Server-side rule: showOnDonorWall requires a non-null memberId.
+        // The checkbox is disabled without a member, but guard here too.
+        showOnDonorWall: hasMember ? data.showOnDonorWall : false,
         note: data.note || undefined,
       }
 
@@ -240,6 +263,57 @@ export function OfferingForm({
                   </SelectContent>
                 </Select>
                 <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="goalId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Count Toward Goal (Optional)</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Not linked to a goal" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value={UNSET}>Not linked to a goal</SelectItem>
+                    {goals.map((goal) => (
+                      <SelectItem key={goal.id} value={goal.id}>
+                        {goal.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>Link this offering to a fundraising goal&apos;s progress</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="showOnDonorWall"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    disabled={!hasMember}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Show on donor wall</FormLabel>
+                  <FormDescription>
+                    {hasMember
+                      ? "Recognize this giver by name on the public donor wall (never shows the amount)"
+                      : "Select a member to enable public recognition"}
+                  </FormDescription>
+                </div>
               </FormItem>
             )}
           />

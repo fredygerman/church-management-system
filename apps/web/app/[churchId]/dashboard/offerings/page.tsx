@@ -1,6 +1,7 @@
 import React from "react"
 import Link from "next/link"
 import { getOfferings, getOfferingCategories } from "@/actions/offering"
+import { getGivingGoals } from "@/actions/giving-goal"
 import { ensurePermission } from "@/lib/permissions-server"
 import { formatMoney } from "@/lib/utils"
 
@@ -18,7 +19,7 @@ import {
 
 interface PageProps {
   params: Promise<{ churchId: string }>
-  searchParams: Promise<{ categoryId?: string; from?: string; to?: string }>
+  searchParams: Promise<{ categoryId?: string; goalId?: string; from?: string; to?: string }>
 }
 
 function formatDate(value: string | null | undefined): string {
@@ -31,14 +32,17 @@ function formatDate(value: string | null | undefined): string {
 async function OfferingsTable({
   offeringsPromise,
   categories,
+  goals,
   churchId,
 }: {
   offeringsPromise: ReturnType<typeof getOfferings>
   categories: Awaited<ReturnType<typeof getOfferingCategories>>
+  goals: Awaited<ReturnType<typeof getGivingGoals>>
   churchId: string
 }) {
   const offerings = await offeringsPromise
   const categoryNameById = new Map(categories.map((category) => [category.id, category.name]))
+  const goalNameById = new Map(goals.map((goal) => [goal.id, goal.name]))
 
   if (offerings.length === 0) {
     return <p className="text-sm text-muted-foreground">No offerings recorded for this filter.</p>
@@ -50,6 +54,7 @@ async function OfferingsTable({
         <TableRow>
           <TableHead>Date</TableHead>
           <TableHead>Category</TableHead>
+          <TableHead>Goal</TableHead>
           <TableHead>Member</TableHead>
           <TableHead className="text-right">Amount</TableHead>
           <TableHead className="w-24 text-right">Actions</TableHead>
@@ -61,6 +66,11 @@ async function OfferingsTable({
             <TableCell>{formatDate(offering.offeringDate)}</TableCell>
             <TableCell>
               {offering.category?.name || categoryNameById.get(offering.categoryId) || offering.categoryId}
+            </TableCell>
+            <TableCell className="text-muted-foreground">
+              {offering.goalId
+                ? offering.goal?.name || goalNameById.get(offering.goalId) || offering.goalId
+                : "—"}
             </TableCell>
             <TableCell className="text-muted-foreground">
               {offering.memberName ?? "Anonymous"}
@@ -87,7 +97,10 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
   await ensurePermission("manage:offerings")
   const { churchId } = await params
   const filters = await searchParams
-  const categories = await getOfferingCategories(churchId)
+  const [categories, goals] = await Promise.all([
+    getOfferingCategories(churchId),
+    getGivingGoals(churchId).catch(() => []),
+  ])
   const offeringsPromise = getOfferings(churchId, filters)
 
   return (
@@ -131,6 +144,24 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
           </select>
         </div>
         <div className="flex flex-col gap-1">
+          <label htmlFor="goalId" className="text-xs text-muted-foreground">
+            Goal
+          </label>
+          <select
+            id="goalId"
+            name="goalId"
+            defaultValue={filters.goalId || ""}
+            className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          >
+            <option value="">All goals</option>
+            {goals.map((goal) => (
+              <option key={goal.id} value={goal.id}>
+                {goal.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
           <label htmlFor="from" className="text-xs text-muted-foreground">
             From
           </label>
@@ -168,6 +199,7 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
         <OfferingsTable
           offeringsPromise={offeringsPromise}
           categories={categories}
+          goals={goals}
           churchId={churchId}
         />
       </React.Suspense>
