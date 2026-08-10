@@ -29,6 +29,7 @@ import { DataQualityModule } from './data-quality/data-quality.module'
 import { FamilyLifecycleModule } from './family-lifecycle/family-lifecycle.module'
 import { PrayerModule } from './prayer/prayer.module'
 import { OfferingsModule } from './offerings/offerings.module'
+import { EventsModule } from './events/events.module'
 import config from './config'
 
 @Module({
@@ -55,6 +56,7 @@ import config from './config'
     FamilyLifecycleModule,
     PrayerModule,
     OfferingsModule,
+    EventsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
