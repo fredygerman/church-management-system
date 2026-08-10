@@ -87,6 +87,11 @@ export type PermissionAction =
   | 'create:prayer-request'
   | 'read:own-prayer-requests'
 
+  // Offerings
+  | 'manage:offerings'
+  | 'view:giving-reports'
+  | 'read:own-giving-history'
+
 // ============================================================================
 // ROLE TO PERMISSIONS MAPPING
 // ============================================================================
@@ -100,6 +105,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:family', 'read:family', 'update:family', 'delete:family', 'manage:families', 'view:families',
     'create:visitation', 'read:visitation', 'update:visitation', 'delete:visitation',
     'manage:departments', 'read:department', 'manage:settings', 'manage:users', 'manage:churches', 'view:users',
+    'manage:offerings', 'view:giving-reports',
     'manage:files', 'manage:mail', 'manage:sms',
     'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
@@ -116,6 +122,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'create:family', 'read:family', 'update:family', 'delete:family', 'manage:families', 'view:families',
     'create:visitation', 'read:visitation', 'update:visitation', 'delete:visitation',
     'manage:departments', 'read:department', 'manage:settings', 'view:users',
+    'manage:offerings', 'view:giving-reports',
     'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
@@ -130,6 +137,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'read:family', 'view:families',
     'create:visitation', 'read:visitation',
     'manage:departments', 'read:department', 'view:users',
+    'manage:offerings', 'view:giving-reports',
     'manage:services', 'manage:attendance', 'view:attendance', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
@@ -169,7 +177,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'view:attendance',
     'view:communications',
     'view:lifecycle-dashboard',
-    'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
+    'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests', 'read:own-giving-history',
   ],
 }
 
@@ -488,6 +496,24 @@ export const PERMISSION_METADATA: Record<PermissionAction, PermissionMetadata> =
   'read:own-prayer-requests': {
     label: 'Read Own Prayer Requests',
     description: 'View own submitted prayer requests',
+    category: 'member',
+    riskLevel: 'low',
+  },
+  'manage:offerings': {
+    label: 'Manage Offerings',
+    description: 'Record, edit, and delete offerings and offering categories',
+    category: 'admin',
+    riskLevel: 'high',
+  },
+  'view:giving-reports': {
+    label: 'View Giving Reports',
+    description: 'View aggregate offering/giving reports by category and period',
+    category: 'admin',
+    riskLevel: 'medium',
+  },
+  'read:own-giving-history': {
+    label: 'Read Own Giving History',
+    description: 'View own submitted offering/contribution history',
     category: 'member',
     riskLevel: 'low',
   },
