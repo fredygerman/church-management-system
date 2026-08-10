@@ -19,6 +19,7 @@ import { ServiceStatusUtil } from './helpers/service-status.util'
 import { ChurchModule } from './churches/churches.module'
 import { MembersModule } from './members/members.module'
 import { ZonesModule } from './zones/zones.module'
+import { DepartmentsModule } from './departments/departments.module'
 import { FamiliesModule } from './families/families.module'
 import { VisitorsModule } from './visitors/visitors.module'
 import { AttendanceModule } from './attendance/attendance.module'
@@ -43,6 +44,7 @@ import config from './config'
     ChurchModule,
     MembersModule,
     ZonesModule,
+    DepartmentsModule,
     FamiliesModule,
     VisitorsModule,
     AttendanceModule,
