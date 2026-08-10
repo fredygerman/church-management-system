@@ -261,7 +261,7 @@ export class EventsService {
       const [updated] = await db
         .update(events)
         .set({ headcount: input.headcount, updatedAt: now() as any })
-        .where(eq(events.id, eventId))
+        .where(and(eq(events.id, eventId), eq(events.churchId, churchId)))
         .returning()
       return updated
     }
