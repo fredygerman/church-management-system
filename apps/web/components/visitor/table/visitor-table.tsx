@@ -27,7 +27,7 @@ export function VisitorTable({ visitorPromise, churchId, canConvert = false }: V
   const visitors = React.use(visitorPromise) as any[]
   const pageCount = 1
 
-  const handleConvert = async (visitorId: string) => {
+  const handleConvert = React.useCallback(async (visitorId: string) => {
     const confirmed = window.confirm("Convert this visitor to a member now?")
     if (!confirmed) return
 
@@ -42,17 +42,19 @@ export function VisitorTable({ visitorPromise, churchId, canConvert = false }: V
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [churchId, router])
 
-  const handlers = {
+  const handleDelete = React.useCallback(async (visitorId: string) => {
+    // TODO: Implement delete handler
+    toast.info("Delete functionality coming soon")
+  }, [])
+
+  const handlers = React.useMemo(() => ({
     onConvert: canConvert ? handleConvert : undefined,
-    onDelete: async (visitorId: string) => {
-      // TODO: Implement delete handler
-      toast.info("Delete functionality coming soon")
-    },
-  }
+    onDelete: handleDelete,
+  }), [canConvert, handleConvert, handleDelete])
 
-  const columns = React.useMemo(() => getVisitorColumns(churchId, handlers), [churchId])
+  const columns = React.useMemo(() => getVisitorColumns(churchId, handlers), [churchId, handlers])
 
   const { table } = useDataTable({
     data: visitors,

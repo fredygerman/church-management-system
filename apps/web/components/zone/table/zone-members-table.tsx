@@ -29,16 +29,16 @@ export function ZoneMembersTable({ membersPromise, churchId, zoneId, zone }: Zon
   }>({ open: false })
 
   // Handlers to call server actions
-  const onAssignLeader = async (memberId: string) => {
+  const onAssignLeader = React.useCallback(async (memberId: string) => {
     try {
       await assignMemberToZone(zoneId, memberId, true, churchId)
       toast.success("Leader assigned")
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to assign leader")
     }
-  }
+  }, [zoneId, churchId])
 
-  const onUnassign = async (memberId: string) => {
+  const onUnassign = React.useCallback(async (memberId: string) => {
     const member = members.find(m => m.id === memberId)
     const isLeader = (member as any)?.isLeader
 
@@ -62,9 +62,12 @@ export function ZoneMembersTable({ membersPromise, churchId, zoneId, zone }: Zon
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to remove member")
     }
-  }
+  }, [zoneId, churchId, members, zone])
 
-  const columns = React.useMemo(() => getZoneMembersColumns(churchId, { onAssignLeader, onUnassign }), [churchId])
+  const columns = React.useMemo(
+    () => getZoneMembersColumns(churchId, { onAssignLeader, onUnassign }),
+    [churchId, onAssignLeader, onUnassign]
+  )
 
   const { table } = useDataTable({
     data: members,

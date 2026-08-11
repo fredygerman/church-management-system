@@ -26,7 +26,7 @@ export function DepartmentMembersTable({
   const router = useRouter()
 
   // Handler to toggle leader status (make leader or remove leader)
-  const onToggleLeader = async (memberId: string, makeLeader: boolean) => {
+  const onToggleLeader = React.useCallback(async (memberId: string, makeLeader: boolean) => {
     try {
       if (makeLeader) {
         await addDepartmentLeader(departmentId, memberId, churchId)
@@ -38,9 +38,9 @@ export function DepartmentMembersTable({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to update leader status")
     }
-  }
+  }, [departmentId, churchId])
 
-  const onRemove = async (memberId: string) => {
+  const onRemove = React.useCallback(async (memberId: string) => {
     const confirmed = window.confirm("Remove member from this department?")
     if (!confirmed) return
 
@@ -50,11 +50,11 @@ export function DepartmentMembersTable({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to remove member")
     }
-  }
+  }, [departmentId, churchId])
 
   const columns = React.useMemo(
     () => getDepartmentMembersColumns(churchId, { onToggleLeader, onRemove }),
-    [churchId]
+    [churchId, onToggleLeader, onRemove]
   )
 
   const { table } = useDataTable({
