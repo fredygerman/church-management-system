@@ -237,7 +237,10 @@ export class OfferingsService {
       ),
     })
     const categories = await db.query.offeringCategories.findMany({
-      where: eq(offeringCategories.churchId, churchId),
+      where: and(
+        eq(offeringCategories.churchId, churchId),
+        isNull(offeringCategories.deletedAt),
+      ),
     })
     const nameById = new Map(categories.map((c: OfferingCategory) => [c.id, c.name]))
 
