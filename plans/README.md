@@ -82,15 +82,40 @@ be defects. Recorded so they are not re-audited.
   server-side, not from the client-supplied `churchId`. Full per-action audit
   table is in that commit's worker report.
 
+## Post-wave follow-up (outside the wave, same day)
+
+- `pnpm --filter api exec eslint` and `apps/web`/`packages/config` lint were
+  all broken at baseline (fixed in `c2f0626`, `c9ea40b`). `apps/web` was
+  crashing outright — `eslint-config-next@16`'s native flat-config exports
+  fed through the legacy root `.eslintrc.cjs`, plus its `lint` script called
+  `next lint`, which Next 16 removed entirely. Root `.eslintrc.cjs` deleted;
+  `packages/config` got its own isolated config; `apps/web` got a proper flat
+  `eslint.config.mjs`.
+- Once lint actually ran on `apps/web` for the first time, it surfaced 13
+  real pre-existing issues — all fixed in `459b466`, `6d665ec`, `d80a5b7`,
+  `116522a`: unescaped JSX entities, two `setTimeout(async () => ...)`
+  misused-promise bugs, a `Math.random()` purity violation in a memoized
+  skeleton width, and three stale-closure bugs where a `useMemo`'s
+  dependency array didn't cover the handlers its callback closed over.
+
 ## Known findings not yet planned
 
-- `pnpm --filter api exec eslint` is broken at baseline across this repo —
-  ESLint 9 is installed but the config is still `.eslintrc.cjs` (pre-v9
-  format), so lint couldn't be run as a gate for this wave. Worth a dedicated
-  fix (migrate to `eslint.config.js`) since no wave can get a real lint signal
-  until it's fixed.
 - No spec file exists yet for `apps/api/src/users/users.service.ts` — it
   injects `this.db` via Nest DI rather than importing `@church/db` directly,
   so it needs a different test harness than the `jest.mock('@church/db')`
   pattern used elsewhere. The tenant-scoping fix landed without a regression
   test as a result (see commit `5108273`).
+- `offerings.service.ts` `getMyOfferings` doesn't filter soft-deleted
+  categories — a deleted category still shows its name on a member's own
+  giving history instead of falling back to null. Low severity, cosmetic.
+- 4x duplicated 12-line pagination limit/offset parse-and-validate block
+  across `members`/`visitors`/`events`/`offerings` controllers (flagged in
+  the Ponytail review before merge) — could be one shared helper in
+  `common/`. No functional issue, optional cleanup.
+- Public-facing UI findings from the original scan (hardcoded `gray-*`/
+  `blue-*`/`red-*` instead of design tokens, emoji icons on the docs page) —
+  untouched, cosmetic only, no security impact.
+- `packages/eslint-config` is a dead, unused scaffold — nothing extends it,
+  its declared `files` (`library.js`, `next.js`, `react-internal.js`) don't
+  even exist in the package. Candidate for deletion whenever someone's in
+  there.
