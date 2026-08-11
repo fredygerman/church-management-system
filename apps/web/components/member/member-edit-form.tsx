@@ -78,7 +78,7 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
       <CardHeader>
         <CardTitle>Member Information</CardTitle>
         <CardDescription>
-          Update the member's basic information
+          Update the member&apos;s basic information
         </CardDescription>
       </CardHeader>
       <CardContent>

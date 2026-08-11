@@ -69,7 +69,7 @@ export function ZoneEditForm({ zone, churchId }: ZoneEditFormProps) {
       <CardHeader>
         <CardTitle>Zone Information</CardTitle>
         <CardDescription>
-          Update the zone's basic information
+          Update the zone&apos;s basic information
         </CardDescription>
       </CardHeader>
       <CardContent>

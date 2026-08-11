@@ -27,12 +27,12 @@ export function ChurchNotFoundError({ churchId, onRetry }: ChurchNotFoundErrorPr
           {/* Error Details */}
           <div className="space-y-2">
             <p className="text-sm text-muted-foreground">
-              We couldn't find the church you're looking for. This might happen if:
+              We couldn&apos;t find the church you&apos;re looking for. This might happen if:
             </p>
             <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
               <li>The church ID is invalid or has changed</li>
               <li>The church has been deleted</li>
-              <li>You don't have access to this church</li>
+              <li>You don&apos;t have access to this church</li>
               <li>The backend service is temporarily unavailable</li>
             </ul>
           </div>

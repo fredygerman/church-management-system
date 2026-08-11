@@ -106,7 +106,7 @@ export function PermissionGate({
               </div>
             </TooltipTrigger>
             <TooltipContent className="bg-red-600">
-              <p>You don't have permission to perform this action</p>
+              <p>You don&apos;t have permission to perform this action</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
