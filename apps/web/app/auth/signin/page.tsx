@@ -39,10 +39,10 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
-      <div className="rounded-lg bg-white p-8 shadow-md">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-background">
+      <div className="rounded-lg bg-card p-8 shadow-md">
         {callbackUrl && (
-          <p className="mb-4 text-center text-red-500">
+          <p className="mb-4 text-center text-destructive">
             To access {callbackUrl}, you need to be signed in.
           </p>
         )}

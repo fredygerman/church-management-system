@@ -101,13 +101,13 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 p-4">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-lg">
         <CardHeader className="space-y-2 text-center">
           <div className="flex justify-center">
-            <div className="rounded-lg bg-blue-100 p-3">
+            <div className="rounded-lg bg-primary/10 p-3">
               <svg
-                className="h-8 w-8 text-blue-600"
+                className="h-8 w-8 text-primary"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"

@@ -1,3 +1,4 @@
+import { BookOpen, Wrench, FileText, Code2, Activity, ScrollText, Users } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 
@@ -5,28 +6,28 @@ const DOCS_CATEGORIES = [
   {
     title: "Getting Started",
     description: "Learn the basics and get up and running quickly",
-    icon: "📚",
+    icon: BookOpen,
     links: ["Quick Start Guide", "Installation", "Basic Concepts"],
   },
   {
     title: "API Reference",
     description: "Detailed API documentation and examples",
-    icon: "🔧",
+    icon: Wrench,
     links: ["Endpoints", "Authentication", "Rate Limits"],
   },
   {
     title: "Tutorials",
     description: "Step-by-step guides for common tasks",
-    icon: "📝",
+    icon: FileText,
     links: ["Basic Tutorial", "Advanced Topics", "Best Practices"],
   },
 ]
 
 const QUICK_LINKS = [
-  { title: "Developer Portal", url: "/dev", icon: "💻" },
-  { title: "API Status", url: "/status", icon: "🟢" },
-  { title: "Release Notes", url: "/releases", icon: "📋" },
-  { title: "Community Forum", url: "/forum", icon: "👥" },
+  { title: "Developer Portal", url: "/dev", icon: Code2 },
+  { title: "API Status", url: "/status", icon: Activity },
+  { title: "Release Notes", url: "/releases", icon: ScrollText },
+  { title: "Community Forum", url: "/forum", icon: Users },
 ]
 
 export default function DocsPage() {
@@ -35,7 +36,7 @@ export default function DocsPage() {
       {/* Hero Section */}
       <section className="mb-16 text-center">
         <h1 className="mb-6 text-5xl font-bold">Documentation</h1>
-        <p className="mx-auto max-w-2xl text-lg text-gray-600">
+        <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
           Everything you need to build with our platform
         </p>
       </section>
@@ -44,8 +45,8 @@ export default function DocsPage() {
       <section className="mb-16">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {QUICK_LINKS.map((link, index) => (
-            <Card key={index} className="p-4 text-center hover:bg-gray-50">
-              <div className="mb-2 text-2xl">{link.icon}</div>
+            <Card key={index} className="p-4 text-center hover:bg-muted">
+              <link.icon className="mx-auto mb-2 h-6 w-6 text-primary" />
               <h3 className="font-medium">{link.title}</h3>
             </Card>
           ))}
@@ -60,9 +61,9 @@ export default function DocsPage() {
         <div className="grid gap-8 md:grid-cols-3">
           {DOCS_CATEGORIES.map((category, index) => (
             <Card key={index} className="p-6">
-              <div className="mb-4 text-3xl">{category.icon}</div>
+              <category.icon className="mb-4 h-8 w-8 text-primary" />
               <h3 className="mb-2 text-xl font-semibold">{category.title}</h3>
-              <p className="mb-4 text-gray-600">{category.description}</p>
+              <p className="mb-4 text-muted-foreground">{category.description}</p>
               <ul className="space-y-2">
                 {category.links.map((link, linkIndex) => (
                   <li key={linkIndex}>
@@ -78,14 +79,14 @@ export default function DocsPage() {
       </section>
 
       {/* Resources Section */}
-      <section className="rounded-lg bg-gray-50 p-8">
+      <section className="rounded-lg bg-muted p-8">
         <h2 className="mb-6 text-center text-2xl font-semibold">
           Additional Resources
         </h2>
         <div className="grid gap-6 md:grid-cols-2">
           <div>
             <h3 className="mb-4 text-xl font-medium">Developer Tools</h3>
-            <ul className="space-y-2 text-gray-600">
+            <ul className="space-y-2 text-muted-foreground">
               <li>SDK Downloads</li>
               <li>API Explorer</li>
               <li>Code Samples</li>
@@ -93,7 +94,7 @@ export default function DocsPage() {
           </div>
           <div>
             <h3 className="mb-4 text-xl font-medium">Support</h3>
-            <ul className="space-y-2 text-gray-600">
+            <ul className="space-y-2 text-muted-foreground">
               <li>Developer Support</li>
               <li>Stack Overflow</li>
               <li>GitHub Discussions</li>
