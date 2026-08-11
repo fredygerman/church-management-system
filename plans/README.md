@@ -98,24 +98,33 @@ be defects. Recorded so they are not re-audited.
   skeleton width, and three stale-closure bugs where a `useMemo`'s
   dependency array didn't cover the handlers its callback closed over.
 
+## Cleanup round (same day, after the follow-up above)
+
+All five items previously listed under "known findings not yet planned" are
+now closed:
+
+- `apps/api/src/users/users.service.ts` — added `users.service.spec.ts`
+  (`f462fa5`), mocking `../database/schema` with the same column-ref-object
+  approach the other specs use against `@church/db`, since this service gets
+  its db via `DatabaseService.getDatabase()` rather than a direct import.
+  Covers `deleteUser`/`restoreUser` church scoping. Verified the tests
+  actually catch the regression: temporarily reverted the churchId predicate,
+  confirmed the cross-church tests failed, restored, confirmed green.
+- `offerings.service.ts` `getMyOfferings` — added the missing
+  `isNull(offeringCategories.deletedAt)` filter (`336270f`).
+- Pagination duplication — extracted `helpers/pagination.helper.ts`
+  (`parsePagination`), used by all four controllers (`187a2ab`).
+- Public-facing UI — `docs/page.tsx` emoji icons swapped for `lucide-react`
+  components, `text-gray-600`/`bg-gray-50` swapped for
+  `text-muted-foreground`/`bg-muted`; `signin/page.tsx`'s
+  `bg-gray-100`/`bg-white`/`text-red-500` swapped for
+  `bg-background`/`bg-card`/`text-destructive`; `setup-church.tsx`'s slate
+  gradient and blue icon badge swapped for `bg-background` and
+  `bg-primary/10`/`text-primary` (`cd70871`). Verified via production build
+  plus a live dev-server check of the signin page's actual rendered HTML.
+- `packages/eslint-config` dead scaffold deleted, along with its entire
+  unused dependency subtree from the lockfile (`ae7fb24`).
+
 ## Known findings not yet planned
 
-- No spec file exists yet for `apps/api/src/users/users.service.ts` — it
-  injects `this.db` via Nest DI rather than importing `@church/db` directly,
-  so it needs a different test harness than the `jest.mock('@church/db')`
-  pattern used elsewhere. The tenant-scoping fix landed without a regression
-  test as a result (see commit `5108273`).
-- `offerings.service.ts` `getMyOfferings` doesn't filter soft-deleted
-  categories — a deleted category still shows its name on a member's own
-  giving history instead of falling back to null. Low severity, cosmetic.
-- 4x duplicated 12-line pagination limit/offset parse-and-validate block
-  across `members`/`visitors`/`events`/`offerings` controllers (flagged in
-  the Ponytail review before merge) — could be one shared helper in
-  `common/`. No functional issue, optional cleanup.
-- Public-facing UI findings from the original scan (hardcoded `gray-*`/
-  `blue-*`/`red-*` instead of design tokens, emoji icons on the docs page) —
-  untouched, cosmetic only, no security impact.
-- `packages/eslint-config` is a dead, unused scaffold — nothing extends it,
-  its declared `files` (`library.js`, `next.js`, `react-internal.js`) don't
-  even exist in the package. Candidate for deletion whenever someone's in
-  there.
+None outstanding from this repo's review history as of this commit.
