@@ -49,22 +49,24 @@ export function AddMemberDialog({
 
   // Debounced search
   React.useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (searchQuery.trim()) {
-        setIsSearching(true)
-        try {
-          const results = await searchMembers(churchId, searchQuery)
-          setMembers(results)
-        } catch (error) {
-          console.error("Error searching members:", error)
-          toast.error("Failed to search members")
+    const timer = setTimeout(() => {
+      void (async () => {
+        if (searchQuery.trim()) {
+          setIsSearching(true)
+          try {
+            const results = await searchMembers(churchId, searchQuery)
+            setMembers(results)
+          } catch (error) {
+            console.error("Error searching members:", error)
+            toast.error("Failed to search members")
+            setMembers([])
+          } finally {
+            setIsSearching(false)
+          }
+        } else {
           setMembers([])
-        } finally {
-          setIsSearching(false)
         }
-      } else {
-        setMembers([])
-      }
+      })()
     }, 300)
 
     return () => clearTimeout(timer)
