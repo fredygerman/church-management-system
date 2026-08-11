@@ -17,6 +17,7 @@ import { MembersService, type CreateMemberInput } from './members.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
 import { UserRole } from '../auth/types/permission.types'
+import { parsePagination } from '../helpers/pagination.helper'
 
 export type UpdateMemberInput = Partial<CreateMemberInput>
 
@@ -54,22 +55,7 @@ export class MembersController {
       throw new BadRequestException('Church context is required')
     }
 
-    let limit: number | undefined
-    let offset: number | undefined
-
-    if (limitStr) {
-      limit = parseInt(limitStr, 10)
-      if (!Number.isInteger(limit) || limit <= 0) {
-        throw new BadRequestException('limit must be a positive integer')
-      }
-    }
-
-    if (offsetStr) {
-      offset = parseInt(offsetStr, 10)
-      if (!Number.isInteger(offset) || offset < 0) {
-        throw new BadRequestException('offset must be a non-negative integer')
-      }
-    }
+    const { limit, offset } = parsePagination(limitStr, offsetStr)
 
     return this.membersService.getMembersByChurch(churchId, limit, offset)
   }

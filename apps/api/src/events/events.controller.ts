@@ -13,6 +13,7 @@ import {
   Req,
 } from '@nestjs/common'
 import { Request } from 'express'
+import { parsePagination } from '../helpers/pagination.helper'
 import {
   EventsService,
   type CreateEventInput,
@@ -92,23 +93,7 @@ export class EventsController {
     @Query('offset') offsetStr?: string,
   ) {
     const churchId = request['churchId'] as string
-
-    let limit: number | undefined
-    let offset: number | undefined
-
-    if (limitStr) {
-      limit = parseInt(limitStr, 10)
-      if (!Number.isInteger(limit) || limit <= 0) {
-        throw new BadRequestException('limit must be a positive integer')
-      }
-    }
-
-    if (offsetStr) {
-      offset = parseInt(offsetStr, 10)
-      if (!Number.isInteger(offset) || offset < 0) {
-        throw new BadRequestException('offset must be a non-negative integer')
-      }
-    }
+    const { limit, offset } = parsePagination(limitStr, offsetStr)
 
     return this.eventsService.getEventsByChurch(churchId, { from, to, status, scope }, false, limit, offset)
   }
