@@ -40,82 +40,70 @@ export function SupportForm() {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    toast.promise(
-      (async () => {
-        // Simulate API call
-        await new Promise((resolve) => setTimeout(resolve, 2000))
-        console.log(values)
-        // If you have an actual API call, replace the above lines with your API logic
-        // const response = await submitSupportForm(values)
-        // if (response.success) {
-        //   return "Message sent successfully"
-        // } else {
-        //   throw new Error("Failed to send message")
-        // }
-        return "Message sent successfully"
-      })(),
-      {
-        loading: "Sending message...",
-        success: "Message sent successfully 🎉",
-        error: "Failed to send message 😢",
-      }
-    )
+    toast.error("Support requests are not available at this time.")
   }
 
   return (
-    <Form {...form}>
-      <form
-        onSubmit={form.handleSubmit(onSubmit)}
-        className="max-w-lg space-y-8"
-      >
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter your name" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+    <div className="max-w-lg space-y-4">
+      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+        <p className="text-sm text-yellow-800">
+          Support requests are not currently available. Please try again later or contact your church administrator.
+        </p>
+      </div>
+      <Form {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-8 opacity-50 pointer-events-none"
+        >
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Name</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter your name" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter your email" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter your email" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="message"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Message</FormLabel>
-              <FormControl>
-                <Textarea
-                  placeholder="Enter your message"
-                  className="resize-none"
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="message"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Message</FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="Enter your message"
+                    className="resize-none"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-        <Button type="submit">Send Message</Button>
-      </form>
-    </Form>
+          <Button type="submit" disabled>Send Message</Button>
+        </form>
+      </Form>
+    </div>
   )
 }
