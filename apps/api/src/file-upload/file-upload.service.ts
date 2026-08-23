@@ -213,12 +213,13 @@ export class FileUploadService {
 
   async getUserDocuments(userId: string, statuses?: string[]): Promise<any> {
     this.logger.log(`Fetching documents for user: ${userId}`);
-    // Return empty array for now - no database integration
+    // ponytail: stub pending documents table migration
     return [];
   }
 
   async updateDocument(id: string, updates: Record<string, any>): Promise<any> {
     this.logger.log(`Updating document: ${id}`);
+    // ponytail: stub pending documents table migration
     return { success: true };
   }
 
@@ -228,6 +229,7 @@ export class FileUploadService {
     userRole: string
   ): Promise<any> {
     this.logger.log(`Marking document as deleted: ${id}`);
+    // ponytail: stub pending documents table migration
     return { success: true };
   }
 }

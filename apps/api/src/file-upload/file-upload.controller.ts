@@ -71,6 +71,7 @@ export class FileUploadController {
 
   @Post('diagnostics')
   @UseGuards(JwtAuthGuard)
+  @RequirePermission('manage:files')
   @UseInterceptors(FileInterceptor('file'))
   async runDiagnostics(@UploadedFile() file?: MulterFile): Promise<any> {
     this.logger.log('========== DIAGNOSTICS START ==========');
