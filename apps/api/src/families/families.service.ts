@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, NotFoundException } from '@nestjs/common'
 import { eq, and, isNull } from 'drizzle-orm'
 import { db } from '@church/db'
 import { families, members, NewFamily, Family } from '@church/db'
@@ -73,6 +73,7 @@ export class FamiliesService {
       .set({ ...data, updatedAt: new Date() })
       .where(and(eq(families.id, familyId), eq(families.churchId, churchId), isNull(families.deletedAt)))
       .returning()
+    if (!updatedFamily) throw new NotFoundException('Family not found')
     return updatedFamily
   }
 
@@ -80,6 +81,8 @@ export class FamiliesService {
    * Soft delete family
    */
   async deleteFamily(churchId: string, familyId: string): Promise<void> {
+    const family = await this.getFamilyById(churchId, familyId)
+    if (!family) throw new NotFoundException('Family not found')
     await db
       .update(families)
       .set({ deletedAt: new Date() })

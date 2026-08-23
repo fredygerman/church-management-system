@@ -31,14 +31,12 @@ export default async function FamiliesPage({ params }: PageProps) {
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {families.map((family: any) => (
-              <Link 
+              <Link
                 key={family.id}
                 href={`/${churchId}/dashboard/families/${family.id}`}
               >
                 <div className="rounded-lg border bg-card p-4 hover:bg-accent cursor-pointer transition">
                   <h3 className="text-lg font-semibold">{family.familyName}</h3>
-                  <p className="text-sm text-muted-foreground">{family.address || 'No address'}</p>
-                  <p className="mt-2 text-sm font-medium">Members: {family.memberCount || 0}</p>
                 </div>
               </Link>
             ))}

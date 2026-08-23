@@ -17,8 +17,6 @@ export async function getFamilies(churchId: string): Promise<any[]> {
 export async function createFamily(data: {
   churchId: string
   familyName: string
-  address?: string
-  phone?: string
 }): Promise<any> {
   return apiPost('/families', data)
 }
