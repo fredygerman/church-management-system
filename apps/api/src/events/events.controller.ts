@@ -9,6 +9,7 @@ import {
   Query,
   BadRequestException,
   ForbiddenException,
+  NotFoundException,
   UseGuards,
   Req,
 } from '@nestjs/common'
@@ -107,7 +108,7 @@ export class EventsController {
   async getOne(@Req() request: Request, @Param('id') id: string) {
     const event = await this.eventsService.getEventByIdInChurch(request['churchId'] as string, id)
     if (!event) {
-      throw new BadRequestException(`Event with ID ${id} not found`)
+      throw new NotFoundException(`Event with ID ${id} not found`)
     }
     return event
   }
@@ -125,7 +126,7 @@ export class EventsController {
     }
     const updated = await this.eventsService.updateEvent(request['churchId'] as string, id, input)
     if (!updated) {
-      throw new BadRequestException(`Event with ID ${id} not found`)
+      throw new NotFoundException(`Event with ID ${id} not found`)
     }
     return updated
   }
@@ -149,7 +150,7 @@ export class EventsController {
   async getRoster(@Req() request: Request, @Param('id') id: string) {
     const roster = await this.eventsService.getRoster(request['churchId'] as string, id)
     if (!roster) {
-      throw new BadRequestException(`Event with ID ${id} not found`)
+      throw new NotFoundException(`Event with ID ${id} not found`)
     }
     return roster
   }

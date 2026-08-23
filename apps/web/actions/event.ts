@@ -95,7 +95,7 @@ export async function getEventRsvps(churchId: string, id: string): Promise<any> 
     return await apiGet(`/events/${id}/rsvps`, { churchId })
   } catch (error) {
     console.error("Error fetching event RSVPs:", error)
-    return { rsvps: [], counts: { going: 0, maybe: 0, declined: 0 } }
+    return { event: null, rows: [], countsByStatus: { going: 0, maybe: 0, declined: 0 } }
   }
 }
 

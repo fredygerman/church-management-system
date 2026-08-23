@@ -38,9 +38,13 @@ export default async function EventDetailPage({ params }: PageProps) {
     getEventRsvps(churchId, id),
   ])
 
-  const rsvps: any[] = Array.isArray(roster?.rsvps) ? roster.rsvps : []
-  const counts = roster?.counts || { going: 0, maybe: 0, declined: 0 }
-  const byChurch: any[] = Array.isArray(roster?.byChurch) ? roster.byChurch : []
+  const rsvps: any[] = Array.isArray(roster?.rows) ? roster.rows : []
+  const counts = roster?.countsByStatus || { going: 0, maybe: 0, declined: 0 }
+  const countsByChurch = (roster?.countsByChurch || {}) as Record<string, Record<string, number>>
+  const byChurch = Object.entries(countsByChurch).map(([churchId, statusCounts]) => ({
+    churchId,
+    count: Object.values(statusCounts).reduce((a, b) => a + b, 0),
+  }))
 
   const byStatus = {
     going: rsvps.filter((r) => r.status === "going"),
@@ -121,7 +125,7 @@ export default async function EventDetailPage({ params }: PageProps) {
                   key={row.churchId}
                   className="flex items-center justify-between rounded-md border border-border p-2 text-sm"
                 >
-                  <span>{row.churchName || row.churchId}</span>
+                  <span>{row.churchId}</span>
                   <span className="font-semibold">{row.count}</span>
                 </li>
               ))}

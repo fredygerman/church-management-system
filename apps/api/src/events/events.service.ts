@@ -90,7 +90,7 @@ export class EventsService {
         filters.status ? eq(events.status, filters.status) : undefined,
         filters.scope ? eq(events.scope, filters.scope) : undefined,
         filters.from ? gte(events.startsAt, filters.from as any) : undefined,
-        filters.to ? lte(events.startsAt, filters.to as any) : undefined,
+        filters.to ? lte(events.startsAt, filters.to + 'T23:59:59.999Z' as any) : undefined,
       ),
       limit: effectiveLimit,
       offset: effectiveOffset,
