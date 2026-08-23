@@ -246,6 +246,9 @@ importers:
 
   apps/web:
     dependencies:
+      '@church/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       '@church/db':
         specifier: workspace:*
         version: link:../../packages/db
