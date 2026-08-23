@@ -427,6 +427,10 @@ export class CommunicationsService {
 
     await this.logEvent(churchId, campaign.id, 'campaign_sending', 'Campaign sending started')
 
+    if (campaign.channel === 'email') {
+      await this.logEvent(churchId, campaign.id, 'email_not_supported', 'Email channel not supported: members table does not contain email field')
+    }
+
     await this.materializeRecipients(campaign)
 
     const recipients = await db.query.campaignRecipients.findMany({ where: eq(campaignRecipients.campaignId, campaign.id) })
