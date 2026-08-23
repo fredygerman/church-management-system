@@ -1,6 +1,6 @@
 'use server'
 
-import { apiGet, apiPost } from '@/lib/api-helpers'
+import { apiGet, apiPost, apiDelete } from '@/lib/api-helpers'
 
 // Function to get all visitors for a church
 export async function getVisitors(churchId: string): Promise<any[]> {
@@ -57,4 +57,12 @@ export async function convertVisitorToMember(data: {
     churchId: data.churchId,
     zoneId: data.zoneId,
   })
+}
+
+// Function to delete a visitor
+export async function deleteVisitor(data: {
+  churchId: string
+  visitorId: string
+}): Promise<any> {
+  return apiDelete(`/visitors/${data.visitorId}`, { churchId: data.churchId })
 }

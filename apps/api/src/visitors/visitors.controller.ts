@@ -67,6 +67,18 @@ export class VisitorsController {
   }
 
   /**
+   * GET /visitors/status/:status - Get visitors by status
+   */
+  @Get('status/:status')
+  @RequirePermission('view:visitors')
+  async getByStatus(
+    @Req() request: Request,
+    @Param('status') status: string,
+  ) {
+    return this.visitorsService.getVisitorsByStatus(request['churchId'] as string, status)
+  }
+
+  /**
    * GET /visitors/:id - Get single visitor
    */
   @Get(':id')
@@ -117,18 +129,6 @@ export class VisitorsController {
       visitorId: id,
       zoneId: convertVisitorDto.zoneId,
     })
-  }
-
-  /**
-   * GET /visitors/status/:status - Get visitors by status
-   */
-  @Get('status/:status')
-  @RequirePermission('view:visitors')
-  async getByStatus(
-    @Req() request: Request,
-    @Param('status') status: string,
-  ) {
-    return this.visitorsService.getVisitorsByStatus(request['churchId'] as string, status)
   }
 
   /**

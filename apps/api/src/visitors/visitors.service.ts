@@ -81,6 +81,11 @@ export class VisitorsService {
    * Soft delete visitor
    */
   async deleteVisitor(churchId: string, visitorId: string): Promise<void> {
+    const visitor = await this.getVisitorById(churchId, visitorId)
+    if (!visitor) {
+      throw new BadRequestException(`Visitor with ID ${visitorId} not found`)
+    }
+
     await db
       .update(visitors)
       .set({ deletedAt: getToday() as any })
@@ -88,12 +93,20 @@ export class VisitorsService {
   }
 
   /**
-   * Get visitors by status
+   * Get visitors by status (filters by latest followup status)
    */
   async getVisitorsByStatus(churchId: string, status: string): Promise<Visitor[]> {
-    // Note: This will require a JOIN with visitorFollowups table
-    // For now, return all visitors and filter in the service layer
-    return this.getVisitorsByChurch(churchId)
+    const visitors = await this.getVisitorsByChurch(churchId)
+    const result: Visitor[] = []
+
+    for (const visitor of visitors) {
+      const latest = await this.getLatestFollowupStatus(churchId, visitor.id)
+      if (latest?.status === status) {
+        result.push(visitor)
+      }
+    }
+
+    return result
   }
 
   /**
@@ -216,6 +229,7 @@ export class VisitorsService {
    * Update followup entry
    */
   async updateFollowup(
+    churchId: string,
     followupId: string,
     data: {
       status?: string
@@ -223,8 +237,21 @@ export class VisitorsService {
       followupDate?: Date | string
     },
   ): Promise<VisitorFollowup> {
+    const [followup] = await db.query.visitorFollowups.findMany({
+      where: eq(visitorFollowups.id, followupId),
+    })
+
+    if (!followup) {
+      throw new BadRequestException(`Followup with ID ${followupId} not found`)
+    }
+
+    const visitor = await this.getVisitorById(churchId, followup.visitorId)
+    if (!visitor) {
+      throw new BadRequestException('Followup does not belong to this church')
+    }
+
     const updateData: any = { ...data, updatedAt: getToday() }
-    
+
     if (data.followupDate) {
       updateData.followupDate = toDateString(data.followupDate)
     }

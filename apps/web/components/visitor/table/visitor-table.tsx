@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { type getVisitors } from "@/actions/visitor"
-import { convertVisitorToMember } from "@/actions/visitor"
+import { convertVisitorToMember, deleteVisitor } from "@/actions/visitor"
 
 import { useDataTable } from "@/hooks/use-data-table"
 import { DataTable } from "@/components/data-table/data-table"
@@ -45,9 +45,21 @@ export function VisitorTable({ visitorPromise, churchId, canConvert = false }: V
   }, [churchId, router])
 
   const handleDelete = React.useCallback(async (visitorId: string) => {
-    // TODO: Implement delete handler
-    toast.info("Delete functionality coming soon")
-  }, [])
+    const confirmed = window.confirm("Delete this visitor?")
+    if (!confirmed) return
+
+    setIsLoading(true)
+    try {
+      await deleteVisitor({ churchId, visitorId })
+      toast.success("Visitor deleted successfully")
+      router.refresh()
+    } catch (error) {
+      console.error("Error deleting visitor:", error)
+      toast.error(error instanceof Error ? error.message : "Failed to delete visitor")
+    } finally {
+      setIsLoading(false)
+    }
+  }, [churchId, router])
 
   const handlers = React.useMemo(() => ({
     onConvert: canConvert ? handleConvert : undefined,
