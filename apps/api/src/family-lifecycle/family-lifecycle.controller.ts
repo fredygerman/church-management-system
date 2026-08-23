@@ -43,6 +43,7 @@ export class FamilyLifecycleController {
   @Post('milestones')
   @RequirePermission('manage:lifecycle-rules')
   async createMilestone(@Req() request: Request, @Body() body: { memberId: string; familyId?: string; milestoneType: 'birthday' | 'anniversary' | 'baptism' | 'custom'; label: string; milestoneDate: string; notificationRuleId?: string; details?: string }) {
+    if (!body?.memberId || !body?.label || !body?.milestoneDate) throw new BadRequestException('memberId, label and milestoneDate are required')
     return this.service.createLifecycleMilestone(request['churchId'] as string, body)
   }
 
@@ -62,7 +63,7 @@ export class FamilyLifecycleController {
   @RequirePermission('manage:families')
   async resolveSuggestion(@Req() request: Request, @Param('id') suggestionId: string, @Body() body: { decision: 'approved' | 'declined' | 'ignored' }) {
     if (!body?.decision) throw new BadRequestException('decision is required')
-    return this.service.resolveSuggestion(request['churchId'] as string, suggestionId, body.decision)
+    return this.service.resolveSuggestion(request['churchId'] as string, suggestionId, body.decision, request.user['id'] as string)
   }
 
   @Get('dashboard')

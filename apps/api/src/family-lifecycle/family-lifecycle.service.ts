@@ -100,14 +100,14 @@ export class FamilyLifecycleService {
     return db.query.familyConnectionSuggestions.findMany({ where: and(eq(familyConnectionSuggestions.churchId, churchId), eq(familyConnectionSuggestions.status, 'pending')), orderBy: [desc(familyConnectionSuggestions.createdAt)] })
   }
 
-  async resolveSuggestion(churchId: string, suggestionId: string, decision: 'approved' | 'declined' | 'ignored') {
+  async resolveSuggestion(churchId: string, suggestionId: string, decision: 'approved' | 'declined' | 'ignored', userId: string) {
     const [suggestion] = await db.query.familyConnectionSuggestions.findMany({ where: and(eq(familyConnectionSuggestions.id, suggestionId), eq(familyConnectionSuggestions.churchId, churchId)) })
     if (!suggestion) throw new NotFoundException('Suggestion not found')
 
     await db.update(familyConnectionSuggestions).set({ status: decision, resolvedAt: new Date() }).where(eq(familyConnectionSuggestions.id, suggestionId))
 
     if (decision === 'approved' && suggestion.suggestedFamilyId) {
-      await this.createRelationship(churchId, '00000000-0000-0000-0000-000000000000', {
+      await this.createRelationship(churchId, userId, {
         familyId: suggestion.suggestedFamilyId,
         memberId: suggestion.memberId,
         role: 'other',
