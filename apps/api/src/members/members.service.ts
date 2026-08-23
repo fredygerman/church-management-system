@@ -156,7 +156,15 @@ export class MembersService {
   /**
    * Remove member from zone
    */
-  async removeFromZone(memberId: string, zoneId: string): Promise<void> {
+  async removeFromZone(churchId: string, memberId: string, zoneId: string): Promise<void> {
+    const [zone] = await db.query.zones.findMany({
+      where: and(eq(zones.id, zoneId), eq(zones.churchId, churchId), isNull(zones.deletedAt)),
+      limit: 1,
+    })
+    if (!zone) {
+      throw new Error('Zone not found in church context')
+    }
+
     await db
       .delete(memberZones)
       .where(and(

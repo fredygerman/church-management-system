@@ -49,7 +49,6 @@ export function MemberForm({
     setIsSubmitting(true)
     try {
       const validatedData = memberFormSchema.parse(formData)
-      console.log("Validated data:", validatedData)
 
       // Ensure optional date fields are either null or valid date strings
       const sanitizedData = {
@@ -70,9 +69,6 @@ export function MemberForm({
       if (sanitizedData.contactInfo.zoneId === "no_zone") {
         sanitizedData.contactInfo.zoneId = null
       }
-
-      console.log("Sanitized data:", sanitizedData)
-      console.log("Church ID:", churchId)
 
       const result = await createMember({
         ...sanitizedData,

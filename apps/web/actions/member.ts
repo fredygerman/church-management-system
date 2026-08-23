@@ -92,10 +92,11 @@ export async function getMembers(
 ): Promise<{ members: any[]; pageCount: number }> {
   try {
     // Build query string
+    const offset = (queryParams.page - 1) * queryParams.per_page
     const params = new URLSearchParams({
       churchId,
-      page: queryParams.page.toString(),
-      per_page: queryParams.per_page.toString(),
+      limit: queryParams.per_page.toString(),
+      offset: offset.toString(),
       sort: queryParams.sort,
       ...(queryParams.firstName && { firstName: queryParams.firstName }),
       ...(queryParams.lastName && { lastName: queryParams.lastName }),
@@ -108,10 +109,10 @@ export async function getMembers(
 
     const result = await apiGet(`/members?${params}`)
     const pageCount = result?.meta?.total_pages || 1
-    
-    return { 
-      members: result || [], 
-      pageCount 
+
+    return {
+      members: result || [],
+      pageCount
     }
   } catch (error) {
     console.error('Error fetching members:', error)
