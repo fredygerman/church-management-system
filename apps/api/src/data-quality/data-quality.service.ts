@@ -19,7 +19,26 @@ function parseCsv(content: string): string[][] {
   return content
     .split(/\r?\n/)
     .filter((line) => line.trim().length > 0)
-    .map((line) => line.split(',').map((v) => v.trim()))
+    .map((line) => {
+      const fields: string[] = []
+      let current = ''
+      let inQuotes = false
+
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i]
+        if (char === '"') {
+          inQuotes = !inQuotes
+          current += char
+        } else if (char === ',' && !inQuotes) {
+          fields.push(current.trim().replace(/^"|"$/g, ''))
+          current = ''
+        } else {
+          current += char
+        }
+      }
+      fields.push(current.trim().replace(/^"|"$/g, ''))
+      return fields
+    })
 }
 
 @Injectable()
@@ -97,7 +116,7 @@ export class DataQualityService {
   }
 
   async commitImport(churchId: string, userId: string, importJobId: string, mode: ImportMode, idempotencyKey: string) {
-    const [job] = await db.query.importJobs.findMany({ where: and(eq(importJobs.id, importJobId), eq(importJobs.churchId, churchId)) })
+    const job = await db.query.importJobs.findFirst({ where: and(eq(importJobs.id, importJobId), eq(importJobs.churchId, churchId)) })
     if (!job) throw new NotFoundException('Import job not found')
 
     if (job.status === 'committed' && job.idempotencyKey === idempotencyKey) {
@@ -172,7 +191,7 @@ export class DataQualityService {
   }
 
   async getImportJobDetail(churchId: string, importJobId: string) {
-    const [job] = await db.query.importJobs.findMany({ where: and(eq(importJobs.id, importJobId), eq(importJobs.churchId, churchId)) })
+    const job = await db.query.importJobs.findFirst({ where: and(eq(importJobs.id, importJobId), eq(importJobs.churchId, churchId)) })
     if (!job) throw new NotFoundException('Import job not found')
     const rows = await db.query.importRows.findMany({ where: eq(importRows.importJobId, importJobId), orderBy: (t, { asc }) => [asc(t.rowNumber)] })
     return { job, rows }
@@ -239,7 +258,7 @@ export class DataQualityService {
   }
 
   async resolveDuplicateCandidate(churchId: string, userId: string, candidateId: string, decision: 'approve' | 'decline' | 'ignore') {
-    const [candidate] = await db.query.duplicateCandidates.findMany({ where: and(eq(duplicateCandidates.id, candidateId), eq(duplicateCandidates.churchId, churchId)) })
+    const candidate = await db.query.duplicateCandidates.findFirst({ where: and(eq(duplicateCandidates.id, candidateId), eq(duplicateCandidates.churchId, churchId)) })
     if (!candidate) throw new NotFoundException('Duplicate candidate not found')
 
     const nextStatus = decision === 'approve' ? 'approved' : decision === 'decline' ? 'declined' : 'ignored'
