@@ -15,8 +15,7 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 ## Wave summary — `wave/security-and-hardening`
 
 All 9 tasks landed, reviewed, and independently re-verified (type-check +
-full test suite, 66/66 passing) before each commit. Not merged to `main` —
-awaiting human review/merge decision.
+full test suite, 66/66 passing) before each commit. Merged to `main`.
 
 | Commit | What |
 |---|---|
@@ -125,6 +124,96 @@ now closed:
 - `packages/eslint-config` dead scaffold deleted, along with its entire
   unused dependency subtree from the lockfile (`ae7fb24`).
 
+## Wave summary — `wave/audit-fixes` (2026-08-23)
+
+Full-repo gap audit (stubs, bugs, frontend/backend contract mismatches),
+executed as a Shipwave wave on branch `wave/audit-fixes`, cut from `main`.
+13 Haiku worker agents fixed 30 findings across 14 commits; coordinator
+review caught and fixed 4 additional bugs the workers introduced or missed
+(see below). Payment was explicitly excluded from this wave per operator
+instruction. Not merged to `main` — awaiting human review/merge decision.
+
+| Commit | What |
+|---|---|
+| `9599f97` | auth: stop leaking OAuth tokens via redirect URL query params |
+| `0f0d489` | visitors: implement delete, fix status route/filter, scope followup updates |
+| `4c7f05a` | members: scope removeFromZone to church, fix list pagination params |
+| `38fa92c` | zones: fix leader guard param name and update payload/type mismatch |
+| `1b00544` | families: guard update/delete against missing rows, add create flow |
+| `3b6fa2a` | offerings: throw NotFoundException on missing update/delete targets |
+| `646845d` | data-quality: use findFirst for single-row lookups, handle quoted CSV |
+| `ca8ebb0` | communications: surface unsupported email channel, fix mail DTO fields |
+| `ea9abf1` | family-lifecycle: use real approver id, validate milestone input |
+| `57149b4` | events: make date-range filter inclusive, use 404s, fix roster contract |
+| `82ef52a` | file-upload: require manage:files on diagnostics endpoint |
+| `68963a2` | web: remove dead action functions calling nonexistent endpoints |
+| `fc4afc9` | web: disable support form instead of faking a successful submission |
+| `6de5efa` | chore: remove leftover debug console.logs and dead commented-out code |
+| `7ccab3e` | attendance: align risk-profile isActive with boolean, expose department groupBy |
+
+**Bugs the coordinator review caught and fixed (not present in the worker
+reports above):**
+- Visitors' `deleteVisitor` fix added a good ownership pre-check but then
+  dropped the `churchId`/`isNull(deletedAt)` filter from the actual delete's
+  WHERE clause, leaving the mutation itself unscoped. Restored the filter.
+- Offerings/giving-goals delete fixes checked `result.rowCount === 0`, but
+  this repo's db client is `drizzle-orm/postgres-js`, whose result exposes
+  `.count`, not the `pg`-style `.rowCount` — the check was silently always
+  false. Fixed to `.count`.
+- Zone's `updateZone` action fixed one call site to send `leaderId` but left
+  the function's own parameter type declared as `leader`, and the events
+  roster page had two leftover type errors (`unknown` values from
+  `countsByChurch`, and a `row.churchName` reference on an object that
+  doesn't have that field). Caught by a full-repo `type-check` run after all
+  workers landed — none of the 13 workers ran monorepo-wide checks
+  themselves by design (shared checkout, no worktrees, avoiding concurrent
+  build/typecheck contention on the same tsbuildinfo).
+- The OAuth token-leak fix (critical, security) moved tokens to HttpOnly
+  cookies on the backend but didn't update the frontend `/auth/callback`
+  page (out of that worker's owned-file scope) to read them from cookies
+  instead of the URL — would have broken login entirely. Coordinator
+  finished this end-to-end, including deleting the relay cookies once read.
+
+## Deferred (explicitly out of scope, not bugs to re-audit)
+
+- **`apps/api/src/payment/payment.service.ts`** — empty stub, no ZenoPay
+  implementation. Excluded from this wave per operator instruction; not
+  touched.
+- **`apps/api/src/file-upload/file-upload.service.ts`**
+  `getUserDocuments`/`updateDocument`/`markDocumentAsDeleted` — stubs with
+  no backing table. Fixing properly needs a new documents-tracking table
+  and migration; only the permission gap on `/diagnostics` was fixed
+  (`82ef52a`).
+- **`apps/web/app/[churchId]/dashboard/analytics/page.tsx`** — left as a
+  "Coming Soon" placeholder; a real version needs backend analytics
+  endpoints that don't exist yet.
+- **Members table has no `email` column** — root cause of the
+  `communications` email-channel gap above; only the failure-reporting was
+  improved, not the underlying capability.
+- **Member form's `joinedDate`/`baptismDate`/`anointedDate`** — the form
+  validates these but the member DTO only supports `dateOfBirth` and
+  `dateOfSalvation`; not wired up, would need new DTO fields.
+
+## Blocked — needs a human decision
+
+- **`apps/web/actions/dashboard.ts` `getDashboardStats`** calls
+  `/dashboard/stats`, which doesn't exist on the backend, but IS used by
+  `app/[churchId]/dashboard/home/page.tsx` for totalMembers/activeZones/
+  pendingVisitors/recentActivities. Needs a decision: build the aggregate
+  endpoint, or refactor the page to compose `/members`, `/zones`,
+  `/visitors/status/pending`, etc. client-side (no obvious source for
+  recentActivities either way).
+- **Migration `packages/db/migrations/0007_sloppy_maggott.sql`** (from
+  commit `7ccab3e`) was generated by `drizzle-kit` for the
+  `attendance_risk_profiles.is_active` integer→boolean fix, but its
+  `ALTER COLUMN ... SET DATA TYPE boolean` has no `USING` clause — Postgres
+  has no implicit or `::boolean` cast from `integer`, so `pnpm db:migrate`
+  will fail as-is against any existing rows. Per `AGENTS.md`, hand-editing
+  or running migration SQL needs explicit sign-off before proceeding; the
+  fix is adding `USING (is_active <> 0)` to that ALTER statement. **Not yet
+  applied to any database.**
+
 ## Known findings not yet planned
 
-None outstanding from this repo's review history as of this commit.
+None outstanding from this repo's review history as of this commit, beyond
+the deferred/blocked items listed above.
