@@ -532,9 +532,9 @@ export class AttendanceService {
     })
   }
 
-  async upsertRiskProfile(churchId: string, input: { versionLabel: string; missedWeight: number; recencyWeight: number; lowThreshold: number; mediumThreshold: number; highThreshold: number; isActive: number }) {
-    if (input.isActive === 1) {
-      await db.update(attendanceRiskProfiles).set({ isActive: 0, updatedAt: new Date() }).where(eq(attendanceRiskProfiles.churchId, churchId))
+  async upsertRiskProfile(churchId: string, input: { versionLabel: string; missedWeight: number; recencyWeight: number; lowThreshold: number; mediumThreshold: number; highThreshold: number; isActive: boolean }) {
+    if (input.isActive) {
+      await db.update(attendanceRiskProfiles).set({ isActive: false, updatedAt: new Date() }).where(eq(attendanceRiskProfiles.churchId, churchId))
     }
     const [row] = await db.insert(attendanceRiskProfiles).values({ churchId, ...input }).returning()
     return row
@@ -554,7 +554,7 @@ export class AttendanceService {
       const [setting] = await db.query.engagementRiskSettings.findMany({ where: eq(engagementRiskSettings.churchId, church.churchId) })
       const threshold = setting?.isActive ? setting.consecutiveMissedThreshold : defaultThreshold
       const [activeProfile] = await db.query.attendanceRiskProfiles.findMany({
-        where: and(eq(attendanceRiskProfiles.churchId, church.churchId), eq(attendanceRiskProfiles.isActive, 1)),
+        where: and(eq(attendanceRiskProfiles.churchId, church.churchId), eq(attendanceRiskProfiles.isActive, true)),
         orderBy: [desc(attendanceRiskProfiles.createdAt)],
       })
 

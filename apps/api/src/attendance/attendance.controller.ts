@@ -117,7 +117,7 @@ export class AttendanceController {
     @Req() request: Request,
     @Query('from') from: string,
     @Query('to') to: string,
-    @Query('groupBy') groupBy: 'branch' | 'zone' | 'gender' | 'age_band',
+    @Query('groupBy') groupBy: 'branch' | 'zone' | 'department' | 'gender' | 'age_band',
   ) {
     if (!from || !to || !groupBy) {
       throw new BadRequestException('from, to and groupBy are required')
@@ -172,7 +172,7 @@ export class AttendanceController {
     @Req() request: Request,
     @Query('from') from: string,
     @Query('to') to: string,
-    @Query('groupBy') groupBy: 'branch' | 'zone' | 'gender' | 'age_band',
+    @Query('groupBy') groupBy: 'branch' | 'zone' | 'department' | 'gender' | 'age_band',
   ) {
     if (!from || !to || !groupBy) throw new BadRequestException('from, to and groupBy are required')
     return this.attendanceService.getPeriodComparison(request['churchId'] as string, { from, to, groupBy })
@@ -195,7 +195,7 @@ export class AttendanceController {
   @RequirePermission('manage:risk-settings')
   async createRiskProfile(
     @Req() request: Request,
-    @Body() body: { versionLabel: string; missedWeight: number; recencyWeight: number; lowThreshold: number; mediumThreshold: number; highThreshold: number; isActive: number },
+    @Body() body: { versionLabel: string; missedWeight: number; recencyWeight: number; lowThreshold: number; mediumThreshold: number; highThreshold: number; isActive: boolean },
   ) {
     return this.attendanceService.upsertRiskProfile(request['churchId'] as string, body)
   }

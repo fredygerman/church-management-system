@@ -74,6 +74,6 @@ export async function getOpenSessionHealth(churchId: string) {
   return apiGet('/attendance/sessions/open/health', { churchId })
 }
 
-export async function createRiskProfile(input: { churchId: string; versionLabel: string; missedWeight: number; recencyWeight: number; lowThreshold: number; mediumThreshold: number; highThreshold: number; isActive: number }) {
+export async function createRiskProfile(input: { churchId: string; versionLabel: string; missedWeight: number; recencyWeight: number; lowThreshold: number; mediumThreshold: number; highThreshold: number; isActive: boolean }) {
   return apiPost('/attendance/risk-profiles', input)
 }

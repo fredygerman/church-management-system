@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { date, index, integer, pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
+import { boolean, date, index, integer, pgEnum, pgTable, text, timestamp, uuid, varchar } from 'drizzle-orm/pg-core'
 import { churches } from './churches'
 import { serviceSessions } from './attendance'
 
@@ -40,7 +40,7 @@ export const attendanceRiskProfiles = pgTable('attendance_risk_profiles', {
   lowThreshold: integer('low_threshold').default(30).notNull(),
   mediumThreshold: integer('medium_threshold').default(60).notNull(),
   highThreshold: integer('high_threshold').default(85).notNull(),
-  isActive: integer('is_active').default(1).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
