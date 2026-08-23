@@ -95,8 +95,3 @@ export function getColumns(churchId: string): ColumnDef<typeof members.$inferSel
     },
   ]
 }
-
-// function handleDelete(user: User) {
-//   // Implement delete functionality here
-//   console.log("Delete", user)
-// }

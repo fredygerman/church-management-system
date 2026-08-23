@@ -9,8 +9,6 @@ import { Button } from "@/components/ui/button"
 export default function SignOutPage() {
   const handleLogout = async (callbackUrl: string) => {
     try {
-      console.log("Signing out on the client")
-
       await signOut({ callbackUrl })
       toast.info("You have been signed out")
     } catch (error) {
