@@ -44,10 +44,10 @@ export class ZoneContextGuard implements CanActivate {
     }
 
     // Get zoneId from:
-    // 1. Request params (/zones/:zoneId/members)
+    // 1. Request params (/zones/:id/members)
     // 2. Query string (?zoneId=xxx)
     // 3. Request body (POST/PUT)
-    const zoneIdFromParams = request.params.zoneId
+    const zoneIdFromParams = request.params.id
     const zoneIdFromQuery = request.query.zoneId
     const zoneIdFromBody = (request.body as any)?.zoneId
 

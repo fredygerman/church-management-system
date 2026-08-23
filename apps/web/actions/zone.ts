@@ -45,11 +45,11 @@ export async function getZoneMembers(
       per_page: (queryParams?.per_page ?? 10).toString(),
       sort: queryParams?.sort ?? 'firstName.asc',
     })
-    const pageCount = result?.meta?.total_pages || 1
-    
-    return { 
-      members: result || [], 
-      pageCount 
+    const pageCount = Array.isArray(result) ? 1 : 0
+
+    return {
+      members: Array.isArray(result) ? result : [],
+      pageCount
     }
   } catch (error) {
     console.error('Error fetching zone members:', error)
@@ -94,7 +94,7 @@ export async function createZone(data: {
 // Function to update a zone
 export async function updateZone(zoneId: string, data: {
   name?: string
-  leader?: string
+  leaderId?: string
   description?: string
 }, churchId: string): Promise<any> {
   try {
@@ -180,7 +180,7 @@ export async function unassignMemberFromZone(
 
     // If assigning a new leader, update zone
     if (newLeaderId && zone.leaderId === memberId) {
-      await updateZone(zoneId, { leader: newLeaderId }, churchId)
+      await updateZone(zoneId, { leaderId: newLeaderId }, churchId)
     }
 
     // Remove member from zone
