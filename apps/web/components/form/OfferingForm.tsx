@@ -176,7 +176,7 @@ export function OfferingForm({
                 <FormItem>
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
+                    <Input type="number" step="0.01" min="0.01" placeholder="0.00" {...field} />
                   </FormControl>
                   <FormDescription>Enter the amount as a decimal value</FormDescription>
                   <FormMessage />

@@ -97,8 +97,8 @@ export class OfferingsService {
     return updated
   }
 
-  async deleteCategory(churchId: string, categoryId: string): Promise<void> {
-    await db
+  async deleteCategory(churchId: string, categoryId: string) {
+    return db
       .update(offeringCategories)
       .set({ deletedAt: today() as any })
       .where(and(
@@ -213,8 +213,8 @@ export class OfferingsService {
     return updated
   }
 
-  async deleteOffering(churchId: string, offeringId: string): Promise<void> {
-    await db
+  async deleteOffering(churchId: string, offeringId: string) {
+    return db
       .update(offerings)
       .set({ deletedAt: today() as any })
       .where(and(eq(offerings.id, offeringId), eq(offerings.churchId, churchId), isNull(offerings.deletedAt)))

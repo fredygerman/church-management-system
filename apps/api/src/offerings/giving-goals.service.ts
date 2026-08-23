@@ -69,8 +69,8 @@ export class GivingGoalsService {
     return updated
   }
 
-  async deleteGoal(churchId: string, goalId: string): Promise<void> {
-    await db
+  async deleteGoal(churchId: string, goalId: string) {
+    return db
       .update(givingGoals)
       .set({ deletedAt: today() as any })
       .where(and(eq(givingGoals.id, goalId), eq(givingGoals.churchId, churchId), isNull(givingGoals.deletedAt)))

@@ -8,6 +8,7 @@ import {
   Delete,
   Query,
   BadRequestException,
+  NotFoundException,
   UseGuards,
   Req,
 } from '@nestjs/common'
@@ -67,7 +68,11 @@ export class OfferingCategoriesController {
     @Param('id') id: string,
     @Body() input: UpdateOfferingCategoryInput,
   ) {
-    return this.offeringsService.updateCategory(request['churchId'] as string, id, input)
+    const updated = await this.offeringsService.updateCategory(request['churchId'] as string, id, input)
+    if (!updated) {
+      throw new NotFoundException(`Offering category with ID ${id} not found`)
+    }
+    return updated
   }
 
   /**
@@ -76,7 +81,10 @@ export class OfferingCategoriesController {
   @Delete(':id')
   @RequirePermission('manage:offerings')
   async delete(@Req() request: Request, @Param('id') id: string) {
-    await this.offeringsService.deleteCategory(request['churchId'] as string, id)
+    const result = await this.offeringsService.deleteCategory(request['churchId'] as string, id)
+    if (result.count === 0) {
+      throw new NotFoundException(`Offering category with ID ${id} not found`)
+    }
     return { message: 'Offering category deleted successfully' }
   }
 }
@@ -213,7 +221,11 @@ export class OfferingsController {
     if (input?.currency != null && !/^[A-Z]{3}$/.test(input.currency)) {
       throw new BadRequestException('currency must be a 3-character uppercase code (e.g., USD)')
     }
-    return this.offeringsService.updateOffering(request['churchId'] as string, id, input)
+    const updated = await this.offeringsService.updateOffering(request['churchId'] as string, id, input)
+    if (!updated) {
+      throw new NotFoundException(`Offering with ID ${id} not found`)
+    }
+    return updated
   }
 
   /**
@@ -222,7 +234,10 @@ export class OfferingsController {
   @Delete(':id')
   @RequirePermission('manage:offerings')
   async delete(@Req() request: Request, @Param('id') id: string) {
-    await this.offeringsService.deleteOffering(request['churchId'] as string, id)
+    const result = await this.offeringsService.deleteOffering(request['churchId'] as string, id)
+    if (result.count === 0) {
+      throw new NotFoundException(`Offering with ID ${id} not found`)
+    }
     return { message: 'Offering deleted successfully' }
   }
 }

@@ -7,6 +7,7 @@ import {
   Put,
   Delete,
   BadRequestException,
+  NotFoundException,
   UseGuards,
   Req,
 } from '@nestjs/common'
@@ -109,7 +110,11 @@ export class GivingGoalsController {
   @RequirePermission('manage:giving-goals')
   async update(@Req() request: Request, @Param('id') id: string, @Body() input: UpdateGivingGoalInput) {
     validateGoalInput(input, true)
-    return this.givingGoalsService.updateGoal(request['churchId'] as string, id, input)
+    const updated = await this.givingGoalsService.updateGoal(request['churchId'] as string, id, input)
+    if (!updated) {
+      throw new NotFoundException(`Giving goal with ID ${id} not found`)
+    }
+    return updated
   }
 
   /**
@@ -118,7 +123,10 @@ export class GivingGoalsController {
   @Delete(':id')
   @RequirePermission('manage:giving-goals')
   async delete(@Req() request: Request, @Param('id') id: string) {
-    await this.givingGoalsService.deleteGoal(request['churchId'] as string, id)
+    const result = await this.givingGoalsService.deleteGoal(request['churchId'] as string, id)
+    if (result.count === 0) {
+      throw new NotFoundException(`Giving goal with ID ${id} not found`)
+    }
     return { message: 'Giving goal deleted successfully' }
   }
 
