@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { toast } from "sonner"
+import { getOAuthTokensFromCookies } from "@/actions/auth"
 
 export default function OAuthCallbackPage() {
   const router = useRouter()
@@ -14,8 +15,6 @@ export default function OAuthCallbackPage() {
   useEffect(() => {
     const processCallback = async () => {
       try {
-        const accessToken = searchParams.get("accessToken")
-        const refreshToken = searchParams.get("refreshToken")
         const errorParam = searchParams.get("error")
 
         // Handle OAuth errors
@@ -23,23 +22,29 @@ export default function OAuthCallbackPage() {
           setError(errorParam)
           toast.error(`Authentication failed: ${errorParam}`)
           setIsProcessing(false)
-          
+
           setTimeout(() => {
             router.push("/auth/signin")
           }, 2000)
           return
         }
 
-        if (!accessToken || !refreshToken) {
+        // Tokens are no longer passed via URL (leaked into browser history/logs) —
+        // the backend sets them as HttpOnly cookies and this reads them server-side.
+        const tokenResult = await getOAuthTokensFromCookies()
+
+        if (!tokenResult.success || !tokenResult.tokens) {
           setError("No tokens received from authentication server")
           toast.error("Authentication failed: Missing tokens")
           setIsProcessing(false)
-          
+
           setTimeout(() => {
             router.push("/auth/signin")
           }, 2000)
           return
         }
+
+        const { accessToken, refreshToken } = tokenResult.tokens
 
         // Sign in with NextAuth using the tokens from the backend
         // This creates a JWT session with the tokens

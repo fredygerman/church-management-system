@@ -112,3 +112,44 @@ export async function getAccessToken(): Promise<string | null> {
     return null
   }
 }
+
+/**
+ * Read OAuth tokens from secure cookies set by backend
+ * Used by /auth/callback page to retrieve tokens for NextAuth sign-in
+ * The caller (callback page) is responsible for calling signIn() with these tokens
+ */
+export async function getOAuthTokensFromCookies() {
+  try {
+    const cookieStore = await cookies()
+
+    // Read tokens from temporary OAuth cookies set by backend
+    const accessToken = cookieStore.get("__tokens_access")?.value
+    const refreshToken = cookieStore.get("__tokens_refresh")?.value
+
+    if (!accessToken || !refreshToken) {
+      return {
+        success: false,
+        error: "No tokens found in secure cookies",
+      }
+    }
+
+    // Single-use handoff: clear the relay cookies now that they've been read.
+    // The real session lives in NextAuth's own cookie after signIn() below.
+    cookieStore.delete("__tokens_access")
+    cookieStore.delete("__tokens_refresh")
+
+    return {
+      success: true,
+      tokens: {
+        accessToken,
+        refreshToken,
+      },
+    }
+  } catch (error) {
+    console.error("Error reading OAuth tokens from cookies:", error)
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to read tokens",
+    }
+  }
+}

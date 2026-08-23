@@ -314,20 +314,35 @@ export class AuthController {
       const membership = await this.authService.getPreferredMembership(user.id, user.churchId);
       const tokens = this.authService.generateTokens(user, membership);
 
-      // Redirect to frontend with tokens in query params
-      // Frontend will extract these and create a session
+      // Set tokens as secure, HttpOnly cookies instead of query params to prevent token leakage
+      const isProduction = process.env.NODE_ENV === 'production';
+      res.cookie('__tokens_access', tokens.accessToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 1000, // 1 hour
+        path: '/',
+      });
+      res.cookie('__tokens_refresh', tokens.refreshToken, {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        path: '/',
+      });
+
+      // Redirect to frontend callback page without tokens in URL
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       const redirectUrl = new URL(`${frontendUrl}/auth/callback`);
-      redirectUrl.searchParams.set('accessToken', tokens.accessToken);
-      redirectUrl.searchParams.set('refreshToken', tokens.refreshToken);
-      
+      redirectUrl.searchParams.set('success', 'true');
+
       // Include the original callback URL if provided
       if (callbackUrl) {
         redirectUrl.searchParams.set('callbackUrl', callbackUrl);
       }
 
       this.logger.log(`Google OAuth successful for user: ${user.id}`);
-      
+
       return res.redirect(redirectUrl.toString());
     } catch (error) {
       this.logger.error('Google OAuth callback error:', error);
