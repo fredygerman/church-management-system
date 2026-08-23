@@ -13,6 +13,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx,mdx}\" --cache"
   },
   "dependencies": {
+    "@church/config": "workspace:*",
     "@church/db": "workspace:*",
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/theme-one-dark": "^6.1.2",
