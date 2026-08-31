@@ -102,7 +102,7 @@ Email/password users can register through the dashboard or `POST /auth/register`
 DEMO_SEED_CONFIRM=true DEMO_ADMIN_EMAIL=admin@example.com DEMO_ADMIN_PASSWORD='use-a-unique-12-character-password' pnpm db:seed:demo
 ```
 
-The demo seed adds sample members, services, attendance, offerings, an event, a visitor, and a prayer request without deleting existing data.
+The duplicate-safe demo seed adds 24 realistic members, populated zones and departments with leaders, families, attendance history, categorized giving and a public goal, events, visitors, a communication campaign, and prayer requests without deleting existing data.
 
 ### Run Development
 
