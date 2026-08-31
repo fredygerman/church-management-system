@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect } from "react"
+import { FormEvent, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
+import { signIn } from "next-auth/react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -9,6 +10,8 @@ import { Button } from "@/components/ui/button"
 export default function SignInPage() {
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl")
+  const [isRegistering, setIsRegistering] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   useEffect(() => {
     if (callbackUrl) {
@@ -38,6 +41,41 @@ export default function SignInPage() {
     }
   }
 
+  const handleCredentials = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    const form = new FormData(event.currentTarget)
+    const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
+    if (!apiBase) return toast.error("Sign-in is not configured")
+
+    setIsSubmitting(true)
+    try {
+      const response = await fetch(`${apiBase}/auth/${isRegistering ? "register" : "login"}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: form.get("name"),
+          email: form.get("email"),
+          password: form.get("password"),
+        }),
+      })
+      const body = await response.json()
+      const result = body.data ?? body
+      if (!response.ok || !result.accessToken) throw new Error(body.message || "Sign-in failed")
+
+      const signedIn = await signIn("credentials", {
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        redirect: false,
+      })
+      if (!signedIn?.ok) throw new Error("Could not create a session")
+      window.location.assign(callbackUrl || (result.user.activeChurchId || result.user.churchId ? `/${result.user.activeChurchId || result.user.churchId}/dashboard` : "/setup"))
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Sign-in failed")
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background">
       <div className="rounded-lg bg-card p-8 shadow-md">
@@ -46,7 +84,7 @@ export default function SignInPage() {
             To access {callbackUrl}, you need to be signed in.
           </p>
         )}
-        <div className="mb-8 flex justify-center">
+        <div className="mb-6 flex justify-center">
           <svg
             width="50"
             height="50"
@@ -72,6 +110,18 @@ export default function SignInPage() {
             />
           </svg>
         </div>
+        <form onSubmit={handleCredentials} className="space-y-3">
+          {isRegistering && <input className="w-full rounded border p-2" name="name" placeholder="Full name" required />}
+          <input className="w-full rounded border p-2" name="email" type="email" placeholder="Email" required />
+          <input className="w-full rounded border p-2" name="password" type="password" minLength={12} placeholder="Password" required />
+          <Button className="w-full" disabled={isSubmitting} type="submit">
+            {isSubmitting ? "Please wait…" : isRegistering ? "Create account" : "Sign in with email"}
+          </Button>
+        </form>
+        <button className="mt-3 w-full text-sm underline" onClick={() => setIsRegistering((value) => !value)} type="button">
+          {isRegistering ? "Already have an account? Sign in" : "Need an account? Register"}
+        </button>
+        <div className="my-4 border-t" />
         <Button
           onClick={handleGoogleSignIn}
           className="w-full"

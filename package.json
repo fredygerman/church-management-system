@@ -20,6 +20,7 @@
     "db:push": "pnpm --filter @church/db db:push",
     "db:migrate": "pnpm --filter @church/db db:migrate",
     "db:seed": "pnpm --filter @church/db db:seed",
+    "db:seed:demo": "pnpm --filter @church/db db:seed:demo",
     "db:studio": "pnpm --filter @church/db db:studio"
   },
   "devDependencies": {

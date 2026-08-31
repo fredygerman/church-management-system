@@ -1,11 +1,14 @@
 import {
   Injectable,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   Logger,
   NotFoundException,
   OnModuleInit,
+  UnauthorizedException,
 } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from '../database/database.service';
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
@@ -25,7 +28,7 @@ export interface AuthTokens {
 }
 
 export interface AuthResponse extends AuthTokens {
-  user: Omit<User, 'password'>;
+  user: Omit<User, 'passwordHash'>;
 }
 
 export interface ActiveMembershipContext {
@@ -50,6 +53,43 @@ export class AuthService implements OnModuleInit {
 
   async onModuleInit() {
     this.db = await this.databaseService.getDatabase();
+  }
+
+  private withoutPassword(user: User): Omit<User, 'passwordHash'> {
+    const { passwordHash: _passwordHash, ...safeUser } = user;
+    return safeUser;
+  }
+
+  async registerWithPassword(name: string, email: string, password: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!name.trim() || !normalizedEmail || password.length < 12) {
+      throw new BadRequestException('Name, email, and a password of at least 12 characters are required');
+    }
+
+    const [existingUser] = await this.db.select({ id: users.id }).from(users).where(eq(users.email, normalizedEmail)).limit(1);
+    if (existingUser) throw new ConflictException('Email already registered');
+
+    const [user] = await this.db.insert(users).values({
+      name: name.trim(),
+      email: normalizedEmail,
+      passwordHash: await bcrypt.hash(password, 12),
+      role: 'member',
+    }).returning();
+
+    return this.authResponse(user);
+  }
+
+  async loginWithPassword(email: string, password: string) {
+    const [user] = await this.db.select().from(users).where(and(eq(users.email, email.trim().toLowerCase()), isNull(users.deletedAt))).limit(1);
+    if (!user?.passwordHash || !user.isActive || !(await bcrypt.compare(password, user.passwordHash))) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+    return this.authResponse(user);
+  }
+
+  private async authResponse(user: User): Promise<AuthResponse> {
+    const membership = await this.getPreferredMembership(user.id, user.churchId);
+    return { ...this.generateTokens(user, membership), user: this.withoutPassword(user) };
   }
 
   /**
@@ -201,7 +241,7 @@ export class AuthService implements OnModuleInit {
   /**
    * Get user profile
    */
-  async getProfile(userId: string): Promise<Omit<User, 'password'>> {
+  async getProfile(userId: string): Promise<Omit<User, 'passwordHash'>> {
     const [user] = await this.db
       .select()
       .from(users)
@@ -212,13 +252,13 @@ export class AuthService implements OnModuleInit {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    return this.withoutPassword(user);
   }
 
   /**
    * Refresh access token
    */
-  async refreshToken(user: Omit<User, 'password'>): Promise<AuthTokens> {
+  async refreshToken(user: Omit<User, 'passwordHash'>): Promise<AuthTokens> {
     const membership = await this.getPreferredMembership(user.id, user.churchId);
     const tokens = this.generateTokens(user, membership);
     this.logger.log(`Token refreshed for user: ${user.id}`);
@@ -233,7 +273,7 @@ export class AuthService implements OnModuleInit {
     email: string,
     name: string,
     picture?: string,
-  ): Promise<{ user: Omit<User, 'password'> | null; isNewUser: boolean }> {
+  ): Promise<{ user: Omit<User, 'passwordHash'> | null; isNewUser: boolean }> {
     // Check if user exists
     const [existingUser] = await this.db
       .select()
@@ -249,7 +289,7 @@ export class AuthService implements OnModuleInit {
           .set({ picture })
           .where(eq(users.id, existingUser.id));
       }
-      return { user: existingUser, isNewUser: false };
+      return { user: this.withoutPassword(existingUser), isNewUser: false };
     }
 
     // Create new user from OAuth info
@@ -270,7 +310,7 @@ export class AuthService implements OnModuleInit {
     }
 
     this.logger.log(`New OAuth user created: ${createdUser.id}`);
-    return { user: createdUser, isNewUser: true };
+    return { user: this.withoutPassword(createdUser), isNewUser: true };
   }
 
   /**

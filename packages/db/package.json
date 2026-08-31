@@ -23,9 +23,11 @@
     "db:push": "dotenv drizzle-kit push",
     "db:migrate": "dotenv tsx migrate.ts",
     "db:seed": "dotenv tsx seed.ts",
+    "db:seed:demo": "dotenv tsx demo.ts",
     "db:studio": "dotenv drizzle-kit studio"
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "drizzle-orm": "^0.44.7",
     "dotenv": "^17.2.3",
     "postgres": "^3.4.5"

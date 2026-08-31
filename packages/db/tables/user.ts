@@ -30,6 +30,7 @@ export const users = pgTable(
     email: varchar("email", { length: 255 }).notNull().unique(),
     phone: varchar("phone", { length: 20 }).unique(),
     picture: varchar("picture", { length: 255 }),
+    passwordHash: varchar("password_hash", { length: 255 }),
     role: roleEnum("role").default("member"),
     churchId: uuid("church_id"),
     assignedZoneId: uuid("assigned_zone_id"),

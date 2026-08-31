@@ -24,6 +24,20 @@ export class AuthController {
 
   constructor(private readonly authService: AuthService) {}
 
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  async register(@Body() body: { name?: string; email?: string; password?: string }) {
+    return this.authService.registerWithPassword(body.name ?? '', body.email ?? '', body.password ?? '');
+  }
+
+  @Public()
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() body: { email?: string; password?: string }) {
+    return this.authService.loginWithPassword(body.email ?? '', body.password ?? '');
+  }
+
   /**
    * Refresh access token
    * POST /auth/refresh
