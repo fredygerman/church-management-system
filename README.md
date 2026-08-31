@@ -94,6 +94,16 @@ pnpm db:push
 pnpm db:seed
 ```
 
+### Demo data and email/password access
+
+Email/password users can register through the dashboard or `POST /auth/register`; passwords must be at least 12 characters. To create an idempotent, non-destructive demo church and administrator, run:
+
+```bash
+DEMO_SEED_CONFIRM=true DEMO_ADMIN_EMAIL=admin@example.com DEMO_ADMIN_PASSWORD='use-a-unique-12-character-password' pnpm db:seed:demo
+```
+
+The demo seed adds sample members, services, attendance, offerings, an event, a visitor, and a prayer request without deleting existing data.
+
 ### Run Development
 
 ```bash
