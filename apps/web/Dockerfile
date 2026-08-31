@@ -11,7 +11,7 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
 COPY apps/web ./apps/web
-RUN pnpm --filter @church/config build && pnpm --filter web build
+RUN pnpm --filter @church/db build && pnpm --filter @church/config build && pnpm --filter web build
 
 FROM base AS production
 ENV NODE_ENV=production
