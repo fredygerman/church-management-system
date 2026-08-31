@@ -112,6 +112,15 @@ Default local URLs:
 - Web: [http://localhost:3000](http://localhost:3000)
 - API: [http://localhost:3001](http://localhost:3001)
 
+### Public hostnames
+
+| Environment | Landing site | Dashboard | API |
+| --- | --- | --- | --- |
+| Production | `mitoyabarakachurch.org` / `www.mitoyabarakachurch.org` (Vercel) | `app.mitoyabarakachurch.org` | `api.mitoyabarakachurch.org` |
+| Development | — | `dev-app.mitoyabarakachurch.org` | `dev-api.mitoyabarakachurch.org` |
+
+The dashboard and API hosts are reserved deployment targets, not active DNS records. Set the web `NEXTAUTH_URL` to its dashboard URL; set `API_BASE_URL` and `NEXT_PUBLIC_API_BASE_URL` to the API URL; set the API `APP_URL` and `API_BASE_URL` to the API URL, `FRONTEND_URL` and `CORS_ORIGINS` to the dashboard URL. Google OAuth must allow `${API_BASE_URL}/auth/google/callback`.
+
 ## Scripts
 
 - `pnpm dev`: Run web + api in dev mode through Turbo
