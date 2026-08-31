@@ -10,6 +10,12 @@ COPY packages ./packages
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
+ARG API_BASE_URL
+ARG NEXT_PUBLIC_API_BASE_URL
+ARG NEXTAUTH_URL
+ARG NEXTAUTH_SECRET
+ARG JWT_SECRET
+ENV API_BASE_URL=$API_BASE_URL NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL NEXTAUTH_URL=$NEXTAUTH_URL NEXTAUTH_SECRET=$NEXTAUTH_SECRET JWT_SECRET=$JWT_SECRET
 COPY apps/web ./apps/web
 RUN pnpm --filter @church/db build && pnpm --filter @church/config build && pnpm --filter web build
 
