@@ -1,5 +1,5 @@
 # Use the official Node.js image
-FROM node:18-slim AS base
+FROM node:22-slim AS base
 
 # Install curl for health checks with better error handling
 RUN apt-get clean && \
