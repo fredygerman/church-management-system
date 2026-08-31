@@ -48,7 +48,7 @@ COPY apps/api ./apps/api
 
 # Build the NestJS service from workspace root
 WORKDIR /app
-RUN pnpm --filter @church/config build && pnpm --filter api build
+RUN pnpm --filter @church/db build && pnpm --filter @church/config build && pnpm --filter api build
 
 # -------------------------------
 # 3. Development stage
