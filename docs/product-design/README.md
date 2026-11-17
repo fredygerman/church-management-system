@@ -70,6 +70,13 @@ Store accounts, store agreements and publishing are explicitly deferred for now.
 
 ## Visual concept boards
 
+Read the companion specifications before treating these boards as design direction:
+
+- [Proposed visual language](DESIGN.md)
+- [Visual audit and inconsistencies](visual-audit.md)
+- [Screen specification](screen-specification.md)
+- [Implementation acceptance checklist](implementation-checklist.md)
+
 These AI-generated boards illustrate direction, not final artwork or an authoritative UI specification. The church logo, people, buildings, locations, dates, statistics, prices and text are fictional; some labels and schedules are inconsistent. Follow the navigation and branch rules above when implementing. Verify church identity, translations and all real content with the church.
 
 - [Member: home, branch selector, profile and events](images/member.png)
