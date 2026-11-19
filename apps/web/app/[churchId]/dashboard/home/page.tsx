@@ -8,18 +8,23 @@ interface DashboardHomeProps {
 
 export default async function DashboardHome({ params }: DashboardHomeProps) {
   const { churchId } = await params
-  let stats = {
-    totalMembers: 0,
-    activeZones: 0,
-    pendingVisitors: 0,
-    recentActivities: [] as any[],
+  const statsResult = await getDashboardStats(churchId)
+
+  if (statsResult.status === 'unavailable') {
+    return (
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        <div className="rounded-lg border bg-card p-6">
+          <h2 className="text-lg font-semibold">Dashboard unavailable</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Dashboard statistics are temporarily unavailable. Please try again
+            later.
+          </p>
+        </div>
+      </div>
+    )
   }
 
-  try {
-    stats = await getDashboardStats(churchId)
-  } catch (error) {
-    console.error('Failed to fetch dashboard stats:', error)
-  }
+  const stats = statsResult.data
 
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
