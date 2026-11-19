@@ -14,7 +14,7 @@ Planning inventory only; implementation is not authorized. Every task is **Not s
 | M-01 | Mobile | [mobile.md](specs/mobile.md) | Mobile stack/toolchain and API capability inventory; member and staff journeys | Not started | DEC-03; no app creation before approval |
 | M-02 | Mobile | [mobile.md](specs/mobile.md) | Mobile library/search/reader and eligible downloads | Not started | M-01, W-05 contracts; no commerce |
 | M-03 | Mobile | [mobile.md](specs/mobile.md) | Mobile staff space and AI entry/conversation capability gate | Not started | M-01; AI blocked on DEC-08 and staff contracts |
-| Q-01 | Integration | [RUN-POLICY.md](RUN-POLICY.md) | Serialized schema/contracts/generation, CI baseline, integration and one bounded correctness/complexity review | Not started | Each task's actual contract/migration edges; no blanket W0 gate |
+| Q-01 | Integration | [RUN-POLICY.md](RUN-POLICY.md) | Serialized schema/contracts/generation, integration and one bounded correctness/complexity review. No CI baseline: Coolify auto-deploys on push, per Fredy | Not started | Each task's actual contract/migration edges; no blanket W0 gate |
 | Q-02 | Human verification | [human-verification.md](human-verification.md) | Perform named product/device/accessibility checks on accepted build | Not started | Code complete, DEC-10 |
 
 Detailed file ownership, exclusions and proposed paths are in the linked specs and [allocation manifest](allocation-manifest.md). **Not started** describes implementation; unresolved decision-gated slices may become **Blocked** only when dispatched. Cross-link design, web/API, mobile and shared foundation waves here as the global ledger.
