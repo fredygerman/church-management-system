@@ -12,6 +12,7 @@ export interface JwtRefreshPayload {
   email?: string;
   phone?: string;
   type: 'refresh';
+  tv?: number;
   iat?: number;
   exp?: number;
 }
@@ -55,6 +56,11 @@ export class JwtRefreshStrategy
     // Check if user is soft-deleted
     if (user.deletedAt) {
       throw new UnauthorizedException('User account is deleted');
+    }
+
+    // Reject refresh tokens issued before the user logged out.
+    if ((payload.tv ?? 0) !== (user.tokenVersion ?? 0)) {
+      throw new UnauthorizedException('Token has been revoked');
     }
 
     return user;

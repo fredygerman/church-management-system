@@ -12,7 +12,11 @@ export default function SignOutPage() {
     try {
       // Revoke the user's tokens on the API while the session still exists.
       // A failure here must not block sign-out.
-      await apiPost("/auth/logout").catch(() => undefined)
+      // Cap the wait so a stalled API cannot hold up sign-out.
+      await Promise.race([
+        apiPost("/auth/logout").catch(() => undefined),
+        new Promise((resolve) => setTimeout(resolve, 3000)),
+      ])
       await signOut({ callbackUrl })
       toast.info("You have been signed out")
     } catch (error) {
