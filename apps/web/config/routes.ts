@@ -40,6 +40,11 @@ export const protectedRoutes: Record<string, PermissionAction> = {
   "/[churchId]/dashboard/data-quality/duplicates": "view:data-quality",
   "/[churchId]/dashboard/attendance/v2": "manage:attendance-analytics",
   "/[churchId]/dashboard/family-lifecycle": "view:lifecycle-dashboard",
+  "/[churchId]/dashboard/analytics": "manage:attendance-analytics",
+  "/[churchId]/dashboard/offerings": "manage:offerings",
+  "/[churchId]/dashboard/events": "view:events",
+  "/[churchId]/dashboard/events/add": "manage:events",
+  "/[churchId]/dashboard/events/[id]/edit": "manage:events",
 }
 
 /**
@@ -66,18 +71,20 @@ export const authRoutes = [
  * Check if a user role is allowed to access a given route
  */
 export function isRouteAllowed(pathname: string, userRole: string): boolean {
-  for (const [route, requiredPermission] of Object.entries(protectedRoutes)) {
-    // Convert route pattern to regex (e.g., /[churchId]/dashboard -> /[^/]+/dashboard)
-    const routePattern = new RegExp(
-      "^" + route.replace(/\[churchId\]/g, "[^/]+") + "(/|$)"
-    )
+  // The most specific (longest) matching route decides. A broad rule such as
+  // /[churchId]/dashboard must not shadow the child routes listed after it.
+  let match: { route: string; permission: PermissionAction } | null = null
 
-    if (routePattern.test(pathname)) {
-      return hasPermission(userRole, requiredPermission)
+  for (const [route, requiredPermission] of Object.entries(protectedRoutes)) {
+    // Convert route pattern to regex, e.g. /[churchId]/events/[id]/edit -> /[^/]+/events/[^/]+/edit
+    const routePattern = new RegExp("^" + route.replace(/\[[^\]]+\]/g, "[^/]+") + "(/|$)")
+
+    if (routePattern.test(pathname) && (!match || route.length > match.route.length)) {
+      match = { route, permission: requiredPermission }
     }
   }
 
-  return true
+  return match ? hasPermission(userRole, match.permission) : true
 }
 
 /**
