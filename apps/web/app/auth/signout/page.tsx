@@ -5,10 +5,14 @@ import { signOut } from "next-auth/react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { apiPost } from "@/lib/api-helpers"
 
 export default function SignOutPage() {
   const handleLogout = async (callbackUrl: string) => {
     try {
+      // Revoke the user's tokens on the API while the session still exists.
+      // A failure here must not block sign-out.
+      await apiPost("/auth/logout").catch(() => undefined)
       await signOut({ callbackUrl })
       toast.info("You have been signed out")
     } catch (error) {
