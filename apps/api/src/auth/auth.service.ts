@@ -21,10 +21,25 @@ import {
   type UserChurchMembership,
 } from '../database/schema';
 import { Database } from '../database/interfaces/database.interfaces';
+import config from '../config';
 
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+}
+
+export interface RefreshTokenPayload {
+  sub: string;
+  type: 'refresh';
+  email?: string;
+  role?: string;
+  churchId?: string | null;
+  activeChurchId?: string | null;
+  activeMembershipId?: string | null;
+  activeRole?: string;
+  assignedZoneId?: string | null;
+  iat?: number;
+  exp?: number;
 }
 
 export interface AuthResponse extends AuthTokens {
@@ -130,8 +145,25 @@ export class AuthService implements OnModuleInit {
   /**
    * Verify and decode refresh token
    */
-  verifyRefreshToken(token: string): Promise<any> {
-    return this.jwtService.verifyAsync(token);
+  async verifyRefreshToken(token: unknown): Promise<RefreshTokenPayload> {
+    if (typeof token !== 'string' || !token.trim()) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    let payload: RefreshTokenPayload;
+    try {
+      payload = await this.jwtService.verifyAsync<RefreshTokenPayload>(token, {
+        secret: config.jwt.secret,
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (!payload || typeof payload.sub !== 'string' || payload.type !== 'refresh') {
+      throw new UnauthorizedException('Invalid refresh token type');
+    }
+
+    return payload;
   }
 
   async getPreferredMembership(userId: string, churchId?: string | null): Promise<ActiveMembershipContext | null> {

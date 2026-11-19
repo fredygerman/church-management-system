@@ -10,6 +10,7 @@ import {
   Query,
   Res,
   BadRequestException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
@@ -73,15 +74,18 @@ export class AuthController {
     status: 401,
     description: 'Invalid or expired refresh token',
   })
-  async refreshToken(@Body() body: { refreshToken: string }) {
-    // Verify refresh token and return new tokens
+  async refreshToken(@Body() body: { refreshToken?: string }) {
     try {
-      const decoded = await this.authService.verifyRefreshToken(body.refreshToken);
+      const decoded = await this.authService.verifyRefreshToken(body?.refreshToken);
       const tokens = await this.authService.refreshTokensForPayload(decoded);
       
       return tokens;
     } catch (error) {
-      throw new BadRequestException('Invalid or expired refresh token');
+      if (error instanceof UnauthorizedException) {
+        throw error;
+      }
+
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
   }
 
