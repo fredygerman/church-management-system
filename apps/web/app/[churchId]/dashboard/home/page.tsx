@@ -1,4 +1,5 @@
 import { getDashboardStats } from '@/actions/dashboard'
+import { UnavailableState } from '@/components/ui/unavailable-state'
 
 interface DashboardHomeProps {
   params: Promise<{
@@ -12,15 +13,10 @@ export default async function DashboardHome({ params }: DashboardHomeProps) {
 
   if (statsResult.status === 'unavailable') {
     return (
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="rounded-lg border bg-card p-6">
-          <h2 className="text-lg font-semibold">Dashboard unavailable</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Dashboard statistics are temporarily unavailable. Please try again
-            later.
-          </p>
-        </div>
-      </div>
+      <UnavailableState
+        title="Dashboard unavailable"
+        message="Dashboard statistics are temporarily unavailable. Please try again later."
+      />
     )
   }
 

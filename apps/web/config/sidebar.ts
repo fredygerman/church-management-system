@@ -2,7 +2,6 @@ import {
   BarChart2,
   HelpCircle,
   MessageSquare,
-  Settings,
   MapPin,
   Home,
   Users,
@@ -136,18 +135,6 @@ export const sidebarConfig: SidebarSection[] = [
   {
     title: "Settings",
     items: [
-      {
-        title: "Church Settings",
-        href: "/dashboard/settings/church",
-        icon: Settings,
-        permissions: ["manage:settings", "manage:churches"],
-      },
-      {
-        title: "Users",
-        href: "/dashboard/settings/users",
-        icon: Users,
-        permissions: ["view:users", "manage:users"],
-      },
       {
         title: "Permissions",
         href: "/dashboard/permissions",
