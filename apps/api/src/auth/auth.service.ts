@@ -245,7 +245,17 @@ export class AuthService implements OnModuleInit {
   }
 
   async refreshTokensForPayload(payload: any): Promise<AuthTokens> {
-    const user = await this.getProfile(payload.sub);
+    const user = await this.getProfile(payload.sub).catch((error) => {
+      if (error instanceof NotFoundException) {
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+      throw error;
+    });
+
+    if (user.deletedAt) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
     const membership = await this.getPreferredMembership(
       user.id,
       payload.activeChurchId ?? payload.churchId ?? null,

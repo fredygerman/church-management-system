@@ -1,4 +1,4 @@
-import { UnauthorizedException } from '@nestjs/common';
+import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 describe('AuthService refresh token verification', () => {
@@ -44,5 +44,24 @@ describe('AuthService refresh token verification', () => {
     jwtService.verifyAsync.mockResolvedValue({ sub: 'user-id', type: 'access' });
 
     await expect(service.verifyRefreshToken('token')).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('rejects a refresh for a soft-deleted user', async () => {
+    jest.spyOn(service, 'getProfile').mockResolvedValue({
+      id: 'user-id',
+      deletedAt: new Date(),
+    } as any);
+
+    await expect(
+      service.refreshTokensForPayload({ sub: 'user-id', type: 'refresh' }),
+    ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('rejects a refresh when the user no longer exists', async () => {
+    jest.spyOn(service, 'getProfile').mockRejectedValue(new NotFoundException('User not found'));
+
+    await expect(
+      service.refreshTokensForPayload({ sub: 'user-id', type: 'refresh' }),
+    ).rejects.toThrow(UnauthorizedException);
   });
 });
