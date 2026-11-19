@@ -2,6 +2,7 @@ import { sql } from "drizzle-orm"
 import {
   boolean,
   date,
+  integer,
   pgEnum,
   pgTable,
   uuid,
@@ -35,6 +36,8 @@ export const users = pgTable(
     churchId: uuid("church_id"),
     assignedZoneId: uuid("assigned_zone_id"),
     isActive: boolean("is_active").default(true),
+    // Bumped on logout; tokens carrying an older version are rejected.
+    tokenVersion: integer("token_version").notNull().default(0),
     createdAt: date("created_at").defaultNow(),
     updatedAt: date("updated_at").defaultNow(),
     deletedAt: date("deleted_at"),

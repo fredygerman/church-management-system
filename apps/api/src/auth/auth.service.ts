@@ -11,7 +11,7 @@ import {
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from '../database/database.service';
-import { and, asc, desc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
 import {
   users,
   type User,
@@ -38,6 +38,7 @@ export interface RefreshTokenPayload {
   activeMembershipId?: string | null;
   activeRole?: string;
   assignedZoneId?: string | null;
+  tv?: number;
   iat?: number;
   exp?: number;
 }
@@ -126,6 +127,7 @@ export class AuthService implements OnModuleInit {
       activeMembershipId,
       activeRole,
       assignedZoneId,
+      tv: user.tokenVersion ?? 0,
     };
 
     const accessToken = this.jwtService.sign(payload, {
@@ -244,6 +246,17 @@ export class AuthService implements OnModuleInit {
     return this.generateTokens(user, membership);
   }
 
+  /**
+   * Invalidate every token issued to a user (logout). Bumping tokenVersion
+   * makes existing access and refresh tokens fail the version check.
+   */
+  async revokeTokens(userId: string): Promise<void> {
+    await this.db
+      .update(users)
+      .set({ tokenVersion: sql`${users.tokenVersion} + 1` })
+      .where(eq(users.id, userId));
+  }
+
   async refreshTokensForPayload(payload: any): Promise<AuthTokens> {
     const user = await this.getProfile(payload.sub).catch((error) => {
       if (error instanceof NotFoundException) {
@@ -253,6 +266,10 @@ export class AuthService implements OnModuleInit {
     });
 
     if (user.deletedAt) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if ((payload.tv ?? 0) !== (user.tokenVersion ?? 0)) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 

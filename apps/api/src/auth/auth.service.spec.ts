@@ -2,11 +2,11 @@ import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 describe('AuthService refresh token verification', () => {
-  let jwtService: { verifyAsync: jest.Mock };
+  let jwtService: { verifyAsync: jest.Mock; sign: jest.Mock };
   let service: AuthService;
 
   beforeEach(() => {
-    jwtService = { verifyAsync: jest.fn() };
+    jwtService = { verifyAsync: jest.fn(), sign: jest.fn().mockReturnValue('signed') };
     service = new AuthService({} as any, jwtService as any);
   });
 
@@ -55,6 +55,32 @@ describe('AuthService refresh token verification', () => {
     await expect(
       service.refreshTokensForPayload({ sub: 'user-id', type: 'refresh' }),
     ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('rejects a refresh token issued before the user logged out', async () => {
+    jest.spyOn(service, 'getProfile').mockResolvedValue({
+      id: 'user-id',
+      deletedAt: null,
+      tokenVersion: 2,
+    } as any);
+
+    await expect(
+      service.refreshTokensForPayload({ sub: 'user-id', type: 'refresh', tv: 1 }),
+    ).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('accepts a refresh token whose version matches the user', async () => {
+    jest.spyOn(service, 'getProfile').mockResolvedValue({
+      id: 'user-id',
+      email: 'a@example.com',
+      deletedAt: null,
+      tokenVersion: 2,
+    } as any);
+    jest.spyOn(service, 'getPreferredMembership').mockResolvedValue(null);
+
+    await expect(
+      service.refreshTokensForPayload({ sub: 'user-id', type: 'refresh', tv: 2 }),
+    ).resolves.toEqual({ accessToken: 'signed', refreshToken: 'signed' });
   });
 
   it('rejects a refresh when the user no longer exists', async () => {

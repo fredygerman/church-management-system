@@ -64,6 +64,13 @@
       "when": 1788195313056,
       "tag": "0008_clumsy_mandroid",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1795059934503,
+      "tag": "0009_parched_maverick",
+      "breakpoints": true
     }
   ]
 }

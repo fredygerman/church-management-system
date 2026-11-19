@@ -17,6 +17,7 @@ export interface JwtPayload {
   activeMembershipId?: string | null;
   activeRole?: string;
   assignedZoneId?: string | null;
+  tv?: number;
   iat?: number;
   exp?: number;
 }
@@ -51,6 +52,10 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') implements On
     // Check if user is soft-deleted
     if (user.deletedAt) {
       throw new UnauthorizedException('User account is deleted');
+    }
+
+    if ((payload.tv ?? 0) !== (user.tokenVersion ?? 0)) {
+      throw new UnauthorizedException('Token has been revoked');
     }
 
     return {

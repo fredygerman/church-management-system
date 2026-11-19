@@ -197,6 +197,7 @@ export class AuthController {
     description: 'Unauthorized - Invalid or missing access token',
   })
   async logout(@GetUser() user: any) {
+    await this.authService.revokeTokens(user.id);
     this.logger.log(`User logged out: ${user.id}`);
     return {
       success: true,
