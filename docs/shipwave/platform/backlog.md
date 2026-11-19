@@ -5,8 +5,8 @@ Planning inventory only; implementation is not authorized. Every task is **Not s
 | ID | Group | Owning specification | Outcome | State | Dependencies |
 |---|---|---|---|---|---|
 | D-01 | Design | [staff-operations.md](specs/staff-operations.md), [screen-specification.md](../../product-design/screen-specification.md) | Reconcile responsive member/staff journeys, brand/content, accessibility and observable states | Not started | None |
-| W-01 | Web/API | [foundations.md](specs/foundations.md) | Validate refresh-token lifecycle and guard tests | Not started | None |
-| W-02 | Web/API | [foundations.md](specs/foundations.md) | Fix dashboard false-zero behavior and define truthful states | Not started | DEC-01 for API composition only; independent UI error fix can proceed |
+| W-01 | Web/API | [foundations.md](specs/foundations.md) | Validate refresh-token lifecycle and guard tests (commit 9a4eae1; 7 local auth tests pass; revocation not implemented) | Code complete | None |
+| W-02 | Web/API | [foundations.md](specs/foundations.md) | Fix dashboard false-zero behavior and define truthful states (commit 17d46ca; web type-check no new errors; no test setup) | Code complete | DEC-01 for API composition only; independent UI error fix can proceed |
 | W-03 | Web/API | [member-experience.md](specs/member-experience.md) | Member Home/Church/Events/Profile, RSVP, prayer and profile states on web | Not started | D-01 for shared navigation; DEC-02 for expanded sensitive behavior |
 | W-04 | Web/API | [staff-operations.md](specs/staff-operations.md) | Staff dashboard/People/Services/Content/More, reports, communication and role settings | Not started | D-01; DEC-04/05/06 only for affected capability |
 | W-05 | Web/API | [content-and-ai.md](specs/content-and-ai.md) | Durable document workflow and shared free library/reader/eligible downloads | Not started | DEC-09 and serialized schema/contracts lane |
