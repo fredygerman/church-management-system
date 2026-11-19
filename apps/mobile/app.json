@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "Mito Ya Baraka Church",
+    "slug": "mito-ya-baraka-church",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "mitoyabaraka",
+    "plugins": ["expo-router"]
+  }
+}
