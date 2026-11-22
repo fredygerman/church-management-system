@@ -2,13 +2,21 @@ import * as http from 'http';
 import * as https from 'https';
 import { randomUUID } from 'crypto';
 import { NodeHttpHandler } from '@smithy/node-http-handler';
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import config from '../config';
+import { and, eq, isNull } from 'drizzle-orm';
+import { db, documents } from '@church/db';
+import { roleHasPermission } from '../auth/types/permission.types';
 
 // Local imports
 import { ExceptionConstants } from '../core/exceptions/exceptions.constants';
@@ -32,6 +40,24 @@ export interface FileUploadResult {
   mimeType: string;
   size: number;
   uploadedAt: string;
+}
+
+export interface DocumentMetadata {
+  id: string;
+  churchId: string;
+  uploadedBy: string;
+  originalFileName: string;
+  contentType: string;
+  sizeBytes: number;
+  title: string;
+  description: string | null;
+  visibleToMembers: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface StoredFileUpload extends FileUploadResult {
+  storageKey: string;
 }
 
 export type DirectoryType = 'default' | 'profileImages' | 'documents' | 'temp';
@@ -86,6 +112,22 @@ export class FileUploadService {
     this.s3Client = new S3Client(s3ClientConfig);
   }
 
+  private toDocumentMetadata(document: any): DocumentMetadata {
+    return {
+      id: document.id,
+      churchId: document.churchId,
+      uploadedBy: document.uploadedBy,
+      originalFileName: document.originalFileName,
+      contentType: document.contentType,
+      sizeBytes: document.sizeBytes,
+      title: document.title,
+      description: document.description,
+      visibleToMembers: document.visibleToMembers,
+      createdAt: document.createdAt,
+      updatedAt: document.updatedAt,
+    };
+  }
+
   private validateFileSize(file: MulterFile): void {
     if (file.size > this.maxFileSize) {
       throw new BadRequestException({
@@ -109,11 +151,11 @@ export class FileUploadService {
     }
   }
 
-  async uploadToS3(
+  private async uploadObjectToS3(
     file: MulterFile,
     allowedMimeTypes?: string[],
     directory: DirectoryType = 'default'
-  ): Promise<FileUploadResult> {
+  ): Promise<StoredFileUpload> {
     try {
       this.logger.log(`Uploading ${file.originalname} (${file.size} bytes)`);
 
@@ -162,7 +204,7 @@ export class FileUploadService {
       };
 
       this.logger.debug(`File uploaded: ${fileUrl}`);
-      return result;
+      return { ...result, storageKey: s3Key };
     } catch (error: any) {
       this.logger.error(
         `Upload failed for ${file.originalname}: ${error.message}`
@@ -177,6 +219,19 @@ export class FileUploadService {
         code: ExceptionConstants.BadRequestCodes.FILE_UPLOAD_ERROR,
       });
     }
+  }
+
+  async uploadToS3(
+    file: MulterFile,
+    allowedMimeTypes?: string[],
+    directory: DirectoryType = 'default'
+  ): Promise<FileUploadResult> {
+    const { storageKey: _storageKey, ...result } = await this.uploadObjectToS3(
+      file,
+      allowedMimeTypes,
+      directory,
+    );
+    return result;
   }
 
   async deleteFromS3(key: string): Promise<void> {
@@ -208,28 +263,135 @@ export class FileUploadService {
     directory: DirectoryType = 'default'
   ): Promise<FileUploadResult> {
     this.logger.log(`Handling file upload: ${name}`);
-    return this.uploadToS3(file, config.allowedDocumentTypes, directory);
+    const uploaded = await this.uploadObjectToS3(
+      file,
+      config.allowedDocumentTypes,
+      directory,
+    );
+
+    const userId = metadata.userId as string | undefined;
+    const churchId = metadata.churchId as string | undefined;
+    if (!userId || !churchId) {
+      await this.deleteFromS3(uploaded.storageKey);
+      throw new BadRequestException({
+        message: 'Church and user information are required for document metadata',
+        code: ExceptionConstants.BadRequestCodes.VALIDATION_ERROR,
+      });
+    }
+
+    try {
+      await db.insert(documents).values({
+        churchId,
+        uploadedBy: userId,
+        originalFileName: file.originalname,
+        contentType: file.mimetype,
+        sizeBytes: file.size,
+        storageKey: uploaded.storageKey,
+        title: (metadata.title || metadata.displayName || name) as string,
+        description: (metadata.description as string | undefined) ?? null,
+        visibleToMembers:
+          metadata.visibleToMembers === true || metadata.isPublicUpload === true,
+      }).returning();
+    } catch (error) {
+      try {
+        await this.deleteFromS3(uploaded.storageKey);
+      } catch (cleanupError: any) {
+        this.logger.error(
+          `Uploaded document cleanup failed: ${cleanupError.message}`,
+          cleanupError.stack,
+        );
+      }
+      throw error;
+    }
+
+    const { storageKey: _storageKey, ...result } = uploaded;
+    return result;
   }
 
-  async getUserDocuments(userId: string, statuses?: string[]): Promise<any> {
-    this.logger.log(`Fetching documents for user: ${userId}`);
-    // ponytail: stub pending documents table migration
-    return [];
+  async getUserDocuments(
+    churchId: string,
+    userId: string,
+    userRole: string,
+  ): Promise<DocumentMetadata[]> {
+    this.logger.log(`Fetching documents for user: ${userId} in church: ${churchId}`);
+
+    const canManageFiles = roleHasPermission(userRole as any, 'manage:files');
+    const rows = await db.query.documents.findMany({
+      where: and(
+        eq(documents.churchId, churchId),
+        isNull(documents.deletedAt),
+        canManageFiles ? undefined : eq(documents.visibleToMembers, true),
+      ),
+    });
+
+    return rows.map((document) => this.toDocumentMetadata(document));
   }
 
-  async updateDocument(id: string, updates: Record<string, any>): Promise<any> {
+  async updateDocument(
+    churchId: string,
+    id: string,
+    userId: string,
+    userRole: string,
+    updates: Pick<Partial<DocumentMetadata>, 'title' | 'description'>,
+  ): Promise<DocumentMetadata> {
     this.logger.log(`Updating document: ${id}`);
-    // ponytail: stub pending documents table migration
-    return { success: true };
+
+    const set: { title?: string; description?: string | null; updatedAt: Date } = {
+      updatedAt: new Date(),
+    };
+    if (updates.title !== undefined) set.title = updates.title;
+    if (updates.description !== undefined) set.description = updates.description;
+    if (set.title === undefined && set.description === undefined) {
+      throw new BadRequestException('At least one of title or description is required');
+    }
+
+    const canManageFiles = roleHasPermission(userRole as any, 'manage:files');
+    const [updated] = await db
+      .update(documents)
+      .set(set)
+      .where(
+        and(
+          eq(documents.id, id),
+          eq(documents.churchId, churchId),
+          isNull(documents.deletedAt),
+          canManageFiles ? undefined : eq(documents.uploadedBy, userId),
+        ),
+      )
+      .returning();
+
+    if (!updated) {
+      throw new NotFoundException('Document not found');
+    }
+
+    return this.toDocumentMetadata(updated);
   }
 
   async markDocumentAsDeleted(
+    churchId: string,
     id: string,
     userId: string,
     userRole: string
-  ): Promise<any> {
+  ): Promise<{ success: true }> {
     this.logger.log(`Marking document as deleted: ${id}`);
-    // ponytail: stub pending documents table migration
+
+    const canManageFiles = roleHasPermission(userRole as any, 'manage:files');
+    const [deleted] = await db
+      .update(documents)
+      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .where(
+        and(
+          eq(documents.id, id),
+          eq(documents.churchId, churchId),
+          isNull(documents.deletedAt),
+          canManageFiles ? undefined : eq(documents.uploadedBy, userId),
+        ),
+      )
+      .returning({ id: documents.id });
+
+    if (!deleted) {
+      throw new NotFoundException('Document not found');
+    }
+
     return { success: true };
   }
 }

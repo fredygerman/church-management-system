@@ -11,7 +11,11 @@ export interface AuthenticatedRequest extends Request {
     isActive?: boolean;
     isEmailVerified?: boolean;
     isPhoneVerified?: boolean;
+    churchId?: string;
+    activeChurchId?: string;
+    activeMembershipId?: string;
     createdAt?: Date;
     updatedAt?: Date;
   };
+  churchId?: string;
 }

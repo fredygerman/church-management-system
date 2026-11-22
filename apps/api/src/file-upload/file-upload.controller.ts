@@ -11,7 +11,6 @@ import {
   UseInterceptors,
   UseGuards,
   Req,
-  Query,
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -25,6 +24,7 @@ import {
 } from './file-upload.service';
 import config from '../config';
 import { JwtAuthGuard } from '../auth/guards';
+import { ChurchContextGuard } from '../auth/guards/church-context.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { RequirePermission } from '../auth/decorators/require-permission.decorator';
 import { AuthenticatedRequest } from '../auth/dto/auth-request.dto';
@@ -54,6 +54,7 @@ enum VerificationStatus {
 const { maxFileSizeMB, allowedDocumentTypes } = config;
 
 @Controller('api/files')
+@UseGuards(ChurchContextGuard)
 export class FileUploadController {
   constructor(private readonly fileUploadService: FileUploadService) {}
   private readonly logger = new Logger(FileUploadController.name);
@@ -195,6 +196,7 @@ export class FileUploadController {
     parsedMetadata.userId = req.user.id;
     parsedMetadata.userRole = req.user.role || 'visitor';
     parsedMetadata.userEmail = req.user.email;
+    parsedMetadata.churchId = req.churchId || req.user.churchId;
     parsedMetadata.displayName = displayName || name;
     parsedMetadata.directory = directory || 'default';
 
@@ -266,6 +268,7 @@ export class FileUploadController {
     parsedMetadata.userId = req.user.id;
     parsedMetadata.userRole = req.user.role || 'visitor';
     parsedMetadata.userEmail = req.user.email;
+    parsedMetadata.churchId = req.churchId || req.user.churchId;
 
     // Add flag to indicate this is a public upload
     parsedMetadata.isPublicUpload = true;
@@ -400,7 +403,6 @@ export class FileUploadController {
   @ApiBearerAuth('access-token')
   async getUserDocuments(
     @Req() req: AuthenticatedRequest,
-    @Query('status') status?: string | string[]
   ) {
     if (!req.user?.id) {
       throw new BadRequestException({
@@ -409,31 +411,18 @@ export class FileUploadController {
       });
     }
 
-    // Convert single status to array
-    const statusArray = status
-      ? Array.isArray(status)
-        ? status
-        : [status]
-      : undefined;
-
-    // Validate statuses if provided
-    if (statusArray?.length) {
-      const validStatuses = Object.values(VerificationStatus);
-      const invalidStatuses = statusArray.filter(
-        s => !validStatuses.includes(s as any)
-      );
-
-      if (invalidStatuses.length) {
-        throw new BadRequestException({
-          message: `Invalid status filter(s): ${invalidStatuses.join(', ')}. Must be one of: ${validStatuses.join(', ')}`,
-          code: ExceptionConstants.BadRequestCodes.VALIDATION_ERROR,
-        });
-      }
+    const churchId = req.churchId || req.user.churchId;
+    if (!churchId || !req.user.role) {
+      throw new BadRequestException({
+        message: 'Church context not found',
+        code: ExceptionConstants.BadRequestCodes.VALIDATION_ERROR,
+      });
     }
 
     return this.fileUploadService.getUserDocuments(
+      churchId,
       req.user.id,
-      statusArray as any
+      req.user.role,
     );
   }
 
@@ -443,8 +432,8 @@ export class FileUploadController {
   @ApiBearerAuth('access-token')
   async updateDocument(
     @Param('id') id: string,
-    @Body('displayName') displayName?: string,
-    @Body('status') status?: string,
+    @Body('title') title?: string,
+    @Body('description') description?: string,
     @Req() req?: AuthenticatedRequest
   ) {
     this.logger.log(`Updating document ${id}`);
@@ -456,12 +445,21 @@ export class FileUploadController {
       });
     }
 
-    return this.fileUploadService.updateDocument(id, {
-      displayName,
-      status,
-      userId: req.user.id,
-      userRole: req.user.role,
-    });
+    const churchId = req.churchId || req.user.churchId;
+    if (!churchId) {
+      throw new BadRequestException({
+        message: 'Church context not found',
+        code: ExceptionConstants.BadRequestCodes.VALIDATION_ERROR,
+      });
+    }
+
+    return this.fileUploadService.updateDocument(
+      churchId,
+      id,
+      req.user.id,
+      req.user.role,
+      { title, description },
+    );
   }
 
   @Delete(':id')
@@ -481,7 +479,16 @@ export class FileUploadController {
       });
     }
 
+    const churchId = req.churchId || req.user.churchId;
+    if (!churchId) {
+      throw new BadRequestException({
+        message: 'Church context not found',
+        code: ExceptionConstants.BadRequestCodes.VALIDATION_ERROR,
+      });
+    }
+
     return this.fileUploadService.markDocumentAsDeleted(
+      churchId,
       id,
       req.user.id,
       req.user.role
