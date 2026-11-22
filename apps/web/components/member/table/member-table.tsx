@@ -13,9 +13,14 @@ import { MemberTableToolbarActions } from "./member-table-toolbar-actions"
 interface MemberTableProps {
   memberPromise: ReturnType<typeof getMembers>
   churchId: string
+  emptyMessage?: string
 }
 
-export function MemberTable({ memberPromise, churchId }: MemberTableProps) {
+export function MemberTable({
+  memberPromise,
+  churchId,
+  emptyMessage,
+}: MemberTableProps) {
   const { members, pageCount = 1 } = React.use(memberPromise)
   const columns = React.useMemo(() => getColumns(churchId), [churchId])
 
@@ -32,7 +37,7 @@ export function MemberTable({ memberPromise, churchId }: MemberTableProps) {
       <DataTableToolbar table={table}>
         <MemberTableToolbarActions table={table} />
       </DataTableToolbar>
-      <DataTable table={table} />
+      <DataTable table={table} emptyMessage={emptyMessage} />
     </div>
   )
 }

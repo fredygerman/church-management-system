@@ -1,14 +1,14 @@
 import React from "react"
 import Link from "next/link"
 import { getMembers } from "@/actions/member"
-import { checkPermission, ensurePermission } from "@/lib/permissions-server"
 
+import { checkPermission, ensurePermission } from "@/lib/permissions-server"
 import { membersSearchParamsCache } from "@/lib/validators"
 import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
 import { MemberTable } from "@/components/member/table/member-table"
 import { MembersTableProvider } from "@/components/member/table/member-table-provider"
-import { Separator } from "@/components/ui/separator"
 
 export interface SearchParams {
   [key: string]: string | string[] | undefined
@@ -22,12 +22,12 @@ interface PageProps {
 }
 
 export default async function MembersPage(props: PageProps) {
-  await ensurePermission('read:member')
+  await ensurePermission("read:member")
   const { churchId } = await props.params
   const searchParams = await props.searchParams
   const queryParams = membersSearchParamsCache.parse(searchParams)
   const memberPromise = getMembers(queryParams, churchId)
-  const canCreateMember = await checkPermission('create:member')
+  const canCreateMember = await checkPermission("create:member")
 
   return (
     <div className="flex flex-col space-y-6">
@@ -60,9 +60,14 @@ export default async function MembersPage(props: PageProps) {
             />
           }
         >
-          <MemberTable memberPromise={memberPromise} churchId={churchId} />
+          <MemberTable
+            memberPromise={memberPromise}
+            churchId={churchId}
+            emptyMessage="No members match the current filters."
+          />
         </React.Suspense>
       </MembersTableProvider>
+      {/* TODO: Add reviewed Swahili copy for this staff page. */}
     </div>
   )
 }

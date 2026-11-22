@@ -34,6 +34,8 @@ interface DataTableProps<TData> extends React.HTMLAttributes<HTMLDivElement> {
    * @type boolean
    */
   disablePagination?: boolean
+
+  emptyMessage?: React.ReactNode
 }
 
 export function DataTable<TData>({
@@ -42,6 +44,7 @@ export function DataTable<TData>({
   children,
   className,
   disablePagination = false,
+  emptyMessage = "No results.",
   ...props
 }: DataTableProps<TData>) {
   return (
@@ -92,7 +95,7 @@ export function DataTable<TData>({
                   colSpan={table.getAllColumns().length}
                   className="h-24 text-center"
                 >
-                  No results.
+                  {emptyMessage}
                 </TableCell>
               </TableRow>
             )}
