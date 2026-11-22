@@ -83,6 +83,8 @@ async function request<T>(path: string, init: RequestInit = {}, retry = true): P
 export const api = {
   get: <T>(path: string) => request<T>(path),
   post: <T>(path: string, body?: unknown) => request<T>(path, { body: body === undefined ? undefined : JSON.stringify(body), method: "POST" }),
+  patch: <T>(path: string, body?: unknown) => request<T>(path, { body: body === undefined ? undefined : JSON.stringify(body), method: "PATCH" }),
+  put: <T>(path: string, body?: unknown) => request<T>(path, { body: body === undefined ? undefined : JSON.stringify(body), method: "PUT" }),
 }
 
 export async function signOutRequest() {

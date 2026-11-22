@@ -10,4 +10,9 @@ export const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: "700", marginBottom: 8 },
   heading: { fontSize: 19, fontWeight: "700", marginBottom: 8 },
   text: { color: "#4b5563", fontSize: 16, marginBottom: 18 },
+  card: { borderBottomColor: "#e5e7eb", borderBottomWidth: 1, marginBottom: 18, paddingBottom: 6 },
+  input: { borderColor: "#9ca3af", borderRadius: 6, borderWidth: 1, fontSize: 16, marginBottom: 12, padding: 12 },
+  multilineInput: { minHeight: 130, textAlignVertical: "top" },
+  formLabel: { fontSize: 16, fontWeight: "600", marginBottom: 6 },
+  success: { color: "#166534", marginBottom: 14 },
 })
