@@ -1,32 +1,51 @@
-import { Link } from "expo-router"
-import { StyleSheet, Text, View } from "react-native"
+import { router } from "expo-router"
+import { useState } from "react"
+import { Button, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native"
+import { ApiError, api } from "../../lib/api"
+import { useSession } from "../../lib/session"
 
 export default function SignInScreen() {
-  return (
-    <View style={styles.container}>
+  const { signIn } = useSession()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  async function submit() {
+    setError("")
+    setLoading(true)
+    try {
+      const response = await api.post<{ accessToken: string; refreshToken: string; user: Record<string, unknown> }>("/auth/login", { email, password })
+      await signIn(response)
+      router.replace("/(member)")
+    } catch (caught) {
+      const apiError = caught instanceof ApiError ? caught : new ApiError("Unable to sign in. Try again.", "network")
+      setError(apiError.kind === "not-configured" ? apiError.message : apiError.status === 401 ? "Invalid email or password." : apiError.kind === "network" ? apiError.message : apiError.message)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
+    <View style={styles.form}>
       <Text style={styles.title}>Mito Ya Baraka Church</Text>
-      <Text style={styles.message}>Sign-in is not yet connected.</Text>
-      <Text style={styles.detail}>
-        Authentication and church data will be added after the M0 foundation.
-      </Text>
-      <Link href="/(member)" style={styles.link}>
-        Preview member space
-      </Link>
-      <Link href="/(staff)" style={styles.link}>
-        Preview staff space
-      </Link>
+      <Text style={styles.message}>Sign in to your church account.</Text>
+      <TextInput accessibilityLabel="Email" autoCapitalize="none" autoComplete="email" keyboardType="email-address" onChangeText={setEmail} placeholder="Email" style={styles.input} value={email} />
+      <TextInput accessibilityLabel="Password" autoCapitalize="none" autoComplete="password" onChangeText={setPassword} placeholder="Password" secureTextEntry style={styles.input} value={password} />
+      {error ? <Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text> : null}
+      <Button disabled={loading || !email || !password} title={loading ? "Signing in…" : "Sign in"} onPress={submit} />
+      {/* TODO: Have fluent reviewers provide Swahili copy before localization. */}
     </View>
-  )
+  </KeyboardAvoidingView>
 }
 
 const styles = StyleSheet.create({
   container: {
-    alignItems: "center",
     flex: 1,
-    gap: 16,
     justifyContent: "center",
     padding: 24,
   },
+  form: { gap: 14, width: "100%" },
   title: {
     fontSize: 28,
     fontWeight: "700",
@@ -34,18 +53,8 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 18,
-    textAlign: "center",
+    marginBottom: 12,
   },
-  detail: {
-    color: "#5f6368",
-    fontSize: 14,
-    maxWidth: 320,
-    textAlign: "center",
-  },
-  link: {
-    color: "#2457c5",
-    fontSize: 16,
-    fontWeight: "600",
-    padding: 8,
-  },
+  input: { borderColor: "#9ca3af", borderRadius: 6, borderWidth: 1, fontSize: 16, padding: 12 },
+  error: { color: "#a21c1c" },
 })
