@@ -7,6 +7,7 @@ import { getGivingGoals } from "@/actions/giving-goal"
 import { getMembers } from "@/actions/member"
 import { getServiceSessions } from "@/actions/attendance"
 import { OfferingForm } from "@/components/form/OfferingForm"
+import { UnavailableState } from "@/components/ui/unavailable-state"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -36,6 +37,15 @@ export default async function OfferingAddPage({ params }: PageProps) {
     getServiceSessions(churchId).catch(() => []),
     getGivingGoals(churchId).catch(() => []),
   ])
+
+  if (membersResult.status === "unavailable") {
+    return (
+      <UnavailableState
+        title="Members unavailable"
+        message={membersResult.message}
+      />
+    )
+  }
 
   return (
     <div className="flex min-h-screen w-full flex-col p-4">

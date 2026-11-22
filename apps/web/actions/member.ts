@@ -89,7 +89,10 @@ export async function getMembers(
     to: string
   },
   churchId: string
-): Promise<{ members: any[]; pageCount: number }> {
+): Promise<
+  | { status: "ok"; members: any[]; pageCount: number }
+  | { status: "unavailable"; message: string }
+> {
   try {
     // Build query string
     const offset = (queryParams.page - 1) * queryParams.per_page
@@ -111,6 +114,7 @@ export async function getMembers(
     const pageCount = result?.meta?.total_pages || 1
 
     return {
+      status: "ok",
       members: result || [],
       pageCount
     }
@@ -120,7 +124,10 @@ export async function getMembers(
     if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
       throw error
     }
-    return { members: [], pageCount: 0 }
+    return {
+      status: "unavailable",
+      message: "Unable to load members right now. Please refresh the page to try again.",
+    }
   }
 }
 

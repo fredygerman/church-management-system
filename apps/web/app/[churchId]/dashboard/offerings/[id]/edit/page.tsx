@@ -5,6 +5,7 @@ import { getMembers } from "@/actions/member"
 import { getServiceSessions } from "@/actions/attendance"
 import { OfferingForm } from "@/components/form/OfferingForm"
 import { Separator } from "@/components/ui/separator"
+import { UnavailableState } from "@/components/ui/unavailable-state"
 
 interface PageProps {
   params: Promise<{ churchId: string; id: string }>
@@ -35,6 +36,15 @@ export default async function EditOfferingPage({ params }: PageProps) {
     getServiceSessions(churchId).catch(() => []),
     getGivingGoals(churchId).catch(() => []),
   ])
+
+  if (membersResult.status === "unavailable") {
+    return (
+      <UnavailableState
+        title="Members unavailable"
+        message={membersResult.message}
+      />
+    )
+  }
 
   // Active goals for the picker, plus this offering's already-linked goal
   // (even if it has since ended) so the current selection still renders.
