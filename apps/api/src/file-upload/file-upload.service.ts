@@ -12,7 +12,9 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import config from '../config';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db, documents } from '@church/db';
@@ -56,11 +58,28 @@ export interface DocumentMetadata {
   updatedAt: Date;
 }
 
+export interface MemberLibraryDocument {
+  id: string;
+  title: string;
+  description: string | null;
+  original_file_name: string;
+  content_type: string;
+  size_bytes: number;
+  created_at: Date;
+}
+
+export interface DocumentDownloadUrl {
+  url: string;
+  expiresAt: string;
+}
+
 interface StoredFileUpload extends FileUploadResult {
   storageKey: string;
 }
 
 export type DirectoryType = 'default' | 'profileImages' | 'documents' | 'temp';
+
+const MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS = 300;
 
 @Injectable()
 export class FileUploadService {
@@ -325,6 +344,60 @@ export class FileUploadService {
     });
 
     return rows.map((document) => this.toDocumentMetadata(document));
+  }
+
+  async getMemberLibrary(churchId: string): Promise<MemberLibraryDocument[]> {
+    const rows = await db.query.documents.findMany({
+      where: and(
+        eq(documents.churchId, churchId),
+        isNull(documents.deletedAt),
+        eq(documents.visibleToMembers, true),
+      ),
+    });
+
+    return rows.map((document) => ({
+      id: document.id,
+      title: document.title,
+      description: document.description,
+      original_file_name: document.originalFileName,
+      content_type: document.contentType,
+      size_bytes: document.sizeBytes,
+      created_at: document.createdAt,
+    }));
+  }
+
+  async getMemberDownloadUrl(
+    churchId: string,
+    id: string,
+  ): Promise<DocumentDownloadUrl> {
+    const [document] = await db.query.documents.findMany({
+      where: and(
+        eq(documents.id, id),
+        eq(documents.churchId, churchId),
+        isNull(documents.deletedAt),
+        eq(documents.visibleToMembers, true),
+      ),
+    });
+
+    if (!document) {
+      throw new NotFoundException('Document not found');
+    }
+
+    const url = await getSignedUrl(
+      this.s3Client as any,
+      new GetObjectCommand({
+        Bucket: this.s3Config.bucket,
+        Key: document.storageKey,
+      }),
+      { expiresIn: MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS },
+    );
+
+    return {
+      url,
+      expiresAt: new Date(
+        Date.now() + MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS * 1000,
+      ).toISOString(),
+    };
   }
 
   async updateDocument(

@@ -94,7 +94,12 @@ jest.mock('@church/db', () => {
     },
   };
 });
+
+jest.mock('@aws-sdk/s3-request-presigner', () => ({
+  getSignedUrl: jest.fn().mockResolvedValue('https://signed.example/document'),
+}));
 import { FileUploadService } from './file-upload.service';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const churchDb = require('@church/db') as {
   __reset: () => void;
@@ -134,6 +139,60 @@ describe('FileUploadService document metadata', () => {
     const documents = await service.getUserDocuments(CHURCH_A, 'member-1', 'member');
 
     expect(documents.map((document) => document.id)).toEqual(['visible']);
+  });
+
+  it('returns only visible, active documents from the member library in the caller church', async () => {
+    churchDb.__seedDocument({ id: 'visible', churchId: CHURCH_A, visibleToMembers: true });
+    churchDb.__seedDocument({ id: 'other-church', churchId: CHURCH_B, visibleToMembers: true });
+    churchDb.__seedDocument({ id: 'hidden', churchId: CHURCH_A, visibleToMembers: false });
+    churchDb.__seedDocument({
+      id: 'deleted',
+      churchId: CHURCH_A,
+      visibleToMembers: true,
+      deletedAt: new Date(),
+    });
+
+    const library = await service.getMemberLibrary(CHURCH_A);
+
+    expect(library).toEqual([
+      {
+        id: 'visible',
+        title: 'Handbook',
+        description: 'Original description',
+        original_file_name: 'handbook.pdf',
+        content_type: 'application/pdf',
+        size_bytes: 1024,
+        created_at: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ]);
+    expect(library[0]).not.toHaveProperty('storageKey');
+    expect(library[0]).not.toHaveProperty('churchId');
+  });
+
+  it.each([
+    ['non-visible', { id: 'hidden', visibleToMembers: false, churchId: CHURCH_A }],
+    ['another church', { id: 'other-church', visibleToMembers: true, churchId: CHURCH_B }],
+  ])('returns 404 for a %s document download request', async (_label, row) => {
+    churchDb.__seedDocument(row);
+
+    await expect(service.getMemberDownloadUrl(CHURCH_A, row.id)).rejects.toThrow(
+      NotFoundException,
+    );
+  });
+
+  it('creates a presigned member download URL with a 300 second expiry', async () => {
+    churchDb.__seedDocument({ id: 'visible', visibleToMembers: true });
+
+    await expect(service.getMemberDownloadUrl(CHURCH_A, 'visible')).resolves.toEqual({
+      url: 'https://signed.example/document',
+      expiresAt: expect.any(String),
+    });
+
+    expect(getSignedUrl).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.anything(),
+      { expiresIn: 300 },
+    );
   });
 
   it('updates only title and description', async () => {

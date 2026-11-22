@@ -426,6 +426,41 @@ export class FileUploadController {
     );
   }
 
+  @Get('library')
+  @UseGuards(JwtAuthGuard)
+  @RequirePermission('read:self')
+  @ApiBearerAuth('access-token')
+  async getMemberLibrary(@Req() req: AuthenticatedRequest) {
+    const churchId = req.churchId || req.user?.churchId;
+    if (!churchId) {
+      throw new BadRequestException({
+        message: 'Church context not found',
+        code: ExceptionConstants.BadRequestCodes.VALIDATION_ERROR,
+      });
+    }
+
+    return this.fileUploadService.getMemberLibrary(churchId);
+  }
+
+  @Get('library/:id/download-url')
+  @UseGuards(JwtAuthGuard)
+  @RequirePermission('read:self')
+  @ApiBearerAuth('access-token')
+  async getMemberDownloadUrl(
+    @Param('id') id: string,
+    @Req() req: AuthenticatedRequest,
+  ) {
+    const churchId = req.churchId || req.user?.churchId;
+    if (!churchId) {
+      throw new BadRequestException({
+        message: 'Church context not found',
+        code: ExceptionConstants.BadRequestCodes.VALIDATION_ERROR,
+      });
+    }
+
+    return this.fileUploadService.getMemberDownloadUrl(churchId, id);
+  }
+
   @Patch(':id')
   @UseGuards(JwtAuthGuard)
   @RequirePermission('manage:files')
