@@ -15,6 +15,7 @@ import {
   Building2,
   HandCoins,
   CalendarDays,
+  Library,
   type LucideIcon,
 } from "lucide-react"
 import type { PermissionAction } from "@church/config"
@@ -129,6 +130,21 @@ export const sidebarConfig: SidebarSection[] = [
         href: "/dashboard/events",
         icon: CalendarDays,
         permissions: ["view:events"],
+      },
+    ],
+  },
+  {
+    title: "Member Portal",
+    items: [
+      {
+        title: "Church",
+        href: "/portal/church",
+        icon: Building2,
+      },
+      {
+        title: "Library",
+        href: "/portal/library",
+        icon: Library,
       },
     ],
   },
