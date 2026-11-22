@@ -38,7 +38,7 @@ export async function getLibraryDocuments(churchId: string): Promise<LibraryResu
     const response = await apiRequest<LibraryDocumentsPayload | LibraryDocument[]>({
       requestConfig: {
         method: "GET",
-        url: "/files/library",
+        url: "/api/files/library",
         params: { churchId },
       },
     })
@@ -82,7 +82,7 @@ export async function getLibraryDownloadUrl(
     const response = await apiRequest<DownloadUrlPayload>({
       requestConfig: {
         method: "GET",
-        url: `/files/library/${documentId}/download-url`,
+        url: `/api/files/library/${documentId}/download-url`,
         params: { churchId },
       },
     })

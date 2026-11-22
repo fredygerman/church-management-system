@@ -53,7 +53,7 @@ export default function LibraryScreen() {
     }
     setLoading(true)
     try {
-      const data = await api.get<LibraryResponse>(`/files/library?churchId=${encodeURIComponent(churchId)}`)
+      const data = await api.get<LibraryResponse>(`/api/files/library?churchId=${encodeURIComponent(churchId)}`)
       const nextDocuments = Array.isArray(data) ? data : data.documents
       setDocuments(Array.isArray(nextDocuments) ? nextDocuments : [])
       setError("")
@@ -71,7 +71,7 @@ export default function LibraryScreen() {
     setDownloadingId(document.id)
     setRowErrors((current) => ({ ...current, [document.id]: "" }))
     try {
-      const result = await api.get<{ url: string }>(`/files/library/${encodeURIComponent(document.id)}/download-url?churchId=${encodeURIComponent(churchId)}`)
+      const result = await api.get<{ url: string }>(`/api/files/library/${encodeURIComponent(document.id)}/download-url?churchId=${encodeURIComponent(churchId)}`)
       await Linking.openURL(result.url)
     } catch (caught) {
       const message = caught instanceof ApiError && caught.status === 404
