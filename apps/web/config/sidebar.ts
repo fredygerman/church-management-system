@@ -17,6 +17,7 @@ import {
   CalendarDays,
   Library,
   MoreHorizontal,
+  Sparkles,
   type LucideIcon,
 } from "lucide-react"
 import type { PermissionAction } from "@church/config"
@@ -43,6 +44,11 @@ export const sidebarConfig: SidebarSection[] = [
         title: "Home",
         href: "/dashboard/home",
         icon: Home,
+      },
+      {
+        title: "Assistant",
+        href: "/dashboard/ai",
+        icon: Sparkles,
       },
     ],
   },
@@ -152,6 +158,11 @@ export const sidebarConfig: SidebarSection[] = [
         title: "Library",
         href: "/portal/library",
         icon: Library,
+      },
+      {
+        title: "Assistant",
+        href: "/portal/ai",
+        icon: Sparkles,
       },
     ],
   },
