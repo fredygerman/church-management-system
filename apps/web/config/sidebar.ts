@@ -16,6 +16,7 @@ import {
   HandCoins,
   CalendarDays,
   Library,
+  MoreHorizontal,
   type LucideIcon,
 } from "lucide-react"
 import type { PermissionAction } from "@church/config"
@@ -65,6 +66,12 @@ export const sidebarConfig: SidebarSection[] = [
         href: "/dashboard/communications",
         icon: Megaphone,
         permissions: ["view:communications", "manage:communications"],
+      },
+      {
+        title: "Content",
+        href: "/dashboard/content",
+        icon: Library,
+        permissions: ["manage:files"],
       },
       {
         title: "Data Quality",
@@ -166,6 +173,11 @@ export const sidebarConfig: SidebarSection[] = [
         title: "My Profile",
         href: "/dashboard/profile",
         icon: UserCircle,
+      },
+      {
+        title: "More",
+        href: "/dashboard/more",
+        icon: MoreHorizontal,
       },
     ],
   },
