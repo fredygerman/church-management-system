@@ -245,7 +245,7 @@ export class AuthService implements OnModuleInit {
   async listOwnMemberships(userId: string) {
     const memberships = await this.getUserMemberships(userId);
     return memberships
-      .filter((membership) => membership.status !== 'suspended')
+      .filter((membership) => membership.status === 'active')
       .map(({ churchId, churchName, role, status }) => ({ churchId, churchName, role, status }));
   }
 
