@@ -9,14 +9,26 @@ Status: implemented in `apps/api/src/ai` (DEC-08). Read-only. The server never e
 - Guards: JwtAuthGuard and ChurchContextGuard (global), permission `read:self` (any signed-in member). Rate limit: 20 requests per minute per user (`AiUserThrottlerGuard`, plus the global IP throttle).
 - Body: `{ "churchId"?: uuid, "message": string (1 to 1000 chars, not blank), "conversationId"?: uuid }`. `churchId` is injected by ChurchContextGuard.
 - Response (normal envelope): `data = { "conversationId": uuid, "components": AiComponent[] }`. Components follow `packages/config/src/types/ai-components.ts` (see `ai-components.md`), always after `validateAiResponse`.
-- Errors: 400 blank or invalid body; 404 conversation not found or not owned by the caller; 502 provider call failed; 503 `ANTHROPIC_API_KEY` missing (no call is made).
+- Errors: 400 blank or invalid body; 404 conversation not found or not owned by the caller; 502 provider call failed; 503 AI settings missing or invalid (no call is made; the log names the variable, the response does not).
+
+## Provider
+
+Provider-neutral. The answer loop speaks one message model (`apps/api/src/ai/providers/ai-provider.ts`); an adapter per wire format translates it:
+
+- `AI_API_FORMAT=anthropic` (default): Anthropic Messages API via `@anthropic-ai/sdk`.
+- `AI_API_FORMAT=openai`: OpenAI chat-completions format over `fetch`. Works with any endpoint that speaks it, by setting `AI_BASE_URL`.
+
+Each call times out after 30 seconds. The provider error is logged by class only; the body and the key are never logged.
 
 ## Environment
 
-Set in the Coolify environment for church-dev. Never put these values in the repo, in docs, or in logs.
+Set in the Coolify environment for church-dev. Never put these values in the repo, in docs, or in logs. `apps/api/.env.example` lists the names with empty values.
 
-- `ANTHROPIC_API_KEY`: required. Without it the endpoint returns 503.
-- `AI_MODEL`: optional, default `claude-haiku-5-5`.
+- `AI_API_FORMAT`: `anthropic` (default) or `openai`. Any other value returns 503.
+- `AI_API_KEY`: required. Without it the endpoint returns 503. Sent as the Anthropic `x-api-key`, or as `Authorization: Bearer` for `openai`.
+- `AI_MODEL`: model id. Defaults to `claude-haiku-5-5` for `anthropic`; required for `openai` (503 if missing).
+- `AI_BASE_URL`: optional endpoint override. Defaults: the Anthropic SDK default, or `https://api.openai.com/v1` for `openai`.
+- `AI_API_SECRET`: optional second credential, sent as the `x-api-secret` header on every call. Use it for a gateway that asks for one.
 
 ## Model behaviour
 

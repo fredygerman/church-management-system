@@ -1,4 +1,4 @@
-import { NotFoundException, ServiceUnavailableException } from '@nestjs/common'
+import { BadGatewayException, NotFoundException, ServiceUnavailableException } from '@nestjs/common'
 import { AiService } from './ai.service'
 import { AiReadTools, type AiCaller } from './ai-tools'
 
@@ -48,28 +48,89 @@ function setup() {
   return { store, members, service }
 }
 
+const AI_VARS = ['AI_API_KEY', 'AI_API_FORMAT', 'AI_MODEL', 'AI_BASE_URL', 'AI_API_SECRET'] as const
+
 describe('AiService.chat', () => {
-  const savedKey = process.env.ANTHROPIC_API_KEY
-  const savedModel = process.env.AI_MODEL
+  const saved = Object.fromEntries(AI_VARS.map((k) => [k, process.env[k]]))
 
   beforeEach(() => {
     mockCreate.mockReset()
-    process.env.ANTHROPIC_API_KEY = 'test-key'
-    delete process.env.AI_MODEL
+    for (const k of AI_VARS) delete process.env[k]
+    process.env.AI_API_KEY = 'test-key'
   })
 
   afterAll(() => {
-    if (savedKey === undefined) delete process.env.ANTHROPIC_API_KEY
-    else process.env.ANTHROPIC_API_KEY = savedKey
-    if (savedModel === undefined) delete process.env.AI_MODEL
-    else process.env.AI_MODEL = savedModel
+    for (const k of AI_VARS) {
+      if (saved[k] === undefined) delete process.env[k]
+      else process.env[k] = saved[k]
+    }
   })
 
-  it('returns 503 and makes no call when ANTHROPIC_API_KEY is missing', async () => {
-    delete process.env.ANTHROPIC_API_KEY
+  it('returns 503 and makes no call when AI_API_KEY is missing', async () => {
+    delete process.env.AI_API_KEY
     const { service } = setup()
     await expect(service.chat(admin, { message: 'hi' })).rejects.toBeInstanceOf(ServiceUnavailableException)
     expect(mockCreate).not.toHaveBeenCalled()
+  })
+
+  it('sends the chat to an OpenAI-format endpoint and returns its respond components', async () => {
+    process.env.AI_API_FORMAT = 'openai'
+    process.env.AI_MODEL = 'some-model'
+    process.env.AI_BASE_URL = 'https://gateway.example.test/v1/'
+    process.env.AI_API_SECRET = 'gateway-secret'
+    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          choices: [
+            {
+              message: {
+                content: null,
+                tool_calls: [
+                  {
+                    id: 'call_1',
+                    type: 'function',
+                    function: { name: 'respond', arguments: JSON.stringify({ components: [TEXT('Hello')] }) },
+                  },
+                ],
+              },
+            },
+          ],
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      ),
+    )
+    const { service } = setup()
+
+    try {
+      const result = await service.chat(admin, { message: 'hello' })
+
+      expect(result.components).toEqual([TEXT('Hello')])
+      expect(mockCreate).not.toHaveBeenCalled()
+      const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit]
+      expect(url).toBe('https://gateway.example.test/v1/chat/completions')
+      expect((init.headers as Record<string, string>).authorization).toBe('Bearer test-key')
+      expect((init.headers as Record<string, string>)['x-api-secret']).toBe('gateway-secret')
+      const body = JSON.parse(init.body as string)
+      expect(body.model).toBe('some-model')
+      expect(body.tools.map((t: any) => t.function.name)).toContain('respond')
+    } finally {
+      fetchSpy.mockRestore()
+    }
+  })
+
+  it('returns 502 without leaking the body when the OpenAI-format endpoint fails', async () => {
+    process.env.AI_API_FORMAT = 'openai'
+    process.env.AI_MODEL = 'some-model'
+    const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValueOnce(
+      new Response('{"error":"bad key test-key"}', { status: 401 }),
+    )
+    const { service } = setup()
+
+    try {
+      await expect(service.chat(admin, { message: 'hello' })).rejects.toBeInstanceOf(BadGatewayException)
+    } finally {
+      fetchSpy.mockRestore()
+    }
   })
 
   it('returns the validated respond components and stores the turn', async () => {

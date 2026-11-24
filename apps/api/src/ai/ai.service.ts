@@ -4,10 +4,8 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  ServiceUnavailableException,
 } from '@nestjs/common'
 import { randomUUID } from 'crypto'
-import Anthropic from '@anthropic-ai/sdk'
 import {
   AI_ACTION_REGISTRY,
   validateAiResponse,
@@ -15,9 +13,16 @@ import {
 } from '@church/config'
 import type { AiStoredMessage } from '@church/db'
 import { AiConversationStore } from './ai-conversation.store'
+import { loadAiSettings } from './ai-config'
 import { AiReadTools, type AiCaller } from './ai-tools'
+import {
+  createAiProvider,
+  type AiCompletion,
+  type AiMessage,
+  type AiProvider,
+  type AiToolSpec,
+} from './providers'
 
-const DEFAULT_MODEL = 'claude-haiku-5-5'
 const MAX_TOKENS = 1024
 /** Read-tool rounds allowed per question. */
 const MAX_TOOL_ROUNDS = 4
@@ -56,10 +61,10 @@ const NOT_ANSWERED: AiComponent = {
   text: 'I could not prepare an answer for that. Try asking in a different way.',
 }
 
-const RESPOND_DEFINITION: Anthropic.Tool = {
+const RESPOND_DEFINITION: AiToolSpec = {
   name: RESPOND_TOOL,
   description: 'Return the final answer as UI components. This is the only way to answer.',
-  input_schema: {
+  inputSchema: {
     type: 'object',
     properties: {
       components: { type: 'array', items: { type: 'object' }, maxItems: 20 },
@@ -67,6 +72,8 @@ const RESPOND_DEFINITION: Anthropic.Tool = {
     required: ['components'],
   },
 }
+
+const READ_TOOL_INPUT_SCHEMA = { type: 'object' as const, properties: {} }
 
 export interface AiChatInput {
   message: string
@@ -88,11 +95,9 @@ export class AiService {
   ) {}
 
   async chat(caller: AiCaller, input: AiChatInput): Promise<AiChatResult> {
-    const apiKey = process.env.ANTHROPIC_API_KEY
-    if (!apiKey) {
-      throw new ServiceUnavailableException('AI assistant is not configured: ANTHROPIC_API_KEY is missing')
-    }
-    const model = process.env.AI_MODEL?.trim() || DEFAULT_MODEL
+    // Throws 503 before any provider call or database work when settings are missing.
+    const settings = loadAiSettings()
+    const provider = createAiProvider(settings)
 
     const message = input.message.trim()
     if (!message) {
@@ -110,9 +115,9 @@ export class AiService {
       existing = { id: row.id, messages: row.messages ?? [] }
     }
 
-    const components = await this.answer(apiKey, model, caller, [
+    const components = await this.answer(provider, settings.model, caller, [
       ...toModelHistory(existing?.messages ?? []),
-      { role: 'user', content: message },
+      { role: 'user', text: message },
     ])
 
     const turns: AiStoredMessage[] = [
@@ -135,17 +140,16 @@ export class AiService {
 
   /** Runs the model with read tools until it calls respond, then validates the answer. */
   private async answer(
-    apiKey: string,
+    provider: AiProvider,
     model: string,
     caller: AiCaller,
-    start: Anthropic.MessageParam[],
+    start: AiMessage[],
   ): Promise<AiComponent[]> {
-    const client = new Anthropic({ apiKey })
-    const tools: Anthropic.Tool[] = [
+    const tools: AiToolSpec[] = [
       ...this.tools.definitions().map((t) => ({
         name: t.name,
         description: t.description,
-        input_schema: { type: 'object' as const, properties: {} },
+        inputSchema: READ_TOOL_INPUT_SCHEMA,
       })),
       RESPOND_DEFINITION,
     ]
@@ -155,14 +159,14 @@ export class AiService {
     let retries = 0
 
     for (let call = 0; call < MAX_MODEL_CALLS; call++) {
-      let response: Anthropic.Message
+      let completion: AiCompletion
       try {
-        response = await client.messages.create({
+        completion = await provider.complete({
           model,
-          max_tokens: MAX_TOKENS,
           system: SYSTEM_PROMPT,
           tools,
           messages,
+          maxTokens: MAX_TOKENS,
         })
       } catch (err) {
         // Log the error class only: never the message text or the key.
@@ -170,11 +174,9 @@ export class AiService {
         throw new BadGatewayException('AI provider request failed')
       }
 
-      const content = response.content as Anthropic.ContentBlockParam[]
-      const toolUses = response.content.filter(
-        (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use',
-      )
-      const respond = toolUses.find((b) => b.name === RESPOND_TOOL)
+      const { toolCalls } = completion
+      const assistantTurn: AiMessage = { role: 'assistant', text: completion.text, toolCalls }
+      const respond = toolCalls.find((c) => c.name === RESPOND_TOOL)
 
       if (respond) {
         const verdict = validateComponents(respond.input)
@@ -186,56 +188,55 @@ export class AiService {
         const errorText = `Invalid respond input: ${verdict.errors.slice(0, 10).join('; ')}. Call respond again with valid components.`
         messages = [
           ...messages,
-          { role: 'assistant', content },
+          assistantTurn,
           {
-            role: 'user',
-            content: toolUses.map((b) =>
-              b.name === RESPOND_TOOL
-                ? { type: 'tool_result' as const, tool_use_id: b.id, is_error: true, content: errorText }
-                : { type: 'tool_result' as const, tool_use_id: b.id, content: 'Not executed.' },
+            role: 'tool',
+            outcomes: toolCalls.map((c) =>
+              c.name === RESPOND_TOOL
+                ? { toolCallId: c.id, content: errorText, isError: true }
+                : { toolCallId: c.id, content: 'Not executed.', isError: false },
             ),
           },
         ]
         continue
       }
 
-      if (toolUses.length === 0) {
+      if (toolCalls.length === 0) {
         // Plain text instead of respond: invalid output, retry once.
         if (retries >= RETRY_LIMIT) break
         retries++
         messages = [
           ...messages,
-          { role: 'assistant', content },
-          { role: 'user', content: 'Answer only by calling the respond tool.' },
+          assistantTurn,
+          { role: 'user', text: 'Answer only by calling the respond tool.' },
         ]
         continue
       }
 
       if (toolRounds >= MAX_TOOL_ROUNDS) break
       toolRounds++
-      const results = await Promise.all(
-        toolUses.map(async (b) => {
-          const result = await this.tools.execute(b.name, caller)
-          return {
-            type: 'tool_result' as const,
-            tool_use_id: b.id,
-            content: result.content,
-            ...(result.ok ? {} : { is_error: true }),
-          }
+      const outcomes = await Promise.all(
+        toolCalls.map(async (c) => {
+          const result = await this.tools.execute(c.name, caller)
+          return { toolCallId: c.id, content: result.content, isError: !result.ok }
         }),
       )
-      messages = [...messages, { role: 'assistant', content }, { role: 'user', content: results }]
+      messages = [...messages, assistantTurn, { role: 'tool', outcomes }]
     }
 
     return [NOT_ANSWERED]
   }
 }
 
-/** Last HISTORY_LIMIT stored turns, starting on a user turn (the API requires it). */
-function toModelHistory(stored: AiStoredMessage[]): Anthropic.MessageParam[] {
+/** Last HISTORY_LIMIT stored turns, starting on a user turn (the provider requires it). */
+function toModelHistory(stored: AiStoredMessage[]): AiMessage[] {
   const recent = stored.slice(-HISTORY_LIMIT)
   while (recent.length > 0 && recent[0].role !== 'user') recent.shift()
-  return recent.map((m) => ({ role: m.role, content: m.content }))
+  return recent.map((m): AiMessage =>
+    m.role === 'user'
+      ? { role: 'user', text: m.content }
+      : { role: 'assistant', text: m.content, toolCalls: [] },
+  )
 }
 
 function capHistory(messages: AiStoredMessage[]): AiStoredMessage[] {

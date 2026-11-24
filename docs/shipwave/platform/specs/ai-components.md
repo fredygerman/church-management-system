@@ -51,7 +51,7 @@ Every `href` must be a relative in-app path: it starts with `/`, is not `//...`,
 
 ## Open items
 
-- AI API endpoint and provider wiring: built (`ai-api.md`); needs `ANTHROPIC_API_KEY` in Coolify and migration 0012 before it runs.
+- AI API endpoint and provider wiring: built (`ai-api.md`); needs `AI_API_KEY` (and `AI_API_FORMAT` / `AI_MODEL` for a non-default provider) in Coolify, and migration 0012 applied, before it runs.
 - Web renderer: built. Mobile renderer: in progress.
 - Retention: expired conversations are purged lazily on each chat call; there is no scheduled purge job.
 - Real action registry entries: none approved.
