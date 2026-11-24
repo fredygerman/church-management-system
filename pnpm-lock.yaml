@@ -252,6 +252,9 @@ importers:
 
   apps/mobile:
     dependencies:
+      '@church/config':
+        specifier: workspace:*
+        version: link:../../packages/config
       expo:
         specifier: ~58.0.26
         version: 58.0.26(@babel/core@7.28.6)(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.17)(expo-router@58.0.32)(react-dom@19.2.3(react@19.3.0))(react-native-worklets@0.13.1(@babel/core@7.28.6)(@react-native/metro-config@0.88.1(@babel/core@7.28.6))(react-native@0.88.1(@babel/core@7.28.6)(@react-native/metro-config@0.88.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.28.6)(@react-native/metro-config@0.88.1(@babel/core@7.28.6))(@types/react@19.2.8)(react@19.3.0))(react@19.3.0)(typescript@5.9.3)

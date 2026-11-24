@@ -22,6 +22,7 @@
       "default": "./dist/utils/index.js"
     },
     "./ai": {
+      "react-native": "./src/types/ai-components.ts",
       "types": "./dist/types/ai-components.d.ts",
       "default": "./dist/types/ai-components.js"
     }
