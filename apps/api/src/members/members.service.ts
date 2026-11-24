@@ -1,7 +1,28 @@
 import { Injectable } from '@nestjs/common'
-import { eq, and, isNull, or, ilike } from 'drizzle-orm'
+import { eq, and, isNull, or, ilike, asc, desc, count, type SQL } from 'drizzle-orm'
 import { db } from '@church/db'
 import { members, memberZones, zones, userChurchMemberships, type Member, type MemberZone } from '@church/db'
+import { MEMBER_SORTS, type MemberListQuery } from './members-list'
+
+// Escape LIKE wildcards so user input is matched literally inside `%...%`.
+const containsPattern = (value: string) => `%${value.replace(/[\\%_]/g, (c) => `\\${c}`)}%`
+
+/**
+ * Church-scoped, soft-delete-excluding WHERE clause for the member list.
+ * Shared by the page query and the count query so totals always match rows.
+ */
+export function buildMemberListWhere(churchId: string, query: MemberListQuery): SQL | undefined {
+  const conditions: (SQL | undefined)[] = [
+    eq(members.churchId, churchId),
+    isNull(members.deletedAt),
+  ]
+  if (query.firstName) conditions.push(ilike(members.firstName, containsPattern(query.firstName)))
+  if (query.lastName) conditions.push(ilike(members.lastName, containsPattern(query.lastName)))
+  if (query.occupation) conditions.push(ilike(members.occupation, containsPattern(query.occupation)))
+  if (query.gender) conditions.push(eq(members.gender, query.gender))
+  if (query.maritalStatus) conditions.push(eq(members.maritalStatus, query.maritalStatus))
+  return and(...conditions)
+}
 
 export type CreateMemberInput = {
   churchId: string
@@ -45,6 +66,28 @@ export class MembersService {
       limit: effectiveLimit,
       offset: effectiveOffset,
     })
+  }
+
+  /**
+   * Paged, filtered member list plus the total count for the same filters
+   */
+  async listMembers(churchId: string, query: MemberListQuery): Promise<{ rows: Member[]; total: number }> {
+    const where = buildMemberListWhere(churchId, query)
+    const sort = MEMBER_SORTS[query.sort]
+    const sortColumn = members[sort.column]
+    const orderBy = sort.direction === 'desc' ? desc(sortColumn) : asc(sortColumn)
+
+    const [rows, [countRow]] = await Promise.all([
+      db
+        .select()
+        .from(members)
+        .where(where)
+        .orderBy(orderBy, asc(members.id))
+        .limit(query.limit)
+        .offset(query.offset),
+      db.select({ value: count() }).from(members).where(where),
+    ])
+    return { rows, total: Number(countRow?.value ?? 0) }
   }
 
   /**

@@ -17,7 +17,7 @@ import { MembersService, type CreateMemberInput } from './members.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
 import { UserRole } from '../auth/types/permission.types'
-import { parsePagination } from '../helpers/pagination.helper'
+import { buildMemberListMeta, parseMemberListQuery } from './members-list'
 
 export type UpdateMemberInput = Partial<CreateMemberInput>
 
@@ -41,23 +41,20 @@ export class MembersController {
   }
 
   /**
-   * GET /members - List members by church
+   * GET /members - List members by church (filters, sort, pagination)
+   * Returns { data: rows, meta: { total, page, limit, total_pages } }
    */
   @Get()
   @RequirePermission('read:member')
-  async list(
-    @Req() request: Request,
-    @Query('limit') limitStr?: string,
-    @Query('offset') offsetStr?: string,
-  ) {
+  async list(@Req() request: Request, @Query() query: Record<string, unknown>) {
     const churchId = request['churchId'] as string
     if (!churchId) {
       throw new BadRequestException('Church context is required')
     }
 
-    const { limit, offset } = parsePagination(limitStr, offsetStr)
-
-    return this.membersService.getMembersByChurch(churchId, limit, offset)
+    const listQuery = parseMemberListQuery(query)
+    const { rows, total } = await this.membersService.listMembers(churchId, listQuery)
+    return { data: rows, meta: buildMemberListMeta(total, listQuery) }
   }
 
   /**
