@@ -17,6 +17,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 interface Church {
   id: string
@@ -37,6 +46,8 @@ export function ChurchSwitcher({
   const router = useRouter()
   const [switchingChurchId, setSwitchingChurchId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [pendingChurch, setPendingChurch] = useState<Church | null>(null)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const goToChurch = async (church: Church) => {
     if (switchingChurchId) {
@@ -73,6 +84,7 @@ export function ChurchSwitcher({
   }
 
   return (
+    <>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <button className="w-full flex items-center gap-3 rounded-lg border border-border bg-muted hover:bg-muted/80 px-3 py-3 transition-colors text-left">
@@ -104,7 +116,13 @@ export function ChurchSwitcher({
         {churches.map((church) => (
           <DropdownMenuItem
             key={church.id}
-            onClick={() => goToChurch(church)}
+            onClick={() => {
+              if (currentChurch?.id === church.id) {
+                return
+              }
+              setPendingChurch(church)
+              setConfirmOpen(true)
+            }}
             className={cn(
               "my-1 flex items-center gap-3 p-2 cursor-pointer rounded-lg",
               currentChurch?.id === church.id && "bg-primary text-primary-foreground"
@@ -149,5 +167,32 @@ export function ChurchSwitcher({
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Switch to {pendingChurch?.name}?</DialogTitle>
+          <DialogDescription>
+            Your account stays the same. You will open this church&apos;s space.
+          </DialogDescription>
+        </DialogHeader>
+        {/* TODO: Add reviewed Swahili copy for this church switch confirmation. */}
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setConfirmOpen(false)
+              if (pendingChurch) {
+                goToChurch(pendingChurch)
+              }
+            }}
+          >
+            Switch
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }
