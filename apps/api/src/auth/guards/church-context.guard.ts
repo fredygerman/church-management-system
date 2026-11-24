@@ -57,6 +57,7 @@ export class ChurchContextGuard implements CanActivate {
         '/auth/switch-church': ['POST'],
         '/churches': ['GET'],
         '/auth/profile': ['GET'],
+        '/auth/memberships': ['GET'],
       }
       
       if (safePaths.some((path) => request.path.includes(path))) {
