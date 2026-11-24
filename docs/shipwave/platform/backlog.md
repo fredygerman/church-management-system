@@ -1,6 +1,6 @@
 # Programme backlog
 
-Planning inventory only; implementation is not authorized. Every task is **Not started** until a future approved run; blocked capabilities remain blocked at dispatch until decisions/contracts are resolved.
+Programme ledger. Implementation is under way; all decisions DEC-01 to DEC-11 were accepted on 2026-11-24 (see [decisions.md](decisions.md)). Row states below are the older per-slice notes; the **Status 2026-11-24** section at the end is the current summary.
 
 | ID | Group | Owning specification | Outcome | State | Dependencies |
 |---|---|---|---|---|---|
@@ -18,3 +18,20 @@ Planning inventory only; implementation is not authorized. Every task is **Not s
 | Q-02 | Human verification | [human-verification.md](human-verification.md) | Perform named product/device/accessibility checks on accepted build | Not started | Code complete, DEC-10 |
 
 Detailed file ownership, exclusions and proposed paths are in the linked specs and [allocation manifest](allocation-manifest.md). **Not started** describes implementation; unresolved decision-gated slices may become **Blocked** only when dispatched. Cross-link design, web/API, mobile and shared foundation waves here as the global ledger.
+
+## Status 2026-11-24 (code work, before human verification)
+
+Verified once for this batch: frozen install, `@church/config` build and tests (34), `@church/db` build, API type-check and full jest (129 tests, 16 suites), web type-check, mobile type-check and Android export. No runtime run against a live API or device yet.
+
+| Area | Done (commits on `design/mito-ya-baraka-concepts`) | Open |
+|---|---|---|
+| W-01 auth | Refresh-token rotation with reuse detection, 10-second grace window, atomic rotation, refresh tokens rejected as Bearer, expired-row purge (`cdc3054`, `fda351a`, `c7d954d`, `226e468`, `871eb80`); migration `0011_exotic_stick` generated, not applied | Web rotated token persists only in server memory (NextAuth cookie cannot be rewritten from server components), so a server restart forces one sign-in; fix by writing the cookie from a route handler |
+| W-02 dashboard | `GET /dashboard/stats` returns `totalMembers` and `activeZones` only (`4e46b1a`); web shows only those (`4b140d9`) | `pendingVisitors` and `recentActivities` have no verified source and are omitted |
+| Contracts | Verified endpoint contracts and mismatch list (`d5fc31d`); M1 to M6 fixed (`b83d9ff`, `adc5975`, `93566df`, `4b140d9`, `e472c55`, `01da216`, `0f2c6a3`, `edb64c1`) | Mail and SMS body DTOs lack `churchId` (DEC-05: no sending work this release) |
+| Memberships | `GET /auth/memberships` active only, reachable without church context (`77cfe74`, `1aba2c1`, `773cedc`) | Mobile space-switch UI not built |
+| W-05 library | API, web list and reader, mobile list, search and signed download; migration `0010_faithful_blue_blade` | Apply migrations; in-app mobile reader uses the device browser |
+| W-06 AI | Shared component contract (`6aa0ba4`), `POST /ai/chat` with read-only tools and 30-day store (`e53dd6b`, `8aff5ef`), web Assistant (`6169488`, `92a7bb5`), mobile Assistant (`0eca1f4`, `c428f79`, `0cc3e6c`); migration `0012_swift_mesmero` generated, not applied | `ANTHROPIC_API_KEY` in Coolify; action registry empty so forms and confirm buttons are disabled; no scheduled purge job |
+| W-03/W-04 | Denied state, switch confirmation, reader, staff Content and More, mobile staff read-only screens | Reports (DEC-04: only metrics with a verified source); role settings (DEC-06: unchanged); Swahili copy review |
+| Q-01 | Batch review of the foundation lane done; important findings fixed | None |
+| Q-02 | Not started | Fredy performs the checks after the push and migrations (DEC-10) |
+
