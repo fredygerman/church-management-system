@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from "react"
-import { ActivityIndicator, FlatList, Linking, Pressable, StyleSheet, Text, View } from "react-native"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { ActivityIndicator, FlatList, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
@@ -44,6 +44,7 @@ export default function LibraryScreen() {
   const [loading, setLoading] = useState(true)
   const [rowErrors, setRowErrors] = useState<Record<string, string>>({})
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
+  const [query, setQuery] = useState("")
 
   const load = useCallback(async () => {
     if (!churchId) {
@@ -83,13 +84,36 @@ export default function LibraryScreen() {
     }
   }, [churchId, downloadingId])
 
+  // Client-side filter over the loaded list; no search endpoint exists.
+  const visibleDocuments = useMemo(() => {
+    const needle = query.trim().toLowerCase()
+    if (!needle) return documents
+    return documents.filter((document) =>
+      [document.title, document.description, document.original_file_name]
+        .some((field) => field?.toLowerCase().includes(needle))
+    )
+  }, [documents, query])
+
   if (loading) return <LoadingState />
   if (error) return <ErrorState message={error} onRetry={() => void load()} />
   if (!documents.length) return <EmptyState message="No shared documents have been published yet." />
 
   return <FlatList
+    ListEmptyComponent={<EmptyState message="No documents match your search." />}
+    ListHeaderComponent={<View>
+      <Text style={styles.formLabel}>Search documents</Text>
+      <TextInput
+        accessibilityLabel="Search documents"
+        autoCapitalize="none"
+        autoCorrect={false}
+        onChangeText={setQuery}
+        style={styles.input}
+        value={query}
+      />
+    </View>}
     contentContainerStyle={styles.content}
-    data={documents}
+    data={visibleDocuments}
+    keyboardShouldPersistTaps="handled"
     keyExtractor={(document) => document.id}
     renderItem={({ item }) => {
       const busy = downloadingId === item.id
