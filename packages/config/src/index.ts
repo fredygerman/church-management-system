@@ -14,6 +14,7 @@
 // Application-level types (enums, constants, interfaces) - Client-safe
 export * from './types/notifications'
 export * from './types/visitor'
+export * from './types/ai-components'
 export * from './permissions'
 
 // Shared utilities - Client-safe
