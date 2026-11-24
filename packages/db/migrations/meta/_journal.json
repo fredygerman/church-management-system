@@ -85,6 +85,13 @@
       "when": 1795511212301,
       "tag": "0011_exotic_stick",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1795512277628,
+      "tag": "0012_swift_mesmero",
+      "breakpoints": true
     }
   ]
 }
