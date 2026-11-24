@@ -4,8 +4,8 @@ export interface ReportDefinition {
   title: string
   /** Path under /[churchId] of the page that shows the figures. */
   href: string
-  /** Permission that page requires (same rule as config/routes.ts). */
-  permission: PermissionAction
+  /** Every permission the page requires: the route rule (config/routes.ts) and the page's own check. */
+  permissions: PermissionAction[]
   /** One-line definition. Mirrored in docs/shipwave/platform/specs/api-contracts.md (DEC-04). */
   definition: string
 }
@@ -18,14 +18,14 @@ export const REPORTS: ReportDefinition[] = [
   {
     title: "Attendance trends",
     href: "/dashboard/attendance/analytics",
-    permission: "view:attendance",
+    permissions: ["view:attendance"],
     definition:
-      "Check-ins per zone, gender or age band for a date range. Counts check-in records for sessions dated in the range; unique members and sessions are counted within each group.",
+      "Check-ins per zone, gender or age band for a date range. Counts check-in records for sessions dated in the range; unique members and sessions are counted within each group. A member in several zones is counted in each zone.",
   },
   {
     title: "Giving summary",
     href: "/dashboard/offerings/reports",
-    permission: "manage:offerings",
+    permissions: ["manage:offerings", "view:giving-reports"],
     definition:
       "Sum of non-deleted offerings by category, or by week, month or year of offering date. Totals are shown separately for each currency.",
   },

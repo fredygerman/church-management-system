@@ -37,6 +37,11 @@ interface RequestConfig {
   skipAuth?: boolean
 }
 
+function isRedirectSignal(error: unknown): boolean {
+  const digest = (error as { digest?: unknown } | null)?.digest
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")
+}
+
 const getBaseUrl = (): string => {
   // Server-side only - use internal API URL if available
   if (typeof window === "undefined" && process.env.API_BASE_URL) {
@@ -168,6 +173,8 @@ async function serverFetch<D = any>({
               
               return retryData
             } catch (refreshError) {
+              // A redirect raised inside this block is the outcome, not a refresh failure.
+              if (isRedirectSignal(refreshError)) throw refreshError
               console.error("[API] Token refresh failed:", refreshError)
             }
           }

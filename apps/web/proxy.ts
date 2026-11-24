@@ -30,16 +30,15 @@ async function rotateSession(req: NextRequest, token: Record<string, any>): Prom
   if (!name || typeof token.refreshToken !== "string" || typeof token.expiresAt !== "number") return null
   if (token.expiresAt > Date.now() / 1000 + REFRESH_AHEAD_SECONDS) return null
 
-  let rotated: RotatedTokens
   try {
-    rotated = await getRotatedTokens(env.API_BASE_URL, token.refreshToken)
+    const rotated: RotatedTokens = await getRotatedTokens(env.API_BASE_URL, token.refreshToken)
+    const updated = applyRotatedTokens(token, rotated)
+    const value = await encode({ token: updated, secret: env.NEXTAUTH_SECRET, maxAge: SESSION_MAX_AGE })
+    return { name, value, token: updated }
   } catch {
+    // The session stays as it is; the jwt callback still handles an expired or rejected one.
     return null
   }
-
-  const updated = applyRotatedTokens(token, rotated)
-  const value = await encode({ token: updated, secret: env.NEXTAUTH_SECRET, maxAge: SESSION_MAX_AGE })
-  return { name, value, token: updated }
 }
 
 /** Request headers with the session cookie replaced, so this request's server components see the new session. */

@@ -177,16 +177,12 @@ export async function getOfferingReportSummary(
   groupBy: "category" | "period",
   options?: { period?: "week" | "month" | "year"; from?: string; to?: string }
 ): Promise<any[]> {
-  try {
-    const result = await apiGet("/offerings/reports/summary", { churchId, groupBy, ...options })
-    return Array.isArray(result) ? result : []
-  } catch (error) {
-    if (error instanceof Error && error.message === "NEXT_REDIRECT") {
-      throw error
-    }
-    console.error("Error fetching offering report summary:", error)
-    return []
+  // Errors propagate: an empty list would read as "no offerings" (DEC-04: no false zero).
+  const result = await apiGet("/offerings/reports/summary", { churchId, groupBy, ...options })
+  if (!Array.isArray(result)) {
+    throw new Error("Offering report is unavailable")
   }
+  return result
 }
 
 // ============================================

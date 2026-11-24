@@ -21,7 +21,7 @@ export async function getDepartments(churchId: string): Promise<any[]> {
 // Function to get a single department by ID
 export async function getDepartmentById(churchId: string, departmentId: string): Promise<any> {
   try {
-    return await apiGet(`/departments/${departmentId}`, { churchId })
+    return await apiGet(`/departments/${encodeURIComponent(departmentId)}`, { churchId })
   } catch (error) {
     console.error('Error fetching department:', error)
     throw error
@@ -39,7 +39,7 @@ export async function getDepartmentMembers(
   }
 ): Promise<{ members: any[]; pageCount: number }> {
   try {
-    const result = await apiGet(`/departments/${departmentId}/members`, {
+    const result = await apiGet(`/departments/${encodeURIComponent(departmentId)}/members`, {
       churchId,
       page: (queryParams?.page ?? 1).toString(),
       per_page: (queryParams?.per_page ?? 10).toString(),
@@ -83,7 +83,7 @@ export async function updateDepartment(departmentId: string, data: {
   meetingDay?: string
 }, churchId: string): Promise<any> {
   try {
-    const result = await apiPut(`/departments/${departmentId}`, { ...data, churchId })
+    const result = await apiPut(`/departments/${encodeURIComponent(departmentId)}`, { ...data, churchId })
 
     // Revalidate department detail page and list
     if (churchId) {
@@ -101,7 +101,7 @@ export async function updateDepartment(departmentId: string, data: {
 // Function to delete a department
 export async function deleteDepartment(departmentId: string, churchId: string): Promise<void> {
   try {
-    await apiDelete(`/departments/${departmentId}`, { churchId })
+    await apiDelete(`/departments/${encodeURIComponent(departmentId)}`, { churchId })
 
     // Revalidate departments list page
     if (churchId) {
@@ -121,7 +121,7 @@ export async function assignMemberToDepartment(
   churchId: string
 ): Promise<any> {
   try {
-    const result = await apiPost(`/departments/${departmentId}/members`, {
+    const result = await apiPost(`/departments/${encodeURIComponent(departmentId)}/members`, {
       memberId,
       isLeader,
       churchId,
@@ -147,7 +147,7 @@ export async function removeMemberFromDepartment(
 ): Promise<void> {
   try {
     // Simple removal with no leader-reassignment logic (unlike zones)
-    await apiDelete(`/departments/${departmentId}/members/${memberId}`, { churchId })
+    await apiDelete(`/departments/${encodeURIComponent(departmentId)}/members/${encodeURIComponent(memberId)}`, { churchId })
 
     // Revalidate department detail page
     if (churchId) {
@@ -166,7 +166,7 @@ export async function addDepartmentLeader(
   churchId: string
 ): Promise<any> {
   try {
-    const result = await apiPost(`/departments/${departmentId}/leaders`, {
+    const result = await apiPost(`/departments/${encodeURIComponent(departmentId)}/leaders`, {
       memberId,
       churchId,
     })
@@ -190,7 +190,7 @@ export async function removeDepartmentLeader(
   churchId: string
 ): Promise<any> {
   try {
-    const result = await apiDelete(`/departments/${departmentId}/leaders/${memberId}`, { churchId })
+    const result = await apiDelete(`/departments/${encodeURIComponent(departmentId)}/leaders/${encodeURIComponent(memberId)}`, { churchId })
 
     // Revalidate department detail page
     if (churchId) {
@@ -207,7 +207,7 @@ export async function removeDepartmentLeader(
 // Function to get department statistics
 export async function getDepartmentStats(churchId: string, departmentId: string): Promise<any> {
   try {
-    return await apiGet(`/departments/${departmentId}/stats`, { churchId })
+    return await apiGet(`/departments/${encodeURIComponent(departmentId)}/stats`, { churchId })
   } catch (error) {
     console.error('Error fetching department stats:', error)
     return { totalMembers: 0, leaders: 0, regularMembers: 0 }

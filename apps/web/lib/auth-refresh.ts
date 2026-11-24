@@ -17,6 +17,14 @@ const inFlight = new Map<string, Promise<RotatedTokens>>()
 // Session refresh tokens the API has rejected; never sent again in this process.
 const rejected = new Set<string>()
 
+// Bounds the per-process maps; the oldest entry goes first.
+const MAX_TRACKED = 1000
+function remember<V>(map: Map<string, V>, key: string, value: V) {
+  map.delete(key)
+  map.set(key, value)
+  if (map.size > MAX_TRACKED) map.delete(map.keys().next().value as string)
+}
+
 export function decodeJwtPayload(token: string): Record<string, any> {
   return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString())
 }
@@ -78,12 +86,15 @@ export function getRotatedTokens(apiBaseUrl: string, sessionRefreshToken: string
   if (!pending) {
     pending = rotate(apiBaseUrl, sendToken)
       .then((pair) => {
-        latest.set(sessionRefreshToken, pair)
+        remember(latest, sessionRefreshToken, pair)
         return pair
       })
       .catch((error: RefreshError) => {
         // A rejected token must not be replayed; a network error may be retried.
-        if (error.status === 401 || error.status === 403) rejected.add(sessionRefreshToken)
+        if (error.status === 401 || error.status === 403) {
+          rejected.add(sessionRefreshToken)
+          if (rejected.size > MAX_TRACKED) rejected.delete(rejected.values().next().value as string)
+        }
         throw error
       })
       .finally(() => inFlight.delete(sendToken))

@@ -12,7 +12,7 @@ export default async function ReportsPage({ params }: PageProps) {
   const session = await getSession()
   const role = session?.user?.activeRole || session?.user?.role
   // Only reports the caller's role may open are listed; each page still checks on its own.
-  const available = REPORTS.filter((report) => hasPermission(role, report.permission))
+  const available = REPORTS.filter((report) => report.permissions.every((permission) => hasPermission(role, permission)))
 
   return (
     <div className="space-y-6">

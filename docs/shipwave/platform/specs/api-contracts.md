@@ -265,5 +265,5 @@ Each figure shown in the web Reports must come from the query behind one of thes
 
 | Report | Endpoint | Definition |
 |---|---|---|
-| Attendance trends | `GET /attendance/trends` (`view:attendance`) | Check-ins per zone, gender or age band for a date range. Total check-ins are check-in records for sessions dated in the range. Unique members and sessions are distinct within each group. Avg per session is total check-ins divided by sessions. Zone groups members by their zone, `unassigned` when none. The API also accepts `branch`, which groups by zone; the web does not offer it. |
+| Attendance trends | `GET /attendance/trends` (`view:attendance`) | Check-ins per zone, gender or age band for a date range. Total check-ins are check-in records for sessions dated in the range. Unique members and sessions are distinct within each group. Avg per session is total check-ins divided by sessions. Zone groups members by their zone, `unassigned` when none; a member in several zones is counted in each zone (removed zone links are ignored). The API also accepts `branch`, which groups by zone; the web does not offer it. |
 | Giving summary | `GET /offerings/reports/summary` (`view:giving-reports`) | Sum of non-deleted offerings by category, or by week, month or year of offering date. Always split by currency. |
