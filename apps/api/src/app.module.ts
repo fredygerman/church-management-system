@@ -31,6 +31,7 @@ import { FamilyLifecycleModule } from './family-lifecycle/family-lifecycle.modul
 import { PrayerModule } from './prayer/prayer.module'
 import { OfferingsModule } from './offerings/offerings.module'
 import { EventsModule } from './events/events.module'
+import { DashboardModule } from './dashboard/dashboard.module'
 import config from './config'
 
 @Module({
@@ -59,6 +60,7 @@ import config from './config'
     PrayerModule,
     OfferingsModule,
     EventsModule,
+    DashboardModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
