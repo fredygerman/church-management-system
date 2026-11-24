@@ -9,11 +9,13 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from '../database/database.service';
-import { and, asc, desc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
 import {
   users,
+  refreshTokens,
   type User,
   churches,
   type Church,
@@ -28,9 +30,15 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
+const REFRESH_TOKEN_TTL_SECONDS = 604800; // 7 days
+
 export interface RefreshTokenPayload {
   sub: string;
   type: 'refresh';
+  // jti identifies the refresh_tokens row; fid is the family (one login) it belongs to.
+  // Tokens issued before rotation lack both and are rejected on refresh.
+  jti?: string;
+  fid?: string;
   email?: string;
   role?: string;
   churchId?: string | null;
@@ -105,13 +113,19 @@ export class AuthService implements OnModuleInit {
 
   private async authResponse(user: User): Promise<AuthResponse> {
     const membership = await this.getPreferredMembership(user.id, user.churchId);
-    return { ...this.generateTokens(user, membership), user: this.withoutPassword(user) };
+    return { ...(await this.generateTokens(user, membership)), user: this.withoutPassword(user) };
   }
 
   /**
-   * Generate JWT tokens (access and refresh)
+   * Generate JWT tokens (access and refresh). Each refresh token is recorded in
+   * refresh_tokens. Without familyId (login, switch-church) a new family starts;
+   * rotation passes the existing family so reuse can revoke all of it.
    */
-  generateTokens(user: any, membership?: ActiveMembershipContext | null): AuthTokens {
+  async generateTokens(
+    user: any,
+    membership?: ActiveMembershipContext | null,
+    familyId: string = randomUUID(),
+  ): Promise<AuthTokens> {
     const activeChurchId = membership?.churchId ?? user.activeChurchId ?? user.churchId ?? null;
     const activeMembershipId = membership?.id ?? user.activeMembershipId ?? user.membershipId ?? null;
     const activeRole = membership?.role ?? user.activeRole ?? user.role ?? 'member';
@@ -134,12 +148,20 @@ export class AuthService implements OnModuleInit {
       expiresIn: 3600, // 1 hour in seconds
     });
 
+    const jti = randomUUID();
     const refreshToken = this.jwtService.sign(
-      { ...payload, type: 'refresh' },
+      { ...payload, type: 'refresh', jti, fid: familyId },
       {
-        expiresIn: 604800, // 7 days in seconds
+        expiresIn: REFRESH_TOKEN_TTL_SECONDS,
       }
     );
+
+    await this.db.insert(refreshTokens).values({
+      id: jti,
+      userId: user.id,
+      familyId,
+      expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL_SECONDS * 1000),
+    });
 
     return { accessToken, refreshToken };
   }
@@ -248,16 +270,72 @@ export class AuthService implements OnModuleInit {
 
   /**
    * Invalidate every token issued to a user (logout). Bumping tokenVersion
-   * makes existing access and refresh tokens fail the version check.
+   * makes existing access and refresh tokens fail the version check; open
+   * refresh_tokens rows are also marked used so they cannot rotate.
    */
   async revokeTokens(userId: string): Promise<void> {
     await this.db
       .update(users)
       .set({ tokenVersion: sql`${users.tokenVersion} + 1` })
       .where(eq(users.id, userId));
+
+    await this.db
+      .update(refreshTokens)
+      .set({ usedAt: new Date() })
+      .where(and(eq(refreshTokens.userId, userId), isNull(refreshTokens.usedAt)));
   }
 
-  async refreshTokensForPayload(payload: any): Promise<AuthTokens> {
+  /**
+   * Exchange a refresh token for a new access/refresh pair in the same family.
+   *
+   * The presented jti is consumed with a conditional UPDATE, so two concurrent
+   * refreshes cannot both succeed. If the jti was already used, is unknown, or
+   * has expired, the whole family is revoked and the request gets 401. A
+   * replayed token therefore also kills the newer token issued from it.
+   *
+   * Pre-rotation refresh tokens (no jti/fid, no row) are rejected with 401, so
+   * those users must sign in again once after this change ships.
+   */
+  async rotateRefreshToken(token: unknown): Promise<AuthTokens> {
+    const payload = await this.verifyRefreshToken(token);
+
+    if (!payload.jti || !payload.fid) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const now = new Date();
+    const [consumed] = await this.db
+      .update(refreshTokens)
+      .set({ usedAt: now })
+      .where(
+        and(
+          eq(refreshTokens.id, payload.jti),
+          eq(refreshTokens.userId, payload.sub),
+          isNull(refreshTokens.usedAt),
+          gt(refreshTokens.expiresAt, now),
+        ),
+      )
+      .returning({ id: refreshTokens.id });
+
+    if (!consumed) {
+      await this.db
+        .update(refreshTokens)
+        .set({ usedAt: now })
+        .where(
+          and(
+            eq(refreshTokens.familyId, payload.fid),
+            eq(refreshTokens.userId, payload.sub),
+            isNull(refreshTokens.usedAt),
+          ),
+        );
+      this.logger.warn(`Refresh token reuse or expiry for user ${payload.sub}; family ${payload.fid} revoked`);
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    return this.refreshTokensForPayload(payload, payload.fid);
+  }
+
+  async refreshTokensForPayload(payload: any, familyId: string): Promise<AuthTokens> {
     const user = await this.getProfile(payload.sub).catch((error) => {
       if (error instanceof NotFoundException) {
         throw new UnauthorizedException('Invalid or expired refresh token');
@@ -278,7 +356,7 @@ export class AuthService implements OnModuleInit {
       payload.activeChurchId ?? payload.churchId ?? null,
     );
 
-    return this.generateTokens(user, membership);
+    return this.generateTokens(user, membership, familyId);
   }
 
   private toMembershipContext(
@@ -319,7 +397,7 @@ export class AuthService implements OnModuleInit {
    */
   async refreshToken(user: Omit<User, 'passwordHash'>): Promise<AuthTokens> {
     const membership = await this.getPreferredMembership(user.id, user.churchId);
-    const tokens = this.generateTokens(user, membership);
+    const tokens = await this.generateTokens(user, membership);
     this.logger.log(`Token refreshed for user: ${user.id}`);
     return tokens;
   }

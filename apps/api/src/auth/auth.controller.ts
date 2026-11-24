@@ -74,10 +74,9 @@ export class AuthController {
     description: 'Invalid or expired refresh token',
   })
   async refreshToken(@Body() body: { refreshToken?: string }) {
-    // verifyRefreshToken and refreshTokensForPayload throw UnauthorizedException
-    // for invalid tokens; other failures (e.g. database errors) surface as 500.
-    const decoded = await this.authService.verifyRefreshToken(body?.refreshToken);
-    return this.authService.refreshTokensForPayload(decoded);
+    // rotateRefreshToken throws UnauthorizedException for invalid, reused, or
+    // pre-rotation tokens; other failures (e.g. database errors) surface as 500.
+    return this.authService.rotateRefreshToken(body?.refreshToken);
   }
 
   /**
@@ -161,7 +160,7 @@ export class AuthController {
     }
 
     const membership = await this.authService.getPreferredMembership(user.id, user.churchId);
-    const tokens = this.authService.generateTokens(user, membership);
+    const tokens = await this.authService.generateTokens(user, membership);
     
     return {
       ...tokens,
@@ -322,7 +321,7 @@ export class AuthController {
 
       // Generate tokens
       const membership = await this.authService.getPreferredMembership(user.id, user.churchId);
-      const tokens = this.authService.generateTokens(user, membership);
+      const tokens = await this.authService.generateTokens(user, membership);
 
       // Set tokens as secure, HttpOnly cookies instead of query params to prevent token leakage
       const isProduction = process.env.NODE_ENV === 'production';
@@ -459,7 +458,7 @@ export class AuthController {
 
       // Generate new tokens with updated user info
       const membership = await this.authService.getPreferredMembership(updatedUser.id, church.id);
-      const tokens = this.authService.generateTokens(updatedUser, membership);
+      const tokens = await this.authService.generateTokens(updatedUser, membership);
 
       this.logger.log(`Church setup completed for user: ${user.id}, church: ${church.id}`);
 
