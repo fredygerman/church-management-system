@@ -13,8 +13,8 @@ Programme ledger. Implementation is under way; all decisions DEC-01 to DEC-11 we
 | W-06 | Web/API | [content-and-ai.md](specs/content-and-ai.md) | AI policy and capability gate; implementation only after DEC-08 | Not started | DEC-08 |
 | M-01 | Mobile | [mobile.md](specs/mobile.md) | Mobile stack/toolchain and API capability inventory; member and staff journeys. M0 skeleton (`fc1b831`) and M1 member core (`552dfcf`: sign-in with SecureStore tokens, read-only Home/Church/Events/Profile, Library and staff placeholders) committed; typecheck and Android export pass. API inventory: [mobile-api-inventory.md](specs/mobile-api-inventory.md) (`23ff450`). M1b member actions committed (`5be3d28`): event detail with RSVP, prayer request form, profile edit; endpoints verified against the users PATCH handler. M1b member actions (`5be3d28`) and M2 library list with signed downloads (`74e3eb4`; route paths corrected to `/api/files/library` in `90637f3`) committed. No runtime or device test yet; migration 0010 must be applied before the library returns data; staff read-only People, Services and Content screens committed (`6381577`); Staff Dashboard shows `GET /dashboard/stats` (`totalMembers`, `activeZones`); staff More has the space switcher and sign-out; signed-in users are routed to the staff or member area by their active role | In progress | DEC-03 accepted 2026-11-19; refresh-token rotation not implemented (inventory risk 1) |
 | M-02 | Mobile | [mobile.md](specs/mobile.md) | Mobile library/search/reader and eligible downloads | In progress: list, client-side search and signed download committed; in-app reader not built (needs a WebView dependency decision; signed document opens in the device browser) | M-01, W-05 contracts; no commerce |
-| M-03 | Mobile | [mobile.md](specs/mobile.md) | Mobile staff space and AI entry/conversation capability gate | Not started | M-01; AI blocked on DEC-08 and staff contracts |
-| Q-01 | Integration | [RUN-POLICY.md](RUN-POLICY.md) | Serialized schema/contracts/generation, integration and one bounded correctness/complexity review. No CI baseline: Coolify auto-deploys on push, per Fredy | Not started | Each task's actual contract/migration edges; no blanket W0 gate |
+| M-03 | Mobile | [mobile.md](specs/mobile.md) | Mobile staff space and AI entry/conversation capability gate | Code complete: role routing sends staff to the staff area; staff Dashboard, People, Services, Content and More; Assistant entry for signed-in users with server-side read:self and tool-level permission checks | M-01; AI policy DEC-08 |
+| Q-01 | Integration | [RUN-POLICY.md](RUN-POLICY.md) | Serialized schema/contracts/generation, integration and one bounded correctness/complexity review | Code complete: foundation lane reviewed earlier; the wave of this batch reviewed by three read-only reviewers (API, web, mobile), confirmed findings fixed (`29b1cf7`, `1b45fd8`, `d1ca9eb`). No CI baseline: Coolify auto-deploys on push, per Fredy | Each task's contract/migration edges |
 | Q-02 | Human verification | [human-verification.md](human-verification.md) | Perform named product/device/accessibility checks on accepted build | Not started | Code complete, DEC-10 |
 
 Detailed file ownership, exclusions and proposed paths are in the linked specs and [allocation manifest](allocation-manifest.md). **Not started** describes implementation; unresolved decision-gated slices may become **Blocked** only when dispatched. Cross-link design, web/API, mobile and shared foundation waves here as the global ledger.
@@ -32,6 +32,24 @@ Verified once for this batch: frozen install, `@church/config` build and tests (
 | W-05 library | API, web list and reader, mobile list, search and signed download; migration `0010_faithful_blue_blade` | Apply migrations; in-app mobile reader uses the device browser |
 | W-06 AI | Shared component contract (`6aa0ba4`), `POST /ai/chat` with read-only tools and 30-day store (`e53dd6b`, `8aff5ef`), web Assistant (`6169488`, `92a7bb5`), mobile Assistant (`0eca1f4`, `c428f79`, `0cc3e6c`); migration `0012_swift_mesmero` generated, not applied | Provider settings (`AI_API_FORMAT`, `AI_API_KEY`, `AI_MODEL`, `AI_BASE_URL`, `AI_API_SECRET`) in Coolify, provider-neutral adapters (anthropic and openai formats); action registry empty so forms and confirm buttons are disabled; daily retention job built (`RetentionService`, 03:00: documents past 30 days, expired refresh tokens and AI conversations) |
 | W-03/W-04 | Denied state, switch confirmation, reader, staff Content and More, mobile staff read-only screens | Reports (DEC-04: only metrics with a verified source); role settings (DEC-06: unchanged); Swahili copy review |
-| Q-01 | Batch review of the foundation lane done; important findings fixed | None |
+| Q-01 | Integration | [RUN-POLICY.md](RUN-POLICY.md) | Serialized schema/contracts/generation, integration and one bounded correctness/complexity review | Code complete: foundation lane reviewed earlier; the wave of this batch reviewed by three read-only reviewers (API, web, mobile), confirmed findings fixed (`29b1cf7`, `1b45fd8`, `d1ca9eb`). No CI baseline: Coolify auto-deploys on push, per Fredy | Each task's contract/migration edges |
 | Q-02 | Not started | Fredy performs the checks after the push and migrations (DEC-10) |
 
+## Status 2026-11-24 (second batch, code work)
+
+Done on `develop` (`ce5a753`, `d2eb14f`, `29b1cf7`, `1b45fd8`, `d1ca9eb`, plus the More page change):
+
+- Web session: the proxy rotates the refresh token 60 seconds before expiry and writes the cookie (`1d168c6`). Known gap: two requests holding the old cookie across a restart can still lose the session.
+- Retention (DEC-09 and DEC-08): daily 03:00 job removes documents soft-deleted for 30 days (object first, row second, a failure keeps the row), expired refresh tokens and expired AI conversations (`ba97470`).
+- Reports (DEC-04): Reports hub lists only reports whose every required permission the caller holds, each with its definition. Attendance trends shows an unavailable notice instead of zero and drops the Branch option (the API groups it by zone). Giving summary shows an error instead of an empty list. Definitions are in `api-contracts.md`.
+- Mobile: space switcher on Profile and More; members and staff routed by active role; switching restores the previous space if it fails; startup keeps the session when the API is unreachable; staff Dashboard shows `totalMembers` and `activeZones`.
+- Web More: role settings link to the existing Permissions page (DEC-06: no redesign); space switching points to the sidebar switcher, which asks for confirmation.
+
+Decisions taken on the recommendation, without a new question to Fredy:
+
+- M-02 in-app reader: no WebView dependency. Signed downloads open in the device browser.
+- W-06 AI actions: the action registry stays empty, so this release has no AI write actions. Forms and confirm buttons stay disabled.
+- Logout revokes every session of the user (the approved revocation behaviour); per-device logout is not built.
+- Mail and SMS DTOs: no `churchId` work, since no sending is enabled (DEC-05).
+
+Not code, still for Fredy after all code work (DEC-10): Q-02 human verification, the Swahili copy review, and the D-01 design review.
