@@ -9,6 +9,7 @@ import { Database } from '../../database/interfaces/database.interfaces';
 
 export interface JwtPayload {
   sub: string; // user id
+  type?: string;
   email?: string;
   phone?: string;
   role?: string;
@@ -39,6 +40,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') implements On
   }
 
   async validate(payload: JwtPayload) {
+    // Refresh tokens are signed with the same secret; only POST /auth/refresh may use them.
+    if (payload.type === 'refresh') {
+      throw new UnauthorizedException('Refresh tokens cannot be used as access tokens');
+    }
+
     const [user] = await this.db
       .select()
       .from(users)
