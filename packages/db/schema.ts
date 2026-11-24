@@ -7,6 +7,7 @@ import {
   type NewMember,
 } from "./tables/members"
 import { users, roleEnum, type User, type NewUser, type RoleType } from "./tables/user"
+import { refreshTokens, type RefreshToken, type NewRefreshToken } from "./tables/refreshTokens"
 import {
   userChurchMemberships,
   userChurchMembershipRoleEvents,
@@ -143,6 +144,7 @@ import {
 
 export {
   users,
+  refreshTokens,
   roleEnum,
   baptismStatusEnum,
   memberGenderEnum,
@@ -243,6 +245,8 @@ export {
   type User,
   type NewUser,
   type RoleType,
+  type RefreshToken,
+  type NewRefreshToken,
   type UserChurchMembership,
   type NewUserChurchMembership,
   type UserChurchMembershipRoleEvent,
