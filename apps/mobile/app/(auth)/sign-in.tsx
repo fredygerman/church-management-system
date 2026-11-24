@@ -1,4 +1,3 @@
-import { router } from "expo-router"
 import { useState } from "react"
 import { Button, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native"
 import { ApiError, api } from "../../lib/api"
@@ -16,8 +15,8 @@ export default function SignInScreen() {
     setLoading(true)
     try {
       const response = await api.post<{ accessToken: string; refreshToken: string; user: Record<string, unknown> }>("/auth/login", { email, password })
+      // The session gate sends the user to the member or staff area for their role.
       await signIn(response)
-      router.replace("/(member)")
     } catch (caught) {
       const apiError = caught instanceof ApiError ? caught : new ApiError("Unable to sign in. Try again.", "network")
       setError(apiError.kind === "not-configured" ? apiError.message : apiError.status === 401 ? "Invalid email or password." : apiError.kind === "network" ? apiError.message : apiError.message)
