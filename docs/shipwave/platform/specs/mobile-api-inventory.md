@@ -41,7 +41,7 @@ Tokens carry `tv`; both JWT strategies reject a token whose `tv` differs from th
 
 | Area | Method and path | Permission / source |
 |---|---|---|
-| Dashboard | `GET /dashboard/stats` — **MISSING** | Web action calls it, but grep found no dashboard controller or stats route (`apps/web/actions/dashboard.ts:20-29`). |
+| Dashboard | `GET /dashboard/stats` — implemented (DEC-01) | `read:member` (`apps/api/src/dashboard/dashboard.controller.ts:15`). Returns `{totalMembers, activeZones}` only. The web home page also reads `pendingVisitors` and `recentActivities`, which are not returned (`apps/web/app/[churchId]/dashboard/home/page.tsx:89,114`; see `api-contracts.md` M6). Mobile does not call it yet. |
 | People | `GET /members`, `GET /members/search`, `GET /members/:id`, `PUT /members/:id`, `DELETE /members/:id` | `read:member`, `update:member`, `delete:member` (`apps/api/src/members/members.controller.ts:44-75,109-153`; `apps/web/actions/member.ts:77-135,158-186,188-207`). |
 | People | `GET /members/:id/zones` | `read:member` (`apps/api/src/members/members.controller.ts:157-163`; `apps/web/actions/member.ts:137-155`). |
 | Services | `GET/POST /attendance/service-types`, `PATCH /attendance/service-types/:id` | `view:attendance`, `manage:services` (`apps/api/src/attendance/attendance.controller.ts:41-61`; `apps/web/actions/attendance.ts:5-15`). |
@@ -55,8 +55,8 @@ Tokens carry `tv`; both JWT strategies reject a token whose `tv` differs from th
 | Capability | Status |
 |---|---|
 | Authenticated upload | `POST /api/files/upload`, `manage:files`, multipart `file` plus metadata; implemented through S3 upload (`apps/api/src/file-upload/file-upload.controller.ts:56,135-209`; `apps/api/src/file-upload/file-upload.service.ts:112-165`). |
-| Document metadata list/update/delete | Routes exist: `GET /api/files/user`, `PATCH /api/files/:id`, `DELETE /api/files/:id`, all `manage:files` (`apps/api/src/file-upload/file-upload.controller.ts:397-489`). Service methods are stubs: list returns `[]`; update/delete return success without persistence (`apps/api/src/file-upload/file-upload.service.ts:214-233`). |
-| Library catalog/search/detail/read/progress/download | **MISSING**: no library controller or member-facing contract was found; upload metadata stubs do not provide these capabilities. |
+| Document metadata list/update/delete | Routes exist and persist: `GET /api/files/user` (`file-upload.controller.ts:400`, `getUserDocuments` queries `documents`, church-scoped and soft-delete filtered, `file-upload.service.ts:330-346`), `PATCH /api/files/:id` (`:464`, Drizzle update, `file-upload.service.ts:403-439`), `DELETE /api/files/:id` (`:500`, sets `deletedAt`, `file-upload.service.ts:442-455`). All `manage:files`. |
+| Library catalog and download | Implemented: `GET /api/files/library` (`file-upload.controller.ts:429`, `read:self`, visible-to-members documents only, `file-upload.service.ts:349-367`) and `GET /api/files/library/:id/download-url` (`:445`, signed URL, `file-upload.service.ts:369-400`). **MISSING**: library search, detail, read and progress endpoints. |
 
 ## 6. Risks for mobile
 
@@ -65,4 +65,4 @@ Tokens carry `tv`; both JWT strategies reject a token whose `tv` differs from th
 | Token storage | Native must keep access and especially refresh tokens in OS secure storage; do not use plaintext files, logs, or ordinary preferences. Logout revokes all tokens, but a stolen refresh token remains usable until then/expiry. |
 | CORS and typed client | `enableCors` uses configured web origins and allowed headers (`apps/api/src/main.ts:74-80`; defaults are localhost web URLs at `apps/api/src/config/index.ts:136-140`). Native requests normally omit `Origin`; this code has no explicit missing-Origin rejection, so CORS should not reject them. Swagger/OpenAPI is generated and served at `/docs` (`apps/api/src/main.ts:48-58,72-87`), suitable for typed-client generation after contract gaps are resolved. |
 
-MISSING endpoint count: **6 named capabilities** (dashboard stats plus five library capabilities).
+Missing endpoint count: **4 named capabilities** (library search, detail, read and progress). Dashboard stats is implemented; its `pendingVisitors` and `recentActivities` fields are not served (DEC-01, `api-contracts.md` M6).
