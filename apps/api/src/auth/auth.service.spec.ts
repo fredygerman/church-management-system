@@ -230,3 +230,18 @@ describe('AuthService refresh token rotation', () => {
     ).rejects.toThrow(UnauthorizedException);
   });
 });
+
+describe('AuthService listOwnMemberships', () => {
+  it("returns only the caller's non-suspended memberships", async () => {
+    const service = new AuthService({} as any, {} as any);
+    const getUserMemberships = jest.spyOn(service, 'getUserMemberships').mockResolvedValue([
+      { id: 'm1', churchId: 'c1', churchName: 'Alpha', role: 'member', status: 'active', memberId: null, assignedZoneId: null, isDefaultChurch: true, churchLocation: null },
+      { id: 'm2', churchId: 'c2', churchName: 'Beta', role: 'admin', status: 'suspended', memberId: null, assignedZoneId: null, isDefaultChurch: false, churchLocation: null },
+    ] as any);
+
+    await expect(service.listOwnMemberships('caller-id')).resolves.toEqual([
+      { churchId: 'c1', churchName: 'Alpha', role: 'member', status: 'active' },
+    ]);
+    expect(getUserMemberships).toHaveBeenCalledWith('caller-id');
+  });
+});

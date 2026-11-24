@@ -242,6 +242,13 @@ export class AuthService implements OnModuleInit {
       );
   }
 
+  async listOwnMemberships(userId: string) {
+    const memberships = await this.getUserMemberships(userId);
+    return memberships
+      .filter((membership) => membership.status !== 'suspended')
+      .map(({ churchId, churchName, role, status }) => ({ churchId, churchName, role, status }));
+  }
+
   async switchChurch(userId: string, churchId: string): Promise<AuthTokens> {
     const user = await this.getProfile(userId);
     const [rawMembership] = await this.db

@@ -223,6 +223,17 @@ export class AuthController {
   }
 
   /**
+   * List the caller's own non-suspended church memberships
+   * GET /auth/memberships
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('memberships')
+  @HttpCode(HttpStatus.OK)
+  async listMemberships(@GetUser() user: any) {
+    return this.authService.listOwnMemberships(user.id);
+  }
+
+  /**
    * Initiate Google OAuth flow
    * GET /auth/google
    */
