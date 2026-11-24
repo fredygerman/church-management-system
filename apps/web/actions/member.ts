@@ -107,8 +107,6 @@ export async function getMembers(
       ...(queryParams.gender && { gender: queryParams.gender }),
       ...(queryParams.maritalStatus && { maritalStatus: queryParams.maritalStatus }),
       ...(queryParams.occupation && { occupation: queryParams.occupation }),
-      ...(queryParams.from && { from: queryParams.from }),
-      ...(queryParams.to && { to: queryParams.to }),
     })
 
     // apiGet returns only `data`; the pagination meta lives on the full response.

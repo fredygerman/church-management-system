@@ -5,6 +5,7 @@ import NextAuth, {
 } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { env } from "./env.mjs"
+import { decodeJwtPayload, getRotatedTokens } from "./lib/auth-refresh"
 
 declare module "next-auth" {
   interface Session {
@@ -119,52 +120,21 @@ export const authOptions: NextAuthOptions = {
       // Handle token refresh if access token is expired
       if (token.expiresAt && typeof token.expiresAt === "number" && Math.floor(Date.now() / 1000) >= token.expiresAt) {
         try {
-          const response = await fetch(`${env.API_BASE_URL}/auth/refresh`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refreshToken: token.refreshToken }),
-          })
-
-          if (!response.ok) {
-            console.error("[Auth] Token refresh failed:", response.status)
-            // Clear the token if refresh fails
-            return {
-              ...token,
-              sub: undefined,
-              accessToken: undefined,
-              refreshToken: undefined,
-            }
-          }
-
-          const data = await response.json()
-          const tokens = data.data || data
-
-          // Decode the new access token to get updated user info
-          const tokenParts = tokens.accessToken.split(".")
-          if (tokenParts.length === 3) {
-            const payload = JSON.parse(
-              Buffer.from(tokenParts[1], "base64").toString()
-            )
-            
-            return {
-              ...token,
-              accessToken: tokens.accessToken,
-              refreshToken: tokens.refreshToken,
-              expiresAt: Math.floor(Date.now() / 1000) + 3600,
-              role: payload.activeRole || payload.role,
-              churchId: payload.activeChurchId || payload.churchId,
-              activeChurchId: payload.activeChurchId || payload.churchId,
-              activeMembershipId: payload.activeMembershipId,
-              activeRole: payload.activeRole || payload.role,
-              assignedZoneId: payload.assignedZoneId,
-            }
-          }
+          // Single-flight rotation; the rotated refresh token replaces the consumed one.
+          const rotated = await getRotatedTokens(env.API_BASE_URL, token.refreshToken as string)
+          const payload = decodeJwtPayload(rotated.accessToken)
 
           return {
             ...token,
-            accessToken: tokens.accessToken,
-            refreshToken: tokens.refreshToken,
-            expiresAt: Math.floor(Date.now() / 1000) + 3600,
+            accessToken: rotated.accessToken,
+            refreshToken: rotated.refreshToken,
+            expiresAt: rotated.accessExpiresAt,
+            role: payload.activeRole || payload.role,
+            churchId: payload.activeChurchId || payload.churchId,
+            activeChurchId: payload.activeChurchId || payload.churchId,
+            activeMembershipId: payload.activeMembershipId,
+            activeRole: payload.activeRole || payload.role,
+            assignedZoneId: payload.assignedZoneId,
           }
         } catch (error) {
           console.error("[Auth] Token refresh error:", error)

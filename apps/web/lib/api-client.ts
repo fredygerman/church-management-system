@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import { getRotatedTokens } from "./auth-refresh"
 
 // ============================================
 // Types
@@ -139,50 +140,33 @@ async function serverFetch<D = any>({
 
           if (refreshToken) {
             try {
-              // Try to refresh the token via API
-              const refreshResponse = await fetch(
-                new URL("/auth/refresh", baseUrl).toString(),
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                  },
-                  body: JSON.stringify({ refreshToken }),
-                  cache: "no-store",
-                }
-              )
+              // Single-flight rotation; the API consumes the old refresh token.
+              // The rotated refresh token cannot be written back to the NextAuth cookie here
+              // (server components are read-only), so getRotatedTokens keeps it per process.
+              const rotated = await getRotatedTokens(baseUrl, refreshToken)
 
-              const refreshData = await refreshResponse.json()
+              // Retry original request with new token
+              const retryHeaders = new Headers(headers)
+              retryHeaders.set("Authorization", `Bearer ${rotated.accessToken}`)
 
-              if (
-                refreshResponse.ok &&
-                refreshData?.data?.accessToken
-              ) {
-                const newAccessToken = refreshData.data.accessToken
+              const retryResponse = await fetch(url.toString(), {
+                method,
+                headers: retryHeaders,
+                body,
+                cache: requestConfig.skipAuth
+                  ? "default"
+                  : ("no-store" as RequestCache),
+              })
 
-                // Retry original request with new token
-                const retryHeaders = new Headers(headers)
-                retryHeaders.set("Authorization", `Bearer ${newAccessToken}`)
-
-                const retryResponse = await fetch(url.toString(), {
-                  method,
-                  headers: retryHeaders,
-                  body,
-                  cache: requestConfig.skipAuth
-                    ? "default"
-                    : ("no-store" as RequestCache),
-                })
-
-                const retryData: ApiResponse<D> = await retryResponse.json()
-                
-                // Check if the retry also failed with 401
-                const retryIs401 = retryResponse.status === 401 || retryData?.statusCode === 401
-                if (retryIs401) {
-                  redirect("/auth/signin?error=session_expired")
-                }
-                
-                return retryData
+              const retryData: ApiResponse<D> = await retryResponse.json()
+              
+              // Check if the retry also failed with 401
+              const retryIs401 = retryResponse.status === 401 || retryData?.statusCode === 401
+              if (retryIs401) {
+                redirect("/auth/signin?error=session_expired")
               }
+              
+              return retryData
             } catch (refreshError) {
               console.error("[API] Token refresh failed:", refreshError)
             }
