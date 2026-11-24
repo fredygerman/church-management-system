@@ -1,6 +1,6 @@
 import { router, useSegments } from "expo-router"
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
-import { api, setSessionExpiredHandler, signOutRequest } from "./api"
+import { ApiError, api, setSessionExpiredHandler, signOutRequest } from "./api"
 import { decodeAccessClaims, isStaffRole } from "./claims"
 import { clearStoredTokens, getStoredTokens, storeTokens, type StoredTokens } from "./storage"
 
@@ -57,8 +57,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         try {
           const currentUser = await loadUser(tokens)
           if (active) setUser(currentUser)
-        } catch {
-          await clearStoredTokens()
+        } catch (error) {
+          // Only a rejected session is cleared. An unreachable API keeps the stored session for the next launch.
+          if (error instanceof ApiError && error.kind === "http") await clearStoredTokens()
         }
       }
       if (active) setReady(true)
@@ -77,9 +78,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
     // The API issues a new token pair for the chosen church; the old pair stops being used.
     switchChurch: async (churchId) => {
+      const previous = await getStoredTokens()
       const tokens = await api.post<StoredTokens>("/auth/switch-church", { churchId })
       await storeTokens(tokens)
-      setUser(await loadUser(tokens))
+      try {
+        setUser(await loadUser(tokens))
+      } catch (error) {
+        // The stored pair and the screen must agree: restore the space the user was in.
+        if (previous) await storeTokens(previous)
+        throw error
+      }
     },
     signOut: async () => { await signOutRequest(); setUser(null) },
   }), [ready, user])
