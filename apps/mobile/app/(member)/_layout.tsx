@@ -1,8 +1,9 @@
 import { Tabs } from "expo-router"
+import { AiHeaderButton } from "../../components/ai/ai-header-button"
 
 export default function MemberLayout() {
   return (
-    <Tabs>
+    <Tabs screenOptions={{ headerRight: () => <AiHeaderButton /> }}>
       <Tabs.Screen name="index" options={{ title: "Home" }} />
       <Tabs.Screen name="church" options={{ title: "Church" }} />
       <Tabs.Screen name="events" options={{ title: "Events" }} />
