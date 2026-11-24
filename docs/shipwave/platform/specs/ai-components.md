@@ -1,6 +1,6 @@
 # AI response components contract
 
-Status: Contract defined in code; no AI endpoint, provider call or client renderer exists yet. Implements the shape decided in DEC-08 (see `../decisions.md`).
+Status: Contract defined in code. API module (`POST /ai/chat`, see `ai-api.md`) and web renderer are built; mobile renderer is in progress. Nothing has run against a live provider yet. Implements the shape decided in DEC-08 (see `../decisions.md`).
 
 ## Source of truth
 
@@ -51,7 +51,7 @@ Every `href` must be a relative in-app path: it starts with `/`, is not `//...`,
 
 ## Open items
 
-- AI API endpoint and provider wiring: not started (blocked on `apps/api` ownership and review).
-- Web and mobile renderers: not started.
-- Retention purge job: not built.
+- AI API endpoint and provider wiring: built (`ai-api.md`); needs `ANTHROPIC_API_KEY` in Coolify and migration 0012 before it runs.
+- Web renderer: built. Mobile renderer: in progress.
+- Retention: expired conversations are purged lazily on each chat call; there is no scheduled purge job.
 - Real action registry entries: none approved.
