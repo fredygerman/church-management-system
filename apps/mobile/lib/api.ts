@@ -41,43 +41,72 @@ async function readEnvelope<T>(response: Response): Promise<T> {
   return body?.data as T
 }
 
+// The API rotates refresh tokens: a successful refresh consumes the presented one.
+// Only one refresh may be in flight, so concurrent 401s share this promise.
+let inFlightRefresh: Promise<StoredTokens> | null = null
+
 async function refreshTokens(refreshToken: string): Promise<StoredTokens> {
-  // The API does not rotate refresh tokens server-side; keep this to one retry.
   const response = await fetch(`${configuredBaseUrl()}/auth/refresh`, {
     body: JSON.stringify({ refreshToken }),
     headers: { "Content-Type": "application/json" },
     method: "POST",
   })
+  if (response.status === 401) throw new ApiError("Refresh token rejected", "http", 401)
   const tokens = await readEnvelope<StoredTokens>(response)
+  // Persist the rotated pair: the old refresh token is no longer valid.
   await storeTokens(tokens)
   return tokens
 }
 
-async function request<T>(path: string, init: RequestInit = {}, retry = true): Promise<T> {
-  const tokens = await getStoredTokens()
+function refreshSingleFlight(refreshToken: string): Promise<StoredTokens> {
+  if (!inFlightRefresh) {
+    inFlightRefresh = refreshTokens(refreshToken).finally(() => {
+      inFlightRefresh = null
+    })
+  }
+  return inFlightRefresh
+}
+
+async function send(path: string, init: RequestInit, accessToken?: string): Promise<Response> {
   const headers = new Headers(init.headers)
   headers.set("Content-Type", "application/json")
-  if (tokens?.accessToken) headers.set("Authorization", `Bearer ${tokens.accessToken}`)
+  if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`)
 
-  let response: Response
   try {
-    response = await fetch(`${configuredBaseUrl()}${path}`, { ...init, headers })
+    return await fetch(`${configuredBaseUrl()}${path}`, { ...init, headers })
   } catch {
     throw new ApiError("Unable to reach the API. Check your connection and try again.", "network")
   }
+}
 
-  if (response.status === 401 && retry && tokens?.refreshToken) {
+async function expireSession(): Promise<never> {
+  await clearStoredTokens()
+  onSessionExpired?.()
+  throw new ApiError("Your session has expired. Please sign in again.", "http", 401)
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const sent = await getStoredTokens()
+  const response = await send(path, init, sent?.accessToken)
+  if (response.status !== 401 || !sent) return readEnvelope<T>(response)
+
+  // Tokens may already have been rotated by a concurrent call; use them instead of refreshing again.
+  let fresh = await getStoredTokens()
+  if (!fresh || fresh.accessToken === sent.accessToken) {
     try {
-      const nextTokens = await refreshTokens(tokens.refreshToken)
-      return request<T>(path, { ...init, headers: { ...Object.fromEntries(headers.entries()), Authorization: `Bearer ${nextTokens.accessToken}` } }, false)
+      fresh = await refreshSingleFlight(sent.refreshToken)
     } catch {
-      await clearStoredTokens()
-      onSessionExpired?.()
-      throw new ApiError("Your session has expired. Please sign in again.", "http", 401)
+      // A refresh that failed after another call rotated the token: use the stored pair.
+      const current = await getStoredTokens()
+      if (!current || current.refreshToken === sent.refreshToken) return expireSession()
+      fresh = current
     }
   }
 
-  return readEnvelope<T>(response)
+  // Retry once with the new access token; a second 401 means the session is gone.
+  const retried = await send(path, init, fresh.accessToken)
+  if (retried.status === 401) return expireSession()
+  return readEnvelope<T>(retried)
 }
 
 export const api = {
