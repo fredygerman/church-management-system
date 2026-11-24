@@ -31,6 +31,11 @@ export interface AuthTokens {
 }
 
 const REFRESH_TOKEN_TTL_SECONDS = 604800; // 7 days
+// A replay this soon after rotation is treated as a parallel refresh, not theft.
+const REFRESH_REUSE_GRACE_MS = 10_000;
+
+// Root db or the transaction handle used during rotation.
+type DbExecutor = Pick<Database, 'select' | 'insert' | 'update' | 'delete'>;
 
 export interface RefreshTokenPayload {
   sub: string;
@@ -125,6 +130,7 @@ export class AuthService implements OnModuleInit {
     user: any,
     membership?: ActiveMembershipContext | null,
     familyId: string = randomUUID(),
+    db: DbExecutor = this.db,
   ): Promise<AuthTokens> {
     const activeChurchId = membership?.churchId ?? user.activeChurchId ?? user.churchId ?? null;
     const activeMembershipId = membership?.id ?? user.activeMembershipId ?? user.membershipId ?? null;
@@ -156,7 +162,7 @@ export class AuthService implements OnModuleInit {
       }
     );
 
-    await this.db.insert(refreshTokens).values({
+    await db.insert(refreshTokens).values({
       id: jti,
       userId: user.id,
       familyId,
@@ -190,7 +196,11 @@ export class AuthService implements OnModuleInit {
     return payload;
   }
 
-  async getPreferredMembership(userId: string, churchId?: string | null): Promise<ActiveMembershipContext | null> {
+  async getPreferredMembership(
+    userId: string,
+    churchId?: string | null,
+    db: DbExecutor = this.db,
+  ): Promise<ActiveMembershipContext | null> {
     const where = [
       eq(userChurchMemberships.userId, userId),
       eq(userChurchMemberships.status, 'active'),
@@ -201,7 +211,7 @@ export class AuthService implements OnModuleInit {
       where.push(eq(userChurchMemberships.churchId, churchId));
     }
 
-    const memberships = await this.db
+    const memberships = await db
       .select()
       .from(userChurchMemberships)
       .where(and(...where))
@@ -296,9 +306,15 @@ export class AuthService implements OnModuleInit {
    * Exchange a refresh token for a new access/refresh pair in the same family.
    *
    * The presented jti is consumed with a conditional UPDATE, so two concurrent
-   * refreshes cannot both succeed. If the jti was already used, is unknown, or
-   * has expired, the whole family is revoked and the request gets 401. A
-   * replayed token therefore also kills the newer token issued from it.
+   * refreshes cannot both succeed. The consume, the follow-up reads and the new
+   * token insert share one transaction: a failure after the consume rolls it
+   * back and the presented token stays usable.
+   *
+   * If the jti was already used, is unknown, or has expired, the family is
+   * revoked and the request gets 401. Exception: a jti used less than
+   * REFRESH_REUSE_GRACE_MS ago is a parallel refresh; it gets a distinct 401
+   * and the family survives. The revoke runs outside the transaction so it
+   * persists.
    *
    * Pre-rotation refresh tokens (no jti/fid, no row) are rejected with 401, so
    * those users must sign in again once after this change ships.
@@ -310,40 +326,56 @@ export class AuthService implements OnModuleInit {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
+    const jti = payload.jti;
+    const familyId = payload.fid;
+    const userId = payload.sub;
     const now = new Date();
-    const [consumed] = await this.db
-      .update(refreshTokens)
-      .set({ usedAt: now })
-      .where(
-        and(
-          eq(refreshTokens.id, payload.jti),
-          eq(refreshTokens.userId, payload.sub),
-          isNull(refreshTokens.usedAt),
-          gt(refreshTokens.expiresAt, now),
-        ),
-      )
-      .returning({ id: refreshTokens.id });
-
-    if (!consumed) {
-      await this.db
+    const rotated = await this.db.transaction(async (tx) => {
+      const [consumed] = await tx
         .update(refreshTokens)
         .set({ usedAt: now })
         .where(
           and(
-            eq(refreshTokens.familyId, payload.fid),
-            eq(refreshTokens.userId, payload.sub),
+            eq(refreshTokens.id, jti),
+            eq(refreshTokens.userId, userId),
             isNull(refreshTokens.usedAt),
+            gt(refreshTokens.expiresAt, now),
           ),
-        );
-      this.logger.warn(`Refresh token reuse or expiry for user ${payload.sub}; family ${payload.fid} revoked`);
-      throw new UnauthorizedException('Invalid or expired refresh token');
+        )
+        .returning({ id: refreshTokens.id });
+
+      if (!consumed) return null;
+      return this.refreshTokensForPayload(payload, familyId, tx);
+    });
+
+    if (rotated) return rotated;
+
+    const [row] = await this.db
+      .select({ usedAt: refreshTokens.usedAt, expiresAt: refreshTokens.expiresAt })
+      .from(refreshTokens)
+      .where(and(eq(refreshTokens.id, jti), eq(refreshTokens.userId, userId)))
+      .limit(1);
+
+    if (row?.usedAt && row.expiresAt > now && Math.abs(now.getTime() - row.usedAt.getTime()) <= REFRESH_REUSE_GRACE_MS) {
+      throw new UnauthorizedException('Refresh already in progress');
     }
 
-    return this.refreshTokensForPayload(payload, payload.fid);
+    await this.db
+      .update(refreshTokens)
+      .set({ usedAt: now })
+      .where(
+        and(
+          eq(refreshTokens.familyId, familyId),
+          eq(refreshTokens.userId, userId),
+          isNull(refreshTokens.usedAt),
+        ),
+      );
+    this.logger.warn(`Refresh token reuse or expiry for user ${userId}; family ${familyId} revoked`);
+    throw new UnauthorizedException('Invalid or expired refresh token');
   }
 
-  async refreshTokensForPayload(payload: any, familyId: string): Promise<AuthTokens> {
-    const user = await this.getProfile(payload.sub).catch((error) => {
+  async refreshTokensForPayload(payload: any, familyId: string, db: DbExecutor = this.db): Promise<AuthTokens> {
+    const user = await this.getProfile(payload.sub, db).catch((error) => {
       if (error instanceof NotFoundException) {
         throw new UnauthorizedException('Invalid or expired refresh token');
       }
@@ -361,9 +393,10 @@ export class AuthService implements OnModuleInit {
     const membership = await this.getPreferredMembership(
       user.id,
       payload.activeChurchId ?? payload.churchId ?? null,
+      db,
     );
 
-    return this.generateTokens(user, membership, familyId);
+    return this.generateTokens(user, membership, familyId, db);
   }
 
   private toMembershipContext(
@@ -385,8 +418,8 @@ export class AuthService implements OnModuleInit {
   /**
    * Get user profile
    */
-  async getProfile(userId: string): Promise<Omit<User, 'passwordHash'>> {
-    const [user] = await this.db
+  async getProfile(userId: string, db: DbExecutor = this.db): Promise<Omit<User, 'passwordHash'>> {
+    const [user] = await db
       .select()
       .from(users)
       .where(eq(users.id, userId))

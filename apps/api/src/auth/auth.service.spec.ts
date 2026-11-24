@@ -101,9 +101,26 @@ function createFakeDb() {
 
   const resultOf = <T>(value: T) => Object.assign(Promise.resolve(value), { returning: () => Promise.resolve(value) });
 
-  return {
+  const fake = {
     rows,
     userUpdates,
+    // Rolls rows back to their pre-transaction state when the callback throws.
+    transaction: async (fn: (tx: unknown) => Promise<unknown>) => {
+      const snapshot = rows.map((row) => ({ ...row }));
+      try {
+        return await fn(fake);
+      } catch (error) {
+        rows.splice(0, rows.length, ...snapshot);
+        throw error;
+      }
+    },
+    select: () => ({
+      from: () => ({
+        where: (cond: any) => ({
+          limit: async () => rows.filter((row) => matches(cond, row)).slice(0, 1),
+        }),
+      }),
+    }),
     insert: () => ({
       values: async (v: Omit<FakeRow, 'usedAt'>) => {
         rows.push({ ...v, usedAt: null });
@@ -123,6 +140,7 @@ function createFakeDb() {
       }),
     }),
   };
+  return fake;
 }
 
 describe('AuthService refresh token rotation', () => {
@@ -156,14 +174,39 @@ describe('AuthService refresh token rotation', () => {
     expect(rowFor(next.refreshToken).usedAt).toBeNull();
   });
 
-  it('reuse of an already-rotated token returns 401 and revokes the family', async () => {
+  it('reuse outside the grace window returns 401 and revokes the family', async () => {
     const first = await service.generateTokens(user);
     const next = await service.rotateRefreshToken(first.refreshToken);
+    rowFor(first.refreshToken).usedAt = new Date(Date.now() - 60_000);
 
-    await expect(service.rotateRefreshToken(first.refreshToken)).rejects.toThrow(UnauthorizedException);
+    await expect(service.rotateRefreshToken(first.refreshToken)).rejects.toThrow('Invalid or expired refresh token');
 
     expect(rowFor(next.refreshToken).usedAt).toBeInstanceOf(Date);
     await expect(service.rotateRefreshToken(next.refreshToken)).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('replay within the grace window returns a distinct 401 and does not revoke the family', async () => {
+    const first = await service.generateTokens(user);
+    const next = await service.rotateRefreshToken(first.refreshToken);
+
+    await expect(service.rotateRefreshToken(first.refreshToken)).rejects.toThrow('Refresh already in progress');
+
+    expect(rowFor(next.refreshToken).usedAt).toBeNull();
+    await expect(service.rotateRefreshToken(next.refreshToken)).resolves.toEqual(
+      expect.objectContaining({ refreshToken: expect.any(String) }),
+    );
+  });
+
+  it('a failure after the consume leaves the presented token usable', async () => {
+    const first = await service.generateTokens(user);
+    jest.spyOn(service, 'getProfile').mockRejectedValueOnce(new Error('transient db failure'));
+
+    await expect(service.rotateRefreshToken(first.refreshToken)).rejects.toThrow('transient db failure');
+
+    expect(rowFor(first.refreshToken).usedAt).toBeNull();
+    await expect(service.rotateRefreshToken(first.refreshToken)).resolves.toEqual(
+      expect.objectContaining({ refreshToken: expect.any(String) }),
+    );
   });
 
   it('rejects an expired refresh token without consuming its row', async () => {
