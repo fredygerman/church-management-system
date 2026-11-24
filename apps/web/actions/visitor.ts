@@ -44,7 +44,11 @@ export async function createVisitorFollowup(data: {
   notes?: string
   status: 'none' | 'called' | 'visited' | 'converted' | 'dropped'
 }): Promise<any> {
-  return apiPost(`/visitors/${data.visitorId}/followup`, data)
+  return apiPost(`/visitors/${data.visitorId}/followup`, {
+    status: data.status,
+    notes: data.notes,
+    followupDate: data.followupDate,
+  })
 }
 
 // Convert visitor to member (soft-deletes visitor on backend)
@@ -53,10 +57,11 @@ export async function convertVisitorToMember(data: {
   visitorId: string
   zoneId?: string
 }): Promise<any> {
-  return apiPost(`/visitors/${data.visitorId}/convert`, {
-    churchId: data.churchId,
-    zoneId: data.zoneId,
-  })
+  // churchId travels as a query param (ChurchContextGuard reads it there); the DTO accepts only zoneId.
+  return apiPost(
+    `/visitors/${data.visitorId}/convert?churchId=${encodeURIComponent(data.churchId)}`,
+    { zoneId: data.zoneId },
+  )
 }
 
 // Function to delete a visitor
