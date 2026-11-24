@@ -1,35 +1,12 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 
 import { getLibraryDownloadUrl } from "@/actions/library"
 import type { LibraryDocument } from "@/actions/library"
 import { Button } from "@/components/ui/button"
-
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes < 0) return "Unknown size"
-  if (bytes < 1024) return `${bytes} B`
-
-  const units = ["KB", "MB", "GB", "TB"]
-  let value = bytes
-  let unitIndex = -1
-
-  while (value >= 1024 && unitIndex < units.length - 1) {
-    value /= 1024
-    unitIndex += 1
-  }
-
-  return `${value >= 10 ? value.toFixed(0) : value.toFixed(1)} ${units[unitIndex]}`
-}
-
-function formatFileType(document: LibraryDocument): string {
-  const extension = document.original_file_name?.split(".").pop()
-  if (extension && extension !== document.original_file_name) {
-    return extension.toUpperCase()
-  }
-
-  return document.content_type?.split("/").pop()?.toUpperCase() || "FILE"
-}
+import { formatBytes, formatFileType } from "./library-format"
 
 export function LibraryDocumentList({
   churchId,
@@ -81,16 +58,25 @@ export function LibraryDocumentList({
               {formatFileType(document)} · {formatBytes(document.size_bytes)}
             </p>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            className="shrink-0"
-            disabled={downloadingId === document.id}
-            aria-label={`Download ${document.title}`}
-            onClick={() => handleDownload(document)}
-          >
-            {downloadingId === document.id ? "Preparing…" : "Download"}
-          </Button>
+          <div className="flex shrink-0 gap-2">
+            <Button asChild variant="outline">
+              <Link
+                href={`/${churchId}/portal/library/${document.id}`}
+                aria-label={`View ${document.title}`}
+              >
+                View
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={downloadingId === document.id}
+              aria-label={`Download ${document.title}`}
+              onClick={() => handleDownload(document)}
+            >
+              {downloadingId === document.id ? "Preparing…" : "Download"}
+            </Button>
+          </div>
         </li>
       ))}
       {downloadError ? (
