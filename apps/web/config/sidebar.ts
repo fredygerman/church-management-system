@@ -56,7 +56,7 @@ export const sidebarConfig: SidebarSection[] = [
     title: "Reporting",
     items: [
       {
-        title: "Analytics",
+        title: "Reports",
         href: "/dashboard/analytics",
         icon: BarChart2,
         permissions: ["manage:attendance-analytics"],

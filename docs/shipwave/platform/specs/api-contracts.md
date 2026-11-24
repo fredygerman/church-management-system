@@ -258,3 +258,12 @@ Checked and matching (no mismatch): all `/api/files/*` paths; library snake_case
 - Fields for rows marked "not re-checked" (most write bodies and response shapes beyond those listed above). Path, method and permission were verified for every row.
 - Web `apps/web/lib/api/apiBase.ts` (default `http://localhost:8871/api/v1`) has no importers, so it is not a live client path. `apps/web/actions/auth.ts` and `apps/web/app/auth/signin/page.tsx` use `API_BASE_URL` / `NEXT_PUBLIC_API_BASE_URL` without a `/api/v1` suffix; the deployed values were not checked.
 - Runtime behavior was not exercised against a running server, except the two ValidationPipe runs for M4 and M5 (DTO classes plus the global pipe options, run in isolation).
+
+## Report metric definitions (DEC-04)
+
+Each figure shown in the web Reports must come from the query behind one of these endpoints. A metric without a verified source is not shown. Definitions match the code, and the web pages repeat them (`apps/web/lib/report-catalog.ts`).
+
+| Report | Endpoint | Definition |
+|---|---|---|
+| Attendance trends | `GET /attendance/trends` (`view:attendance`) | Check-ins per zone, gender or age band for a date range. Total check-ins are check-in records for sessions dated in the range. Unique members and sessions are distinct within each group. Avg per session is total check-ins divided by sessions. Zone groups members by their zone, `unassigned` when none. The API also accepts `branch`, which groups by zone; the web does not offer it. |
+| Giving summary | `GET /offerings/reports/summary` (`view:giving-reports`) | Sum of non-deleted offerings by category, or by week, month or year of offering date. Always split by currency. |
