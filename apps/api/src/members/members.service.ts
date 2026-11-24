@@ -144,7 +144,7 @@ export class MembersService {
    * Search members by name or phone
    */
   async searchMembers(churchId: string, query: string): Promise<Member[]> {
-    const searchQuery = `%${query}%`
+    const searchQuery = containsPattern(query)
     
     return db.query.members.findMany({
       where: and(

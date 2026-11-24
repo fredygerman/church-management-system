@@ -65,12 +65,13 @@ export class RetentionService {
     for (const doc of due) {
       try {
         await this.files.deleteFromS3(doc.storageKey)
-      } catch {
+        await db.delete(documents).where(eq(documents.id, doc.id))
+        purged++
+      } catch (error) {
+        // One failed document must not stop the run; the next run retries it.
+        this.logger.warn(`Retention could not purge document ${doc.id}: ${(error as Error)?.name ?? 'unknown'}`)
         failed++
-        continue
       }
-      await db.delete(documents).where(eq(documents.id, doc.id))
-      purged++
     }
     return { purged, failed }
   }

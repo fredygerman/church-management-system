@@ -11,6 +11,7 @@ jest.mock('drizzle-orm', () => ({
 const mockState = {
   due: [] as { id: string; storageKey: string }[],
   deleted: [] as string[],
+  documentDeleteFailures: 0,
 }
 
 jest.mock('@church/db', () => {
@@ -29,6 +30,10 @@ jest.mock('@church/db', () => {
         where: () => {
           // Awaitable like the real builder, with .returning() for the callers that need rows.
           const run = async () => {
+            if (target.__table === 'documents' && mockState.documentDeleteFailures > 0) {
+              mockState.documentDeleteFailures--
+              throw new Error('database unavailable')
+            }
             const rows = target.__table === 'refreshTokens' ? [{ id: 't1' }, { id: 't2' }] : [{ id: 'c1' }]
             mockState.deleted.push(target.__table)
             return rows
@@ -44,6 +49,7 @@ describe('RetentionService.runRetention', () => {
   beforeEach(() => {
     mockState.due = []
     mockState.deleted = []
+    mockState.documentDeleteFailures = 0
   })
 
   it('removes the stored object, then the row, for each document past retention', async () => {
@@ -81,5 +87,21 @@ describe('RetentionService.runRetention', () => {
     expect(result.refreshTokensPurged).toBe(2)
     expect(result.aiConversationsPurged).toBe(1)
     expect(mockState.deleted).toEqual(expect.arrayContaining(['refreshTokens', 'aiConversations']))
+  })
+
+  it('keeps going after a database failure on one document', async () => {
+    mockState.due = [
+      { id: 'd1', storageKey: 'library/d1.pdf' },
+      { id: 'd2', storageKey: 'library/d2.pdf' },
+    ]
+    mockState.documentDeleteFailures = 1
+    const service = new RetentionService({ deleteFromS3: jest.fn().mockResolvedValue(undefined) } as any)
+
+    const result = await service.runRetention()
+
+    expect(result.documentsPurged).toBe(1)
+    expect(result.documentsFailed).toBe(1)
+    expect(result.refreshTokensPurged).toBe(2)
+    expect(result.aiConversationsPurged).toBe(1)
   })
 })

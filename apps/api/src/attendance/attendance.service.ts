@@ -216,7 +216,7 @@ export class AttendanceService {
           .from(attendanceCheckins)
           .innerJoin(serviceSessions, eq(attendanceCheckins.sessionId, serviceSessions.id))
           .innerJoin(members, eq(attendanceCheckins.memberId, members.id))
-          .leftJoin(memberZones, eq(memberZones.memberId, members.id))
+          .leftJoin(memberZones, and(eq(memberZones.memberId, members.id), isNull(memberZones.deletedAt)))
           .leftJoin(zones, eq(memberZones.zoneId, zones.id))
           .leftJoin(memberDepartments, eq(memberDepartments.memberId, members.id))
           .leftJoin(departments, eq(memberDepartments.departmentId, departments.id))
@@ -233,7 +233,7 @@ export class AttendanceService {
           .from(attendanceCheckins)
           .innerJoin(serviceSessions, eq(attendanceCheckins.sessionId, serviceSessions.id))
           .innerJoin(members, eq(attendanceCheckins.memberId, members.id))
-          .leftJoin(memberZones, eq(memberZones.memberId, members.id))
+          .leftJoin(memberZones, and(eq(memberZones.memberId, members.id), isNull(memberZones.deletedAt)))
           .leftJoin(zones, eq(memberZones.zoneId, zones.id))
           .where(whereClause)
 
