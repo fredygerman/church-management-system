@@ -20,9 +20,13 @@ export async function getOfferingCategories(churchId: string): Promise<any[]> {
   }
 }
 
-export async function getOfferingCategoryById(churchId: string, id: string): Promise<any> {
+// The API has no GET /offering-categories/:id; look the category up in the list.
+// Returns null when no active category has that id.
+export async function getOfferingCategoryById(churchId: string, id: string): Promise<any | null> {
   try {
-    return await apiGet(`/offering-categories/${id}`, { churchId })
+    const result = await apiGet("/offering-categories", { churchId })
+    const categories: any[] = Array.isArray(result) ? result : []
+    return categories.find((category) => category.id === id) ?? null
   } catch (error) {
     console.error("Error fetching offering category:", error)
     throw error
