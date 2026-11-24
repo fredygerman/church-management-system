@@ -32,6 +32,7 @@ import { PrayerModule } from './prayer/prayer.module'
 import { OfferingsModule } from './offerings/offerings.module'
 import { EventsModule } from './events/events.module'
 import { DashboardModule } from './dashboard/dashboard.module'
+import { AiModule } from './ai/ai.module'
 import config from './config'
 
 @Module({
@@ -61,6 +62,7 @@ import config from './config'
     OfferingsModule,
     EventsModule,
     DashboardModule,
+    AiModule,
   ],
   controllers: [AppController, HealthController],
   providers: [
