@@ -52,4 +52,10 @@ export class UpdateVisitorDto {
   @IsOptional()
   @IsUUID('4')
   referredByMemberId?: string
+
+  // Injected by ChurchContextGuard before validation runs; declared so the
+  // whitelist pipe does not reject it.
+  @IsOptional()
+  @IsUUID('4')
+  churchId?: string
 }
