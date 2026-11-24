@@ -12,7 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { randomUUID } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from '../database/database.service';
-import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, isNull, lt, sql } from 'drizzle-orm';
 import {
   users,
   refreshTokens,
@@ -161,6 +161,11 @@ export class AuthService implements OnModuleInit {
         expiresIn: REFRESH_TOKEN_TTL_SECONDS,
       }
     );
+
+    // Lazy cleanup: expired rows can never be presented again.
+    await db
+      .delete(refreshTokens)
+      .where(and(eq(refreshTokens.userId, user.id), lt(refreshTokens.expiresAt, new Date())));
 
     await db.insert(refreshTokens).values({
       id: jti,

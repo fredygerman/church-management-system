@@ -14,6 +14,7 @@ jest.mock('drizzle-orm', () => {
     eq: (col: unknown, val: unknown) => ({ op: 'eq', col, val }),
     isNull: (col: unknown) => ({ op: 'isNull', col }),
     gt: (col: unknown, val: unknown) => ({ op: 'gt', col, val }),
+    lt: (col: unknown, val: unknown) => ({ op: 'lt', col, val }),
   };
 });
 
@@ -94,6 +95,8 @@ function createFakeDb() {
         return row[fieldOf(cond.col)] == null;
       case 'gt':
         return (row[fieldOf(cond.col)] as Date) > cond.val;
+      case 'lt':
+        return (row[fieldOf(cond.col)] as Date) < cond.val;
       default:
         throw new Error(`unsupported op ${cond.op}`);
     }
@@ -124,6 +127,13 @@ function createFakeDb() {
     insert: () => ({
       values: async (v: Omit<FakeRow, 'usedAt'>) => {
         rows.push({ ...v, usedAt: null });
+      },
+    }),
+    delete: (table: unknown) => ({
+      where: async (cond: any) => {
+        if (table !== refreshTokens) return;
+        const keep = rows.filter((row) => !matches(cond, row));
+        rows.splice(0, rows.length, ...keep);
       },
     }),
     update: (table: unknown) => ({
@@ -240,6 +250,18 @@ describe('AuthService refresh token rotation', () => {
     expect(db.userUpdates[0].set).toHaveProperty('tokenVersion');
     expect(rowFor(first.refreshToken).usedAt).toBeInstanceOf(Date);
     await expect(service.rotateRefreshToken(first.refreshToken)).rejects.toThrow(UnauthorizedException);
+  });
+
+  it('purges this user\'s expired refresh rows when new tokens are issued', async () => {
+    const expired = await service.generateTokens(user);
+    rowFor(expired.refreshToken).expiresAt = new Date(Date.now() - 1000);
+    const live = await service.generateTokens(user);
+
+    const fresh = await service.generateTokens(user);
+
+    expect(db.rows.some((row) => row.id === decode(expired.refreshToken).jti)).toBe(false);
+    expect(rowFor(live.refreshToken)).toBeDefined();
+    expect(rowFor(fresh.refreshToken)).toBeDefined();
   });
 
   it('starts a new family for a fresh login, separate from an existing one', async () => {
