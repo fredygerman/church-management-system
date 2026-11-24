@@ -5,13 +5,6 @@ import { apiGet } from '@/lib/api-helpers'
 export interface DashboardStats {
   totalMembers: number
   activeZones: number
-  pendingVisitors: number
-  recentActivities: Array<{
-    id: string
-    description: string
-    timestamp: string
-    type: string
-  }>
 }
 
 export type DashboardStatsResult =
