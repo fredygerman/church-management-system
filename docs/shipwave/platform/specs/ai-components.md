@@ -45,7 +45,7 @@ Every `href` must be a relative in-app path: it starts with `/`, is not `//...`,
 2. **Confirm before action.** No automatic execution of any `actionId`.
 3. **User's own permissions.** The AI answers only from data the signed-in user's role can already read. Actions run with the user's token, so the API decides.
 4. **Excluded data classes.** Prayer requests and family details (DEC-02) are never sent to the model or shown in AI answers.
-5. **Retention.** AI conversations are kept 30 days, then deleted (DEC-08). Deletion job not built yet.
+5. **Retention.** AI conversations are kept 30 days, then deleted (DEC-08). Daily job built: `RetentionService` (03:00) deletes expired conversations.
 6. **Provider.** Anthropic Claude API (DEC-08). The API key lives only in the Coolify environment, never in the repo.
 7. **Validation at the boundary.** Responses that fail `validateAiResponse` are not rendered. Show an unavailable state instead.
 
@@ -53,5 +53,5 @@ Every `href` must be a relative in-app path: it starts with `/`, is not `//...`,
 
 - AI API endpoint and provider wiring: built (`ai-api.md`); needs `AI_API_KEY` (and `AI_API_FORMAT` / `AI_MODEL` for a non-default provider) in Coolify, and migration 0012 applied, before it runs.
 - Web renderer: built. Mobile renderer: in progress.
-- Retention: expired conversations are purged lazily on each chat call; there is no scheduled purge job.
+- Retention: expired conversations are purged lazily on each chat call; a daily job (`RetentionService`) also purges expired rows.
 - Real action registry entries: none approved.

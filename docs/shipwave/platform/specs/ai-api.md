@@ -66,6 +66,6 @@ No tool exists for prayer requests, families, giving, visitors, or any write.
 
 ## Not done
 
-- No purge job beyond the lazy purge on chat calls.
+- Expired conversations are removed by the daily `RetentionService` job (03:00) and lazily on chat calls.
 - No endpoint to list or read a conversation.
 - No action registry entries.
