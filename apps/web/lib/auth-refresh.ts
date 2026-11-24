@@ -21,6 +21,23 @@ export function decodeJwtPayload(token: string): Record<string, any> {
   return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString())
 }
 
+/** Copies a rotated pair and the claims of its access token onto a NextAuth JWT. */
+export function applyRotatedTokens<T extends Record<string, any>>(token: T, rotated: RotatedTokens): T {
+  const payload = decodeJwtPayload(rotated.accessToken)
+  return {
+    ...token,
+    accessToken: rotated.accessToken,
+    refreshToken: rotated.refreshToken,
+    expiresAt: rotated.accessExpiresAt,
+    role: payload.activeRole || payload.role,
+    churchId: payload.activeChurchId || payload.churchId,
+    activeChurchId: payload.activeChurchId || payload.churchId,
+    activeMembershipId: payload.activeMembershipId,
+    activeRole: payload.activeRole || payload.role,
+    assignedZoneId: payload.assignedZoneId,
+  }
+}
+
 async function rotate(apiBaseUrl: string, refreshToken: string): Promise<RotatedTokens> {
   const response = await fetch(`${apiBaseUrl.replace(/\/$/, "")}/auth/refresh`, {
     method: "POST",

@@ -5,7 +5,7 @@ import NextAuth, {
 } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { env } from "./env.mjs"
-import { decodeJwtPayload, getRotatedTokens } from "./lib/auth-refresh"
+import { applyRotatedTokens, getRotatedTokens } from "./lib/auth-refresh"
 
 declare module "next-auth" {
   interface Session {
@@ -122,20 +122,7 @@ export const authOptions: NextAuthOptions = {
         try {
           // Single-flight rotation; the rotated refresh token replaces the consumed one.
           const rotated = await getRotatedTokens(env.API_BASE_URL, token.refreshToken as string)
-          const payload = decodeJwtPayload(rotated.accessToken)
-
-          return {
-            ...token,
-            accessToken: rotated.accessToken,
-            refreshToken: rotated.refreshToken,
-            expiresAt: rotated.accessExpiresAt,
-            role: payload.activeRole || payload.role,
-            churchId: payload.activeChurchId || payload.churchId,
-            activeChurchId: payload.activeChurchId || payload.churchId,
-            activeMembershipId: payload.activeMembershipId,
-            activeRole: payload.activeRole || payload.role,
-            assignedZoneId: payload.assignedZoneId,
-          }
+          return applyRotatedTokens(token, rotated)
         } catch (error) {
           console.error("[Auth] Token refresh error:", error)
           // Clear the token if refresh fails
