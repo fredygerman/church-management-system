@@ -14,4 +14,10 @@ export class ConvertVisitorToMemberDto {
   @IsOptional()
   @IsUUID('4')
   zoneId?: string
+
+  // Injected by ChurchContextGuard before validation runs; declared so the
+  // whitelist pipe does not reject it.
+  @IsOptional()
+  @IsUUID('4')
+  churchId?: string
 }

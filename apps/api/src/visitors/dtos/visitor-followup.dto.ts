@@ -4,6 +4,7 @@ import {
   IsOptional,
   IsEnum,
   IsDateString,
+  IsUUID,
 } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
@@ -46,6 +47,12 @@ export class CreateVisitorFollowupDto {
   @IsOptional()
   @IsString()
   completedBy?: string
+
+  // Injected by ChurchContextGuard before validation runs; declared so the
+  // whitelist pipe does not reject it.
+  @IsOptional()
+  @IsUUID('4')
+  churchId?: string
 }
 
 export class UpdateVisitorFollowupDto {
