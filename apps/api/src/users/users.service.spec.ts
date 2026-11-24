@@ -10,6 +10,8 @@
  * chain (insert, innerJoin, etc.) if a future test needs it.
  */
 jest.mock('drizzle-orm', () => ({
+  // Keep the real exports (sql, relations, ...) that @church/db's built tables need at load time.
+  ...jest.requireActual('drizzle-orm'),
   eq: (column: string, value: any) => (row: any) => row[column] === value,
   and: (...preds: any[]) => (row: any) => preds.filter(Boolean).every((p) => p(row)),
   ne: (column: string, value: any) => (row: any) => row[column] !== value,
