@@ -5,6 +5,7 @@ import { apiGet } from "@/lib/api-helpers"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PortalPrayerRequestForm } from "@/components/portal/prayer-request-form"
+import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -74,7 +75,10 @@ async function PrayerContent({ churchId }: { churchId: string }) {
         {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
-  } catch {
+  } catch (error) {
+    if (isForbiddenError(error)) {
+      return <PortalDeniedState title="Prayer" />
+    }
     return (
       <div className="space-y-4">
         <h1 className="text-foreground text-2xl font-semibold">Prayer</h1>

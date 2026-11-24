@@ -6,6 +6,7 @@ import { apiGet } from "@/lib/api-helpers"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EventRsvp } from "@/components/portal/event-rsvp"
+import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -123,7 +124,10 @@ async function EventsContent({ churchId }: { churchId: string }) {
         {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
-  } catch {
+  } catch (error) {
+    if (isForbiddenError(error)) {
+      return <PortalDeniedState title="Events" />
+    }
     return (
       <div className="space-y-4">
         <div>

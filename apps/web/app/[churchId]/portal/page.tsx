@@ -1,8 +1,9 @@
 import { Suspense } from "react"
 import Link from "next/link"
-import { getMyAnnouncements } from "@/actions/portal"
+import { apiGet } from "@/lib/api-helpers"
 
 import { Button } from "@/components/ui/button"
+import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -16,7 +17,8 @@ function HomeLoading() {
 
 async function HomeContent({ churchId }: { churchId: string }) {
   try {
-    const announcements = await getMyAnnouncements(churchId)
+    const announcementData = await apiGet<any[]>("/communications/announcements", { churchId })
+    const announcements = Array.isArray(announcementData) ? announcementData : []
 
     return (
       <div className="space-y-4">
@@ -61,7 +63,10 @@ async function HomeContent({ churchId }: { churchId: string }) {
         {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
-  } catch {
+  } catch (error) {
+    if (isForbiddenError(error)) {
+      return <PortalDeniedState title="Home" />
+    }
     return (
       <div className="space-y-4">
         <div>

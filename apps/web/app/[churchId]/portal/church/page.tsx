@@ -3,6 +3,7 @@ import Link from "next/link"
 import { getChurchById } from "@/actions/church"
 
 import { Button } from "@/components/ui/button"
+import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -78,7 +79,10 @@ async function ChurchContent({ churchId }: { churchId: string }) {
         {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
-  } catch {
+  } catch (error) {
+    if (isForbiddenError(error)) {
+      return <PortalDeniedState title="Church" />
+    }
     return (
       <div className="space-y-4">
         <h1 className="text-foreground text-2xl font-semibold">Church</h1>

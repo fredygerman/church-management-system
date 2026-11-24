@@ -4,6 +4,7 @@ import Link from "next/link"
 import { apiGet } from "@/lib/api-helpers"
 import { Button } from "@/components/ui/button"
 import { ProfileEditForm } from "@/components/portal/profile-edit-form"
+import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -40,7 +41,10 @@ async function ProfileContent({ churchId }: { churchId: string }) {
         {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
-  } catch {
+  } catch (error) {
+    if (isForbiddenError(error)) {
+      return <PortalDeniedState title="My Profile" />
+    }
     return (
       <div className="space-y-4">
         <h1 className="text-foreground text-2xl font-semibold">My Profile</h1>
