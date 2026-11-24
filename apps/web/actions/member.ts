@@ -3,6 +3,7 @@
 import { isValid, parseISO } from "date-fns"
 import { type MemberFormData } from "@/types/member"
 import { apiPost, apiGet, apiPut, apiDelete } from "@/lib/api-helpers"
+import { apiRequest } from "@/lib/api-client"
 
 function isValidDate(dateStr: string): boolean {
   try {
@@ -110,12 +111,18 @@ export async function getMembers(
       ...(queryParams.to && { to: queryParams.to }),
     })
 
-    const result = await apiGet(`/members?${params}`)
-    const pageCount = result?.meta?.total_pages || 1
+    // apiGet returns only `data`; the pagination meta lives on the full response.
+    const response = await apiRequest<any[]>({
+      requestConfig: { method: "GET", url: `/members?${params}` },
+    })
+    if (!response.success) {
+      throw new Error(response.message || "API request failed")
+    }
+    const pageCount = response.meta?.total_pages || 1
 
     return {
       status: "ok",
-      members: result || [],
+      members: response.data || [],
       pageCount
     }
   } catch (error) {
