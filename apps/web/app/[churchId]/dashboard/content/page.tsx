@@ -3,7 +3,10 @@ import Link from "next/link"
 
 import { Button } from "@/components/ui/button"
 import { UnavailableState } from "@/components/ui/unavailable-state"
+import { ensurePermission } from "@/lib/permissions-server"
 import { getStaffDocuments } from "./staff-documents"
+import { StaffDocumentDeleteButton } from "./staff-document-delete-button"
+import { StaffDocumentUploadForm } from "./staff-document-upload-form"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -59,6 +62,9 @@ async function ContentDocuments({ churchId }: { churchId: string }) {
             <th className="px-3 py-2 text-left">Size</th>
             <th className="px-3 py-2 text-left">Visible to members</th>
             <th className="px-3 py-2 text-left">Added</th>
+            <th className="px-3 py-2 text-left">
+              <span className="sr-only">Actions</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -69,6 +75,13 @@ async function ContentDocuments({ churchId }: { churchId: string }) {
               <td className="px-3 py-2">{formatSize(document.sizeBytes)}</td>
               <td className="px-3 py-2">{document.visibleToMembers ? "Yes" : "No"}</td>
               <td className="px-3 py-2">{document.createdAt.slice(0, 10)}</td>
+              <td className="px-3 py-2 text-right">
+                <StaffDocumentDeleteButton
+                  churchId={churchId}
+                  documentId={document.id}
+                  title={document.title}
+                />
+              </td>
             </tr>
           ))}
         </tbody>
@@ -78,6 +91,8 @@ async function ContentDocuments({ churchId }: { churchId: string }) {
 }
 
 export default async function ContentPage({ params }: PageProps) {
+  // Denied state: users without manage:files are sent to /forbidden, as on other staff pages.
+  await ensurePermission("manage:files")
   const { churchId } = await params
 
   return (
@@ -88,6 +103,7 @@ export default async function ContentPage({ params }: PageProps) {
           Documents shared through the library.
         </p>
       </div>
+      <StaffDocumentUploadForm churchId={churchId} />
       <Suspense fallback={<ContentLoading />}>
         <ContentDocuments churchId={churchId} />
       </Suspense>

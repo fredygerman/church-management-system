@@ -1,21 +1,29 @@
 "use server"
 
-import { validateAiResponse, type AiComponent } from "@church/config"
+import { validateAiResponse, type AiComponent, type AiSource } from "@church/config"
 
 import { apiRequest } from "@/lib/api-client"
 
 interface AiChatPayload {
   conversationId?: string
   components?: unknown
+  sources?: unknown
+  uncertain?: unknown
 }
 
 export type AiSendResult =
-  | { status: "ok"; conversationId: string; components: AiComponent[] }
+  | { status: "ok"; conversationId: string; components: AiComponent[]; sources: AiSource[]; uncertain: boolean }
   | { status: "unavailable"; message: string }
   | { status: "error"; message: string }
 
 const UNAVAILABLE_MESSAGE = "AI is not available right now."
 const ERROR_MESSAGE = "The assistant could not answer. Please try again."
+
+// validateAiResponse only checks components, so sources and uncertain are read here, as plain titles.
+function readSources(value: unknown): AiSource[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item) => (item && typeof item.title === "string" && item.title.length > 0 ? [{ title: item.title }] : []))
+}
 
 function isNextRedirect(error: unknown): boolean {
   return error instanceof Error && error.message.includes("NEXT_REDIRECT")
@@ -60,6 +68,8 @@ export async function sendAiMessage(
       status: "ok",
       conversationId: payload.conversationId,
       components: validated.value.components,
+      sources: readSources(payload.sources),
+      uncertain: payload.uncertain === true,
     }
   } catch (error) {
     if (isNextRedirect(error)) {

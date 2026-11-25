@@ -1,5 +1,6 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { apiRequest } from "@/lib/api-client"
 
 export interface LibraryDocument {
@@ -110,4 +111,63 @@ export async function getLibraryDownloadUrl(
       message: "This document is no longer available. Please refresh the page.",
     }
   }
+}
+
+// Staff upload: POST /api/files/upload (multipart, requires manage:files).
+// Visibility is set at upload time through the metadata JSON; PATCH /api/files/:id cannot change it.
+export async function uploadStaffDocument(churchId: string, formData: FormData): Promise<void> {
+  const file = formData.get("file")
+  const title = String(formData.get("title") ?? "").trim()
+  const description = String(formData.get("description") ?? "").trim()
+
+  if (!(file instanceof File) || file.size === 0) {
+    throw new Error("Choose a file to upload.")
+  }
+  if (!title) {
+    throw new Error("Enter a title for the document.")
+  }
+
+  const body = new FormData()
+  body.append("file", file)
+  body.append("name", title)
+  body.append("displayName", title)
+  body.append(
+    "metadata",
+    JSON.stringify({
+      description: description || undefined,
+      visibleToMembers: formData.get("visibleToMembers") === "on",
+    })
+  )
+
+  const response = await apiRequest<unknown>({
+    requestConfig: {
+      method: "POST",
+      url: "/api/files/upload",
+      params: { churchId },
+      data: body,
+    },
+  })
+
+  if (!response.success) {
+    throw new Error(response.message || "The document could not be uploaded.")
+  }
+
+  revalidatePath(`/${churchId}/dashboard/content`)
+}
+
+// Staff delete: DELETE /api/files/:id is a soft delete (requires manage:files).
+export async function deleteStaffDocument(churchId: string, documentId: string): Promise<void> {
+  const response = await apiRequest<unknown>({
+    requestConfig: {
+      method: "DELETE",
+      url: `/api/files/${encodeURIComponent(documentId)}`,
+      params: { churchId },
+    },
+  })
+
+  if (!response.success) {
+    throw new Error(response.message || "The document could not be deleted.")
+  }
+
+  revalidatePath(`/${churchId}/dashboard/content`)
 }

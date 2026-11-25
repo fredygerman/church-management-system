@@ -15,6 +15,61 @@ function HomeLoading() {
   )
 }
 
+interface ServiceSession {
+  id: string
+  title: string | null
+  sessionDate: string
+  status: string
+  serviceType: { id: string; name: string } | null
+}
+
+function formatServiceDate(sessionDate: string): string {
+  // Plain YYYY-MM-DD dates: parse as local midnight so the day does not shift.
+  const date = new Date(`${sessionDate}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return sessionDate
+  return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })
+}
+
+// Open or upcoming sessions for members (GET /attendance/sessions, sorted by date).
+async function NextServices({ churchId }: { churchId: string }) {
+  try {
+    const sessionData = await apiGet<ServiceSession[]>("/attendance/sessions", { churchId })
+    const services = Array.isArray(sessionData) ? sessionData.slice(0, 3) : []
+
+    return (
+      <section className="border-border bg-card rounded-lg border p-5">
+        <h2 className="text-foreground text-base font-semibold">Next services</h2>
+        {services.length === 0 ? (
+          <p className="text-muted-foreground mt-2 text-sm">No services scheduled</p>
+        ) : (
+          <ul className="mt-3 space-y-3">
+            {services.map((service) => (
+              <li key={service.id} className="border-border border-t pt-3 first:border-t-0 first:pt-0">
+                <p className="text-foreground text-sm font-medium">
+                  {service.title || service.serviceType?.name || "Service"}
+                </p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {formatServiceDate(service.sessionDate)}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    )
+  } catch {
+    return (
+      <section className="border-destructive/50 bg-card rounded-lg border p-5" role="alert">
+        <h2 className="text-foreground text-base font-semibold">Next services</h2>
+        <p className="text-destructive mt-2 text-sm">Next services could not be loaded. Please try again.</p>
+        <Button asChild variant="outline" className="mt-4">
+          <Link href={`/${churchId}/portal`}>Retry</Link>
+        </Button>
+      </section>
+    )
+  }
+}
+
 async function HomeContent({ churchId }: { churchId: string }) {
   try {
     const announcementData = await apiGet<any[]>("/communications/announcements", { churchId })
@@ -56,10 +111,9 @@ async function HomeContent({ churchId }: { churchId: string }) {
           )}
         </section>
 
-        <p className="text-muted-foreground text-sm">
-          Next-service details are not shown because a verified source is not
-          available yet.
-        </p>
+        <Suspense fallback={<HomeLoading />}>
+          <NextServices churchId={churchId} />
+        </Suspense>
         {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )

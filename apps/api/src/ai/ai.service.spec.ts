@@ -39,7 +39,10 @@ class FakeStore {
 
 function setup() {
   const store = new FakeStore()
-  const members = { listMembers: jest.fn().mockResolvedValue({ rows: [], total: 42 }) }
+  const members = {
+    listMembers: jest.fn().mockResolvedValue({ rows: [], total: 42 }),
+    getLeaderScope: jest.fn().mockResolvedValue(undefined),
+  }
   const events = { getEventsByChurch: jest.fn().mockResolvedValue([]) }
   const files = { getMemberLibrary: jest.fn().mockResolvedValue([]) }
   const attendance = { listServiceTypes: jest.fn().mockResolvedValue([]) }
@@ -199,7 +202,7 @@ describe('AiService.chat', () => {
 
     await service.chat(admin, { message: 'how many members?' })
 
-    expect(members.listMembers).toHaveBeenCalledWith(CHURCH, expect.objectContaining({ limit: 1, offset: 0 }))
+    expect(members.listMembers).toHaveBeenCalledWith(CHURCH, expect.objectContaining({ limit: 1, offset: 0 }), undefined)
   })
 
   it('returns 404 for a conversation owned by another user', async () => {

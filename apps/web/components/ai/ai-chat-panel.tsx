@@ -1,7 +1,7 @@
 "use client"
 
 import { useId, useState, type FormEvent } from "react"
-import type { AiComponent } from "@church/config"
+import type { AiComponent, AiSource } from "@church/config"
 
 import { sendAiMessage } from "@/actions/ai"
 import { AiComponents } from "@/components/ai/ai-components"
@@ -12,7 +12,7 @@ import { UnavailableState } from "@/components/ui/unavailable-state"
 
 type Turn =
   | { role: "user"; text: string }
-  | { role: "assistant"; components: AiComponent[] }
+  | { role: "assistant"; components: AiComponent[]; sources: AiSource[]; uncertain: boolean }
 
 type Status = "idle" | "loading" | "error" | "unavailable"
 
@@ -39,7 +39,7 @@ export function AiChatPanel({ churchId }: AiChatPanelProps) {
       setTurns((prev) => [
         ...prev,
         { role: "user", text },
-        { role: "assistant", components: result.components },
+        { role: "assistant", components: result.components, sources: result.sources, uncertain: result.uncertain },
       ])
       setInput("")
       setStatus("idle")
@@ -84,7 +84,19 @@ export function AiChatPanel({ churchId }: AiChatPanelProps) {
               {turn.text}
             </div>
           ) : (
-            <AiComponents key={i} components={turn.components} />
+            <div key={i} className="space-y-2">
+              <AiComponents components={turn.components} />
+              {turn.sources.length > 0 && (
+                <p className="text-muted-foreground text-xs">
+                  Sources: {turn.sources.map((source) => source.title).join(", ")}
+                </p>
+              )}
+              {turn.uncertain && (
+                <p className="text-muted-foreground text-xs">
+                  Uncertain: part of this answer could not be checked.
+                </p>
+              )}
+            </div>
           ),
         )}
 

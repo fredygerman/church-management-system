@@ -1,17 +1,23 @@
 import { useState } from "react"
 import { Button, ScrollView, Text, TextInput, View } from "react-native"
-import { validateAiResponse, type AiComponent } from "@church/config/ai"
+import { validateAiResponse, type AiComponent, type AiSource } from "@church/config/ai"
 import { AiResponseView } from "../components/ai/ai-response"
 import { NotConnectedState } from "../components/not-connected-state"
 import { styles } from "../components/screen-state"
 import { ApiError, api } from "../lib/api"
 import { useSession } from "../lib/session"
 
-type Entry = { role: "user"; text: string } | { role: "assistant"; components: AiComponent[] | null }
+type Entry = { role: "user"; text: string } | { role: "assistant"; components: AiComponent[] | null; sources: AiSource[]; uncertain: boolean }
 type Status = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message: string } | { kind: "unavailable"; message: string } | { kind: "not-connected" }
 
 const UNAVAILABLE = "AI is not available right now"
 const INVALID_ANSWER = "This answer could not be shown safely. Try asking again."
+
+// validateAiResponse only checks components, so sources and uncertain are read here, as plain titles.
+function readSources(value: unknown): AiSource[] {
+  if (!Array.isArray(value)) return []
+  return value.flatMap((item) => (item && typeof item.title === "string" && item.title.length > 0 ? [{ title: item.title }] : []))
+}
 
 export default function AiScreen() {
   const { user } = useSession()
@@ -24,14 +30,16 @@ export default function AiScreen() {
   async function send(text: string) {
     setStatus({ kind: "loading" })
     try {
-      const result = await api.post<{ conversationId: string; components: unknown }>("/ai/chat", {
+      const result = await api.post<{ conversationId: string; components: unknown; sources?: unknown; uncertain?: unknown }>("/ai/chat", {
         churchId,
         message: text,
         conversationId: conversationId ?? undefined,
       })
       const checked = validateAiResponse({ components: result.components })
+      const sources = readSources(result.sources)
+      const uncertain = result.uncertain === true
       setConversationId(result.conversationId)
-      setEntries((current) => [...current, { role: "user", text }, { role: "assistant", components: checked.ok ? checked.value.components : null }])
+      setEntries((current) => [...current, { role: "user", text }, { role: "assistant", components: checked.ok ? checked.value.components : null, sources, uncertain }])
       setMessage((current) => (current === text ? "" : current))
       setStatus(checked.ok ? { kind: "idle" } : { kind: "error", message: INVALID_ANSWER })
     } catch (caught) {
@@ -64,6 +72,8 @@ export default function AiScreen() {
         ) : (
           <View key={index} style={{ marginBottom: 18 }}>
             {entry.components ? <AiResponseView components={entry.components} /> : <Text style={styles.error}>{INVALID_ANSWER}</Text>}
+            {entry.components && entry.sources.length > 0 ? <Text style={styles.text}>Sources: {entry.sources.map((source) => source.title).join(", ")}</Text> : null}
+            {entry.components && entry.uncertain ? <Text style={styles.text}>Uncertain: part of this answer could not be checked.</Text> : null}
           </View>
         ),
       )}

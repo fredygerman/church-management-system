@@ -140,8 +140,19 @@ export type AiComponent =
   | AiLinkButtonComponent
   | AiNoticeComponent
 
+/** A data source the answer was built from. Set by the API from read-tool results, never by the model. */
+export interface AiSource {
+  title: string
+  /** Relative in-app path (same rules as list hrefs). Unset when no stable route exists. */
+  href?: string
+}
+
 export interface AiResponse {
   components: AiComponent[]
+  /** Sources of the tool results used. Unset when the answer used no tool result. */
+  sources?: AiSource[]
+  /** True when a tool result needed for the answer was denied or failed. Unset when no tool result exists. */
+  uncertain?: boolean
 }
 
 export const AI_COMPONENT_TYPES = [

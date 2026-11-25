@@ -16,6 +16,7 @@ import { AttendanceService } from './attendance.service'
 import { MembersService } from '../members/members.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
+import { UserRole } from '../auth/types/permission.types'
 
 @Controller('attendance')
 @UseGuards(ChurchContextGuard)
@@ -72,7 +73,12 @@ export class AttendanceController {
   @Get('sessions')
   @RequirePermission('view:attendance')
   async listSessions(@Req() request: Request, @Query('from') from?: string, @Query('to') to?: string) {
-    return this.attendanceService.listSessions(request['churchId'] as string, from, to)
+    const churchId = request['churchId'] as string
+    // Member role has view:attendance but no staff attendance grant: open/upcoming sessions only.
+    if (request.user['role'] === UserRole.MEMBER) {
+      return this.attendanceService.listUpcomingSessionsForMember(churchId, from, to)
+    }
+    return this.attendanceService.listSessions(churchId, from, to)
   }
 
   @Patch('sessions/:id/status')

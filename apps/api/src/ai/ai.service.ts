@@ -10,11 +10,13 @@ import {
   AI_ACTION_REGISTRY,
   validateAiResponse,
   type AiComponent,
+  type AiResponse,
+  type AiSource,
 } from '@church/config'
 import type { AiStoredMessage } from '@church/db'
 import { AiConversationStore } from './ai-conversation.store'
 import { loadAiSettings } from './ai-config'
-import { AiReadTools, type AiCaller } from './ai-tools'
+import { AiReadTools, type AiCaller, type AiToolResult } from './ai-tools'
 import {
   createAiProvider,
   type AiCompletion,
@@ -80,9 +82,8 @@ export interface AiChatInput {
   conversationId?: string
 }
 
-export interface AiChatResult {
+export interface AiChatResult extends AiResponse {
   conversationId: string
-  components: AiComponent[]
 }
 
 @Injectable()
@@ -115,7 +116,7 @@ export class AiService {
       existing = { id: row.id, messages: row.messages ?? [] }
     }
 
-    const components = await this.answer(provider, settings.model, caller, [
+    const { components, ...meta } = await this.answer(provider, settings.model, caller, [
       ...toModelHistory(existing?.messages ?? []),
       { role: 'user', text: message },
     ])
@@ -126,7 +127,7 @@ export class AiService {
     ]
     if (existing) {
       await this.store.replaceMessages(existing.id, capHistory([...existing.messages, ...turns]))
-      return { conversationId: existing.id, components }
+      return { conversationId: existing.id, components, ...meta }
     }
     const conversationId = randomUUID()
     await this.store.create({
@@ -135,16 +136,19 @@ export class AiService {
       churchId: caller.churchId,
       messages: capHistory(turns),
     })
-    return { conversationId, components }
+    return { conversationId, components, ...meta }
   }
 
-  /** Runs the model with read tools until it calls respond, then validates the answer. */
+  /**
+   * Runs the model with read tools until it calls respond, then validates the answer.
+   * sources/uncertain come from the read-tool results of this answer only.
+   */
   private async answer(
     provider: AiProvider,
     model: string,
     caller: AiCaller,
     start: AiMessage[],
-  ): Promise<AiComponent[]> {
+  ): Promise<AiResponse> {
     const tools: AiToolSpec[] = [
       ...this.tools.definitions().map((t) => ({
         name: t.name,
@@ -157,6 +161,7 @@ export class AiService {
     let messages = start
     let toolRounds = 0
     let retries = 0
+    const toolResults: AiToolResult[] = []
 
     for (let call = 0; call < MAX_MODEL_CALLS; call++) {
       let completion: AiCompletion
@@ -181,7 +186,7 @@ export class AiService {
       if (respond) {
         const verdict = validateComponents(respond.input)
         if ('components' in verdict) {
-          return verdict.components
+          return { components: verdict.components, ...toolProvenance(toolResults) }
         }
         if (retries >= RETRY_LIMIT) break
         retries++
@@ -218,13 +223,28 @@ export class AiService {
       const outcomes = await Promise.all(
         toolCalls.map(async (c) => {
           const result = await this.tools.execute(c.name, caller)
+          toolResults.push(result)
           return { toolCallId: c.id, content: result.content, isError: !result.ok }
         }),
       )
       messages = [...messages, assistantTurn, { role: 'tool', outcomes }]
     }
 
-    return [NOT_ANSWERED]
+    return { components: [NOT_ANSWERED] }
+  }
+}
+
+/**
+ * Sources and uncertainty for an answer. Unset when no tool was run. `uncertain`
+ * is true when any tool result was denied or failed.
+ */
+function toolProvenance(results: AiToolResult[]): Pick<AiResponse, 'sources' | 'uncertain'> {
+  if (results.length === 0) return {}
+  const titles = [...new Set(results.flatMap((r) => (r.ok ? [r.source] : [])))]
+  const sources: AiSource[] = titles.map((title) => ({ title }))
+  return {
+    ...(sources.length > 0 ? { sources } : {}),
+    uncertain: results.some((r) => !r.ok),
   }
 }
 

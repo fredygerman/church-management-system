@@ -15,12 +15,14 @@ export interface AiCaller {
 export interface AiReadTool {
   name: string
   description: string
+  /** Human-readable data source name, shown to the user as an answer source. */
+  source: string
   permission: PermissionAction
   run(caller: AiCaller): Promise<unknown>
 }
 
 export type AiToolResult =
-  | { ok: true; content: string }
+  | { ok: true; content: string; source: string }
   | { ok: false; denied: boolean; content: string }
 
 /**
@@ -41,20 +43,23 @@ export class AiReadTools {
     this.tools = [
       {
         name: 'member_count',
-        description: 'Total number of active members in the caller\'s church.',
+        description: 'Total number of active members the caller can see in their church (zone and department leaders: only their own members).',
+        source: 'Member records',
         permission: 'read:member',
-        run: async ({ churchId }) => {
-          const { total } = await this.members.listMembers(churchId, {
-            sort: 'created_at.desc',
-            limit: 1,
-            offset: 0,
-          })
+        run: async ({ churchId, userId, role }) => {
+          const scope = await this.members.getLeaderScope(churchId, userId, role)
+          const { total } = await this.members.listMembers(
+            churchId,
+            { sort: 'created_at.desc', limit: 1, offset: 0 },
+            scope?.memberFilter,
+          )
           return { total_members: total }
         },
       },
       {
         name: 'upcoming_events',
         description: 'Up to 10 upcoming published events the caller can see (title, start time, location).',
+        source: 'Events',
         permission: 'view:events',
         run: async ({ churchId }) => {
           const events = await this.events.getEventsByChurch(
@@ -74,6 +79,7 @@ export class AiReadTools {
       {
         name: 'library_documents',
         description: 'Up to 20 member-visible library documents (title, description, type, date). Same rules as GET /api/files/library.',
+        source: 'Library documents',
         permission: 'read:self',
         run: async ({ churchId }) => {
           const docs = await this.files.getMemberLibrary(churchId)
@@ -88,6 +94,7 @@ export class AiReadTools {
       {
         name: 'service_types',
         description: 'Service types configured for the church (name, active flag).',
+        source: 'Service types',
         permission: 'view:attendance',
         run: async ({ churchId }) => {
           const types = await this.attendance.listServiceTypes(churchId)
@@ -122,6 +129,6 @@ export class AiReadTools {
       }
     }
     const data = await tool.run(caller)
-    return { ok: true, content: JSON.stringify(data) }
+    return { ok: true, content: JSON.stringify(data), source: tool.source }
   }
 }

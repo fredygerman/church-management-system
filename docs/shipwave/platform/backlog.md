@@ -53,3 +53,21 @@ Decisions taken on the recommendation, without a new question to Fredy:
 - Mail and SMS DTOs: no `churchId` work, since no sending is enabled (DEC-05).
 
 Not code, still for Fredy after all code work (DEC-10): Q-02 human verification, the Swahili copy review, and the D-01 design review.
+
+## Status 2026-11-25 (third batch, code work)
+
+Verified once for this batch: `@church/config` and `@church/db` build, API type-check and jest (19 suites, 143 tests), web type-check and `next build` (placeholder build-only env values), mobile type-check. Not run: mobile Android export, any live API or device run.
+
+- Member scope (`getLeaderScope`): members see only their own record on list, search (403), zone (403) and single-member reads. Zone and department leaders see only members they lead on list, search, zone, single member and dashboard stats. Other roles are unchanged.
+- Member services: `GET /attendance/sessions` returns only open or upcoming, non-draft sessions to members (`id, title, sessionDate, status, serviceType`). Web portal and mobile Home show the next three.
+- Staff documents (web): upload (visible-to-members is set at upload) and soft delete with confirm, under `manage:files`.
+- Web library search by title, description and file name. Mobile staff tabs are hidden by role, using a copy of the permission grants.
+- AI answers carry `sources` and `uncertain` in the contract; clients show them. No feedback control or endpoint.
+
+Open:
+- Visibility toggle after upload needs `PATCH /api/files/:id` to accept visibility (backend change).
+- Leader scope does not yet cover member update and delete routes.
+- `ai-api.md`, `api-contracts.md` and `ai-components.md` do not yet describe the new response fields.
+- The mobile permission copy will drift if `PERMISSION_MAP` changes.
+- No automated test harness for web or mobile (W-02: no test setup).
+- Rebuild `packages/config` before the web and mobile type-checks.

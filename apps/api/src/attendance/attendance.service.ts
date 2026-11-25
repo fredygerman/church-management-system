@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common'
 import { Cron, CronExpression } from '@nestjs/schedule'
-import { and, desc, eq, gte, inArray, isNull, lte, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm'
 import { db } from '@church/db'
 import {
   attendanceCheckins,
@@ -105,6 +105,28 @@ export class AttendanceService {
       where: and(...filters),
       with: { serviceType: true },
       orderBy: [desc(serviceSessions.sessionDate), desc(serviceSessions.createdAt)],
+    })
+  }
+
+  /**
+   * Member view of sessions: not drafts, and either open or dated today or later.
+   * Returns only the fields a member Home needs (qrToken is never exposed).
+   */
+  async listUpcomingSessionsForMember(churchId: string, from?: string, to?: string) {
+    const filters = [
+      eq(serviceSessions.churchId, churchId),
+      isNull(serviceSessions.deletedAt),
+      ne(serviceSessions.status, 'draft'),
+      or(eq(serviceSessions.status, 'open'), gte(serviceSessions.sessionDate, sql`current_date`)),
+    ]
+    if (from) filters.push(gte(serviceSessions.sessionDate, from as any))
+    if (to) filters.push(lte(serviceSessions.sessionDate, to as any))
+
+    return db.query.serviceSessions.findMany({
+      where: and(...filters),
+      columns: { id: true, title: true, sessionDate: true, status: true },
+      with: { serviceType: { columns: { id: true, name: true } } },
+      orderBy: [asc(serviceSessions.sessionDate)],
     })
   }
 

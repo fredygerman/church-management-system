@@ -1,20 +1,42 @@
 import { Injectable } from '@nestjs/common'
-import { eq, and, isNull, or, ilike, asc, desc, count, type SQL } from 'drizzle-orm'
+import { eq, and, isNull, or, ilike, asc, desc, count, inArray, sql, type SQL } from 'drizzle-orm'
 import { db } from '@church/db'
-import { members, memberZones, zones, userChurchMemberships, type Member, type MemberZone } from '@church/db'
+import {
+  members,
+  memberDepartments,
+  memberZones,
+  departments,
+  zones,
+  userChurchMemberships,
+  type Member,
+  type MemberZone,
+} from '@church/db'
 import { MEMBER_SORTS, type MemberListQuery } from './members-list'
+import { UserRole } from '../auth/types/permission.types'
 
 // Escape LIKE wildcards so user input is matched literally inside `%...%`.
 const containsPattern = (value: string) => `%${value.replace(/[\\%_]/g, (c) => `\\${c}`)}%`
 
 /**
+ * Member visibility for zone and department leaders: members linked to a zone or
+ * department the caller leads (isLeader link on the caller's own member record).
+ */
+export interface LeaderScope {
+  /** Condition on members.id, added to the member list, its count and the dashboard counts */
+  memberFilter: SQL
+  /** Zones the caller leads (0 for department leaders) */
+  zoneCount: number
+}
+
+/**
  * Church-scoped, soft-delete-excluding WHERE clause for the member list.
  * Shared by the page query and the count query so totals always match rows.
  */
-export function buildMemberListWhere(churchId: string, query: MemberListQuery): SQL | undefined {
+export function buildMemberListWhere(churchId: string, query: MemberListQuery, scope?: SQL): SQL | undefined {
   const conditions: (SQL | undefined)[] = [
     eq(members.churchId, churchId),
     isNull(members.deletedAt),
+    scope,
   ]
   if (query.firstName) conditions.push(ilike(members.firstName, containsPattern(query.firstName)))
   if (query.lastName) conditions.push(ilike(members.lastName, containsPattern(query.lastName)))
@@ -69,10 +91,69 @@ export class MembersService {
   }
 
   /**
+   * Scope for zone_leader / department_leader callers. Undefined for every other role.
+   * A leader with no led zone or department gets a filter that matches nothing.
+   */
+  /**
+   * Row scope for member reads. Members see only their own record; zone and
+   * department leaders see only their zones/departments; other roles are unscoped.
+   */
+  async getLeaderScope(churchId: string, userId: string, role: string): Promise<LeaderScope | undefined> {
+    const scoped = role === UserRole.MEMBER || role === UserRole.ZONE_LEADER || role === UserRole.DEPARTMENT_LEADER
+    if (!scoped) return undefined
+
+    const member = await this.getMemberByUserId(churchId, userId)
+    if (!member) return { memberFilter: sql`false`, zoneCount: 0 }
+    if (role === UserRole.MEMBER) return { memberFilter: eq(members.id, member.id), zoneCount: 0 }
+
+    if (role === UserRole.ZONE_LEADER) {
+      const led = await db
+        .select({ zoneId: memberZones.zoneId })
+        .from(memberZones)
+        .innerJoin(zones, eq(zones.id, memberZones.zoneId))
+        .where(and(
+          eq(memberZones.memberId, member.id),
+          eq(memberZones.churchId, churchId),
+          eq(memberZones.isLeader, true),
+          isNull(memberZones.deletedAt),
+          isNull(zones.deletedAt),
+        ))
+      const zoneIds = led.map((row) => row.zoneId)
+      return {
+        memberFilter: inArray(members.id, db
+          .select({ memberId: memberZones.memberId })
+          .from(memberZones)
+          .where(and(inArray(memberZones.zoneId, zoneIds), isNull(memberZones.deletedAt)))),
+        zoneCount: zoneIds.length,
+      }
+    }
+
+    const led = await db
+      .select({ departmentId: memberDepartments.departmentId })
+      .from(memberDepartments)
+      .innerJoin(departments, eq(departments.id, memberDepartments.departmentId))
+      .where(and(
+        eq(memberDepartments.memberId, member.id),
+        eq(memberDepartments.churchId, churchId),
+        eq(memberDepartments.isLeader, true),
+        isNull(memberDepartments.deletedAt),
+        isNull(departments.deletedAt),
+      ))
+    const departmentIds = led.map((row) => row.departmentId)
+    return {
+      memberFilter: inArray(members.id, db
+        .select({ memberId: memberDepartments.memberId })
+        .from(memberDepartments)
+        .where(and(inArray(memberDepartments.departmentId, departmentIds), isNull(memberDepartments.deletedAt)))),
+      zoneCount: 0,
+    }
+  }
+
+  /**
    * Paged, filtered member list plus the total count for the same filters
    */
-  async listMembers(churchId: string, query: MemberListQuery): Promise<{ rows: Member[]; total: number }> {
-    const where = buildMemberListWhere(churchId, query)
+  async listMembers(churchId: string, query: MemberListQuery, scope?: SQL): Promise<{ rows: Member[]; total: number }> {
+    const where = buildMemberListWhere(churchId, query, scope)
     const sort = MEMBER_SORTS[query.sort]
     const sortColumn = members[sort.column]
     const orderBy = sort.direction === 'desc' ? desc(sortColumn) : asc(sortColumn)
@@ -143,9 +224,9 @@ export class MembersService {
   /**
    * Search members by name or phone
    */
-  async searchMembers(churchId: string, query: string): Promise<Member[]> {
+  async searchMembers(churchId: string, query: string, scope?: SQL): Promise<Member[]> {
     const searchQuery = containsPattern(query)
-    
+
     return db.query.members.findMany({
       where: and(
         eq(members.churchId, churchId),
@@ -155,22 +236,38 @@ export class MembersService {
           ilike(members.lastName, searchQuery),
           ilike(members.phone, searchQuery),
         ),
+        scope,
       ),
     })
+  }
+
+  /** True when the member is inside the caller's scope (no scope means church-wide). */
+  async isMemberInScope(churchId: string, memberId: string, scope?: SQL): Promise<boolean> {
+    if (!scope) return true
+    const [row] = await db
+      .select({ id: members.id })
+      .from(members)
+      .where(and(eq(members.id, memberId), eq(members.churchId, churchId), isNull(members.deletedAt), scope))
+      .limit(1)
+    return Boolean(row)
   }
 
   /**
    * Get members by zone (via memberZones junction table)
    */
-  async getMembersByZone(churchId: string, zoneId: string): Promise<Member[]> {
+  async getMembersByZone(churchId: string, zoneId: string, scope?: SQL): Promise<Member[]> {
     const memberRecords = await db.query.memberZones.findMany({
       where: eq(memberZones.zoneId, zoneId),
       with: { member: true, zone: true },
     })
+    // ponytail: scope is applied by loading the caller's allowed member ids once, fine at church size; push it into the join if lists grow.
+    const allowed = scope
+      ? new Set((await db.select({ id: members.id }).from(members).where(and(eq(members.churchId, churchId), scope))).map((row) => row.id))
+      : undefined
     return memberRecords
       .filter((record) => record.zone?.churchId === churchId)
       .map((record) => record.member)
-      .filter((member) => member.churchId === churchId && !member.deletedAt)
+      .filter((member) => member.churchId === churchId && !member.deletedAt && (!allowed || allowed.has(member.id)))
   }
 
   /**

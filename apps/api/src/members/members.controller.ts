@@ -53,7 +53,12 @@ export class MembersController {
     }
 
     const listQuery = parseMemberListQuery(query)
-    const { rows, total } = await this.membersService.listMembers(churchId, listQuery)
+    const scope = await this.membersService.getLeaderScope(
+      churchId,
+      request.user['id'] as string,
+      request.user['role'] as string,
+    )
+    const { rows, total } = await this.membersService.listMembers(churchId, listQuery, scope?.memberFilter)
     return { data: rows, meta: buildMemberListMeta(total, listQuery) }
   }
 
@@ -70,8 +75,12 @@ export class MembersController {
     if (!churchId || !query) {
       throw new BadRequestException('Church context and search query are required')
     }
+    if (request.user['role'] === UserRole.MEMBER) {
+      throw new ForbiddenException('Members cannot search the church directory')
+    }
 
-    return this.membersService.searchMembers(churchId, query)
+    const scope = await this.membersService.getLeaderScope(churchId, request.user['id'] as string, request.user['role'] as string)
+    return this.membersService.searchMembers(churchId, query, scope?.memberFilter)
   }
 
   /**
@@ -80,7 +89,13 @@ export class MembersController {
   @Get('zone/:zoneId')
   @RequirePermission('read:member')
   async getByZone(@Req() request: Request, @Param('zoneId') zoneId: string) {
-    return this.membersService.getMembersByZone(request['churchId'] as string, zoneId)
+    if (request.user['role'] === UserRole.MEMBER) {
+      throw new ForbiddenException('Members cannot list zone members')
+    }
+
+    const churchId = request['churchId'] as string
+    const scope = await this.membersService.getLeaderScope(churchId, request.user['id'] as string, request.user['role'] as string)
+    return this.membersService.getMembersByZone(churchId, zoneId, scope?.memberFilter)
   }
 
   /**
@@ -111,13 +126,11 @@ export class MembersController {
   async getOne(@Req() request: Request, @Param('id') id: string) {
     const churchId = request['churchId'] as string
 
-    // The MEMBER role's read:member grant is "own profile only" (see permissions.ts) —
-    // enforce that here since the permission system itself is action-based, not row-scoped.
-    if (request.user['role'] === UserRole.MEMBER) {
-      const ownMember = await this.membersService.getMemberByUserId(churchId, request.user['id'] as string)
-      if (!ownMember || ownMember.id !== id) {
-        throw new ForbiddenException('You can only view your own member profile')
-      }
+    // The permission system is action-based, not row-scoped: members see only their own record and
+    // zone/department leaders only members they lead (see getLeaderScope).
+    const scope = await this.membersService.getLeaderScope(churchId, request.user['id'] as string, request.user['role'] as string)
+    if (!(await this.membersService.isMemberInScope(churchId, id, scope?.memberFilter))) {
+      throw new ForbiddenException('This member is outside your scope')
     }
 
     const member = await this.membersService.getMemberById(churchId, id)
