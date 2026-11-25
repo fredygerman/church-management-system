@@ -14,7 +14,15 @@ export function formatBytes(bytes: number, t: Translate): string {
     unitIndex += 1
   }
 
-  return `${value >= 10 ? value.toFixed(0) : value.toFixed(1)} ${units[unitIndex]}`
+  const format = (amount: number) => (amount >= 10 ? amount.toFixed(0) : amount.toFixed(1))
+  let text = format(value)
+  // Rounding can reach 1024 (for example 1023.9 KB); show it in the next unit instead.
+  if (Number(text) >= 1024 && unitIndex < units.length - 1) {
+    unitIndex += 1
+    text = format(value / 1024)
+  }
+
+  return `${text} ${units[unitIndex]}`
 }
 
 export function formatFileType(document: LibraryDocument, t: Translate): string {

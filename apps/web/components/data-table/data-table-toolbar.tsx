@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils"
 // import { Input } from "@/components/ui/input"
 // import { DataTableFacetedFilter } from "@/components/data-table/data-table-faceted-filter"
 import { DataTableViewOptions } from "@/components/data-table/data-table-view-options"
+import { useT } from "@/components/i18n/locale-provider"
 
 interface DataTableToolbarProps<TData>
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -46,6 +47,7 @@ export function DataTableToolbar<TData>({
   className,
   ...props
 }: DataTableToolbarProps<TData>) {
+  const { t } = useT()
   // const isFiltered = table.getState().columnFilters.length > 0
 
   // Memoize computation of searchableColumns and filterableColumns
@@ -113,12 +115,12 @@ export function DataTableToolbar<TData>({
           })}
         {isFiltered && (
           <Button
-            aria-label="Reset filters"
+            aria-label={t("final.table.resetFilters")}
             variant="ghost"
             className="h-8 px-2 lg:px-3"
             onClick={() => table.resetColumnFilters()}
           >
-            Reset
+            {t("final.table.reset")}
             <Cross2Icon className="ml-2 size-4" aria-hidden="true" />
           </Button>
         )}

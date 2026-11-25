@@ -23,12 +23,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import { DashboardBreadcrumb } from "./dashboard-breadcrumb"
+import { useT } from "@/components/i18n/locale-provider"
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void
 }
 
 export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
+  const { t } = useT()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { data: session } = useSession()
   const user = session?.user
@@ -41,7 +43,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
           <button
             onClick={onMenuClick}
             className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
-            aria-label="Toggle sidebar"
+            aria-label={t("final.a11y.toggleSidebar")}
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -69,7 +71,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                     src={
                       user?.image || "https://i.ibb.co/R0rhgvP/shadcn-avatar.jpg"
                     }
-                    alt={user?.name || "User"}
+                    alt={user?.name || t("final.common.user")}
                   />
                   <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
                 </Avatar>
@@ -88,7 +90,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
               <Link href={`/dashboard/profile`} passHref>
                 <DropdownMenuItem className="cursor-pointer">
                   <User className="mr-2 size-4" />
-                  <span>My Profile</span>
+                  <span>{t("nav.myProfile")}</span>
                 </DropdownMenuItem>
               </Link>
               <DropdownMenuSeparator />
@@ -97,7 +99,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 className="cursor-pointer bg-destructive text-destructive-foreground"
               >
                 <LogOut className="mr-2 size-4" />
-                <span>Log out</span>
+                <span>{t("nav.logout.menu")}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -108,18 +110,18 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Are you sure you want to log out?</DialogTitle>
+            <DialogTitle>{t("nav.logout.title")}</DialogTitle>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Link href="/auth/signout" passHref>
               <Button
                 variant="destructive"
                 className="cursor-pointer bg-destructive text-destructive-foreground"
               >
-                Yes
+                {t("nav.logout.yes")}
               </Button>
             </Link>
           </DialogFooter>

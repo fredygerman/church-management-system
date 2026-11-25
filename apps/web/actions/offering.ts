@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { apiGet, apiPost, apiPut, apiDelete } from "@/lib/api-helpers"
+import { getTranslator } from "@/lib/i18n/server"
 
 // ============================================
 // Offering Categories
@@ -180,7 +181,8 @@ export async function getOfferingReportSummary(
   // Errors propagate: an empty list would read as "no offerings" (DEC-04: no false zero).
   const result = await apiGet("/offerings/reports/summary", { churchId, groupBy, ...options })
   if (!Array.isArray(result)) {
-    throw new Error("Offering report is unavailable")
+    const t = await getTranslator()
+    throw new Error(t("final.offering.reportUnavailable"))
   }
   return result
 }

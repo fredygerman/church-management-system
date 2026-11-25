@@ -26,27 +26,33 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+import { useT } from "@/components/i18n/locale-provider"
+import type { Translate } from "@church/config"
 
-const visitorFormSchema = z.object({
-  firstName: z.string().min(2, "First name must be at least 2 characters"),
-  lastName: z.string().min(2, "Last name must be at least 2 characters"),
-  email: z.string().optional(),
-  phone: z.string().optional(),
-  visitorSource: z.enum([
-    "friend",
-    "flyer",
-    "walk_in",
-    "event",
-    "referral",
-    "social_media",
-    "other",
-  ]),
-  visitDate: z.string().optional(),
-})
+function buildVisitorFormSchema(t: Translate) {
+  return z.object({
+    firstName: z.string().min(2, t("final.visitor.firstNameMin")),
+    lastName: z.string().min(2, t("final.visitor.lastNameMin")),
+    email: z.string().optional(),
+    phone: z.string().optional(),
+    visitorSource: z.enum([
+      "friend",
+      "flyer",
+      "walk_in",
+      "event",
+      "referral",
+      "social_media",
+      "other",
+    ]),
+    visitDate: z.string().optional(),
+  })
+}
 
-type VisitorFormData = z.infer<typeof visitorFormSchema>
+type VisitorFormData = z.infer<ReturnType<typeof buildVisitorFormSchema>>
 
 export function VisitorForm({ churchId }: { churchId: string }) {
+  const { t } = useT()
+  const visitorFormSchema = buildVisitorFormSchema(t)
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -75,12 +81,12 @@ export function VisitorForm({ churchId }: { churchId: string }) {
         visitorSource: data.visitorSource,
       })
 
-      toast.success("Visitor added successfully!")
+      toast.success(t("final.visitor.success"))
       router.push(`/${churchId}/dashboard/visitors`)
     } catch (error) {
       console.error("Error creating visitor:", error)
       toast.error(
-        error instanceof Error ? error.message : "Failed to add visitor"
+        error instanceof Error ? error.message : t("final.visitor.failed")
       )
     } finally {
       setIsSubmitting(false)
@@ -97,7 +103,7 @@ export function VisitorForm({ churchId }: { churchId: string }) {
               name="firstName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>First Name *</FormLabel>
+                  <FormLabel>{t("final.visitor.firstNameLabel")}</FormLabel>
                   <FormControl>
                     <Input placeholder="John" {...field} />
                   </FormControl>
@@ -110,7 +116,7 @@ export function VisitorForm({ churchId }: { churchId: string }) {
               name="lastName"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Last Name *</FormLabel>
+                  <FormLabel>{t("final.visitor.lastNameLabel")}</FormLabel>
                   <FormControl>
                     <Input placeholder="Doe" {...field} />
                   </FormControl>
@@ -126,7 +132,7 @@ export function VisitorForm({ churchId }: { churchId: string }) {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>{t("final.form.email")}</FormLabel>
                   <FormControl>
                     <Input type="email" placeholder="john@example.com" {...field} />
                   </FormControl>
@@ -139,7 +145,7 @@ export function VisitorForm({ churchId }: { churchId: string }) {
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel>{t("final.form.phone")}</FormLabel>
                   <FormControl>
                     <Input type="tel" placeholder="+1 (555) 000-0000" {...field} />
                   </FormControl>
@@ -155,7 +161,7 @@ export function VisitorForm({ churchId }: { churchId: string }) {
               name="visitDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Visit Date</FormLabel>
+                  <FormLabel>{t("final.visitor.visitDate")}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
@@ -168,21 +174,21 @@ export function VisitorForm({ churchId }: { churchId: string }) {
               name="visitorSource"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>How did you hear about us? *</FormLabel>
+                  <FormLabel>{t("final.visitor.source")}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a source" />
+                        <SelectValue placeholder={t("final.visitor.selectSource")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="friend">Friend</SelectItem>
-                      <SelectItem value="flyer">Flyer</SelectItem>
-                      <SelectItem value="walk_in">Walk-in</SelectItem>
-                      <SelectItem value="event">Event</SelectItem>
-                      <SelectItem value="referral">Referral</SelectItem>
-                      <SelectItem value="social_media">Social Media</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="friend">{t("final.visitor.friend")}</SelectItem>
+                      <SelectItem value="flyer">{t("final.visitor.flyer")}</SelectItem>
+                      <SelectItem value="walk_in">{t("final.visitor.walkIn")}</SelectItem>
+                      <SelectItem value="event">{t("final.visitor.event")}</SelectItem>
+                      <SelectItem value="referral">{t("final.visitor.referral")}</SelectItem>
+                      <SelectItem value="social_media">{t("final.visitor.socialMedia")}</SelectItem>
+                      <SelectItem value="other">{t("final.visitor.other")}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -198,10 +204,10 @@ export function VisitorForm({ churchId }: { churchId: string }) {
               onClick={() => router.back()}
               disabled={isSubmitting}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Adding..." : "Add Visitor"}
+              {isSubmitting ? t("final.visitor.adding") : t("final.visitor.add")}
             </Button>
           </div>
         </form>

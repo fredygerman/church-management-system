@@ -1,5 +1,6 @@
 import { getZones } from "@/actions/zone"
 import { ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
 
 import { MemberForm } from "@/components/form/MemberForm"
 
@@ -10,12 +11,13 @@ export default async function NewMemberPage({
 }) {
   await ensurePermission('create:member')
   const { churchId } = await params
+  const t = await getTranslator()
   const zones = await getZones(churchId)
 
   return (
     <div className="container mx-auto py-10">
       <h1 className="mb-8 text-center text-3xl font-bold">
-        New Member Registration
+        {t("final.addPage.member")}
       </h1>
       <MemberForm churchId={churchId} zones={zones} />
     </div>

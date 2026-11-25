@@ -1,4 +1,5 @@
 import { API_BASE_URL } from "../config/api"
+import { DEFAULT_LOCALE, translate, type Locale } from "@church/config/i18n"
 import { clearStoredTokens, getStoredTokens, storeTokens, type StoredTokens } from "./storage"
 
 export class ApiError extends Error {
@@ -15,6 +16,12 @@ export class ApiError extends Error {
 
 type ApiEnvelope<T> = { success: boolean; message?: string; data?: T }
 let onSessionExpired: (() => void) | undefined
+
+// Errors raised in this module are translated with the language the user picked (set by LocaleProvider).
+let apiLocale: Locale = DEFAULT_LOCALE
+export function setApiLocale(locale: Locale) {
+  apiLocale = locale
+}
 
 export function setSessionExpiredHandler(handler: (() => void) | undefined) {
   onSessionExpired = handler
@@ -75,14 +82,14 @@ async function send(path: string, init: RequestInit, accessToken?: string): Prom
   try {
     return await fetch(`${configuredBaseUrl()}${path}`, { ...init, headers })
   } catch {
-    throw new ApiError("Unable to reach the API. Check your connection and try again.", "network")
+    throw new ApiError(translate(apiLocale, "final.api.network"), "network")
   }
 }
 
 async function expireSession(): Promise<never> {
   await clearStoredTokens()
   onSessionExpired?.()
-  throw new ApiError("Your session has expired. Please sign in again.", "http", 401)
+  throw new ApiError(translate(apiLocale, "final.api.sessionExpired"), "http", 401)
 }
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {

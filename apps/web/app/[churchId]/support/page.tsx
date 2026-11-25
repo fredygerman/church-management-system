@@ -5,39 +5,39 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion"
 import { SupportForm } from "@/components/support/support-form"
+import { getTranslator } from "@/lib/i18n/server"
 
 const FAQS = [
   {
-    question: "How can I get help?",
-    answer:
-      "You can reach us through the contact form below, email, or phone during business hours.",
+    questionKey: "final.support.faq1.q",
+    answerKey: "final.support.faq1.a",
   },
   {
-    question: "What are your support hours?",
-    answer: "We're available Monday through Friday, 9AM to 5PM EST.",
+    questionKey: "final.support.faq2.q",
+    answerKey: "final.support.faq2.a",
   },
   {
-    question: "What's the typical response time?",
-    answer:
-      "We aim to respond to all inquiries within 24 hours during business days.",
+    questionKey: "final.support.faq3.q",
+    answerKey: "final.support.faq3.a",
   },
-]
+] as const
 
-export default function SupportPage() {
+export default async function SupportPage() {
+  const t = await getTranslator()
   return (
     <div className="container mx-auto max-w-6xl px-4 py-12">
       {/* Hero Section */}
       <section className="mb-20 text-center">
-        <h1 className="mb-6 text-5xl font-bold">How Can We Help?</h1>
+        <h1 className="mb-6 text-5xl font-bold">{t("final.support.heroTitle")}</h1>
         <p className="mx-auto max-w-2xl text-lg text-gray-600">
-          We&lsquo;re here to help and answer any question you might have
+          {t("final.support.heroSubtitle")}
         </p>
       </section>
 
       {/* FAQ Section */}
       <section className="mb-20">
         <h2 className="mb-8 text-center text-3xl font-semibold">
-          Frequently Asked Questions
+          {t("final.support.faqTitle")}
         </h2>
         <Accordion
           type="single"
@@ -47,10 +47,10 @@ export default function SupportPage() {
           {FAQS.map((faq, index) => (
             <AccordionItem key={index} value={`item-${index}`}>
               <AccordionTrigger className="text-left">
-                {faq.question}
+                {t(faq.questionKey)}
               </AccordionTrigger>
               <AccordionContent className="text-gray-600">
-                {faq.answer}
+                {t(faq.answerKey)}
               </AccordionContent>
             </AccordionItem>
           ))}
@@ -60,7 +60,7 @@ export default function SupportPage() {
       {/* Contact Channels */}
       <section className="mb-20">
         <h2 className="mb-8 text-center text-3xl font-semibold">
-          Contact Channels
+          {t("final.support.channels")}
         </h2>
         <div className="mx-auto max-w-5xl">
           <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
@@ -73,7 +73,7 @@ export default function SupportPage() {
       <section className="mb-20">
         <div className="mx-auto max-w-2xl">
           <h2 className="mb-8 text-center text-3xl font-semibold">
-            Contact Us
+            {t("nav.contactUs")}
           </h2>
           <SupportForm />
         </div>
@@ -81,10 +81,10 @@ export default function SupportPage() {
 
       {/* Support Hours */}
       <section className="mx-auto max-w-2xl rounded-lg bg-gray-50 p-6 text-center">
-        <h3 className="mb-4 text-xl font-semibold">Support Hours</h3>
-        <p className="mb-2 text-gray-600">Monday - Friday, 9AM - 5PM EST</p>
+        <h3 className="mb-4 text-xl font-semibold">{t("final.support.hours")}</h3>
+        <p className="mb-2 text-gray-600">{t("final.support.hoursRange")}</p>
         <p className="text-gray-600">
-          Expected Response Time: Within 24 hours during business days
+          {t("final.support.responseTime")}
         </p>
       </section>
     </div>

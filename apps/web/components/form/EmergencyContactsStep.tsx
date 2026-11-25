@@ -6,6 +6,7 @@ import { emergencyContactSchema } from "@/types/member"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useT } from "@/components/i18n/locale-provider"
 
 type EmergencyContactData = {
   name?: string
@@ -32,6 +33,7 @@ export function EmergencyContactsStep({
   onBack,
   isSubmitting,
 }: EmergencyContactsStepProps) {
+  const { t } = useT()
   const {
     register,
     handleSubmit,
@@ -49,9 +51,9 @@ export function EmergencyContactsStep({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Emergency Contact 1</h3>
+        <h3 className="text-lg font-semibold">{t("final.form.emergency1")}</h3>
         <div>
-          <Label htmlFor="ec1Name">Name</Label>
+          <Label htmlFor="ec1Name">{t("final.form.name")}</Label>
           <Input id="ec1Name" {...register("emergencyContact1.name")} />
           {errors.emergencyContact1?.name && (
             <p className="text-red-500">
@@ -60,7 +62,7 @@ export function EmergencyContactsStep({
           )}
         </div>
         <div>
-          <Label htmlFor="ec1Relation">Relation</Label>
+          <Label htmlFor="ec1Relation">{t("final.form.relation")}</Label>
           <Input id="ec1Relation" {...register("emergencyContact1.relation")} />
           {errors.emergencyContact1?.relation && (
             <p className="text-red-500">
@@ -69,7 +71,7 @@ export function EmergencyContactsStep({
           )}
         </div>
         <div>
-          <Label htmlFor="ec1Phone">Phone</Label>
+          <Label htmlFor="ec1Phone">{t("final.form.phone")}</Label>
           <Input id="ec1Phone" {...register("emergencyContact1.phone")} />
           {errors.emergencyContact1?.phone && (
             <p className="text-red-500">
@@ -78,7 +80,7 @@ export function EmergencyContactsStep({
           )}
         </div>
         <div>
-          <Label htmlFor="ec1Address">Address</Label>
+          <Label htmlFor="ec1Address">{t("final.form.address")}</Label>
           <Input id="ec1Address" {...register("emergencyContact1.address")} />
           {errors.emergencyContact1?.address && (
             <p className="text-red-500">
@@ -88,9 +90,9 @@ export function EmergencyContactsStep({
         </div>
       </div>
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Emergency Contact 2</h3>
+        <h3 className="text-lg font-semibold">{t("final.form.emergency2")}</h3>
         <div>
-          <Label htmlFor="ec2Name">Name</Label>
+          <Label htmlFor="ec2Name">{t("final.form.name")}</Label>
           <Input id="ec2Name" {...register("emergencyContact2.name")} />
           {errors.emergencyContact2?.name && (
             <p className="text-red-500">
@@ -99,7 +101,7 @@ export function EmergencyContactsStep({
           )}
         </div>
         <div>
-          <Label htmlFor="ec2Relation">Relation</Label>
+          <Label htmlFor="ec2Relation">{t("final.form.relation")}</Label>
           <Input id="ec2Relation" {...register("emergencyContact2.relation")} />
           {errors.emergencyContact2?.relation && (
             <p className="text-red-500">
@@ -108,7 +110,7 @@ export function EmergencyContactsStep({
           )}
         </div>
         <div>
-          <Label htmlFor="ec2Phone">Phone</Label>
+          <Label htmlFor="ec2Phone">{t("final.form.phone")}</Label>
           <Input id="ec2Phone" {...register("emergencyContact2.phone")} />
           {errors.emergencyContact2?.phone && (
             <p className="text-red-500">
@@ -117,7 +119,7 @@ export function EmergencyContactsStep({
           )}
         </div>
         <div>
-          <Label htmlFor="ec2Address">Address</Label>
+          <Label htmlFor="ec2Address">{t("final.form.address")}</Label>
           <Input id="ec2Address" {...register("emergencyContact2.address")} />
           {errors.emergencyContact2?.address && (
             <p className="text-red-500">
@@ -128,10 +130,10 @@ export function EmergencyContactsStep({
       </div>
       <div className="flex justify-between">
         <Button type="button" onClick={onBack}>
-          Previous
+          {t("final.form.previous")}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Submitting..." : "Submit"}
+          {isSubmitting ? t("final.form.submitting") : t("final.form.submit")}
         </Button>
       </div>
     </form>

@@ -23,22 +23,22 @@ import {
 } from "@/components/ui/select"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
-const roleLabels: Record<UserRole, string> = {
-  [UserRole.SUPER_ADMIN]: "Super Administrator",
-  [UserRole.ADMIN]: "Administrator",
-  [UserRole.BRANCH_ADMIN]: "Branch Administrator",
-  [UserRole.ZONE_LEADER]: "Zone Leader",
-  [UserRole.DEPARTMENT_LEADER]: "Department Leader",
-  [UserRole.MEMBER]: "Member",
+const roleLabels: Record<UserRole, MessageKey> = {
+  [UserRole.SUPER_ADMIN]: "final.permissions.role.superAdmin",
+  [UserRole.ADMIN]: "final.permissions.role.admin",
+  [UserRole.BRANCH_ADMIN]: "final.permissions.role.branchAdmin",
+  [UserRole.ZONE_LEADER]: "final.permissions.role.zoneLeader",
+  [UserRole.DEPARTMENT_LEADER]: "final.permissions.role.departmentLeader",
+  [UserRole.MEMBER]: "final.permissions.role.member",
 }
 
-const roleDescriptions: Record<UserRole, string> = {
-  [UserRole.SUPER_ADMIN]: "Full system access across all churches",
-  [UserRole.ADMIN]: "Church-level administrator with full access",
-  [UserRole.BRANCH_ADMIN]: "Branch administrator with limited admin access",
-  [UserRole.ZONE_LEADER]: "Zone/small group leader with member management",
-  [UserRole.DEPARTMENT_LEADER]: "Department/ministry leader with department management",
-  [UserRole.MEMBER]: "Regular church member with basic access",
+const roleDescriptions: Record<UserRole, MessageKey> = {
+  [UserRole.SUPER_ADMIN]: "final.permissions.roleDesc.superAdmin",
+  [UserRole.ADMIN]: "final.permissions.roleDesc.admin",
+  [UserRole.BRANCH_ADMIN]: "final.permissions.roleDesc.branchAdmin",
+  [UserRole.ZONE_LEADER]: "final.permissions.roleDesc.zoneLeader",
+  [UserRole.DEPARTMENT_LEADER]: "final.permissions.roleDesc.departmentLeader",
+  [UserRole.MEMBER]: "final.permissions.roleDesc.member",
 }
 
 // Category labels reuse the profile page keys; the risk and attendance keys are sweep.b.
@@ -82,22 +82,22 @@ export function PermissionsViewer() {
       {/* Role Selector */}
       <Card>
         <CardHeader>
-          <CardTitle>Select Role</CardTitle>
+          <CardTitle>{t("final.church.selectRole")}</CardTitle>
           <CardDescription>
-            Choose a role to view its permissions
+            {t("final.church.roleHint")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <Select value={selectedRole} onValueChange={(value) => setSelectedRole(value as UserRole)}>
             <SelectTrigger className="w-full md:w-[300px]">
-              <SelectValue placeholder="Select a role" />
+              <SelectValue placeholder={t("final.permissions.selectRolePlaceholder")} />
             </SelectTrigger>
             <SelectContent>
               {allRoles.map((role) => (
                 <SelectItem key={role} value={role}>
                   <div className="flex items-center gap-2">
                     <Shield className="size-4" />
-                    {roleLabels[role]}
+                    {t(roleLabels[role])}
                   </div>
                 </SelectItem>
               ))}
@@ -107,7 +107,7 @@ export function PermissionsViewer() {
           <Alert>
             <Info className="size-4" />
             <AlertDescription>
-              {roleDescriptions[selectedRole]}
+              {t(roleDescriptions[selectedRole])}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -116,8 +116,8 @@ export function PermissionsViewer() {
       {/* Permissions View */}
       <Tabs defaultValue="grouped" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="grouped">By Category</TabsTrigger>
-          <TabsTrigger value="comparison">Role Comparison</TabsTrigger>
+          <TabsTrigger value="grouped">{t("final.permissions.byCategory")}</TabsTrigger>
+          <TabsTrigger value="comparison">{t("final.permissions.roleComparison")}</TabsTrigger>
         </TabsList>
 
         {/* Grouped View */}
@@ -125,11 +125,11 @@ export function PermissionsViewer() {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
-                <span>{roleLabels[selectedRole]} Permissions</span>
-                <Badge variant="secondary">{rolePermissions.length} total</Badge>
+                <span>{t("final.permissions.heading", { role: t(roleLabels[selectedRole]) })}</span>
+                <Badge variant="secondary">{t("final.permissions.total", { count: rolePermissions.length })}</Badge>
               </CardTitle>
               <CardDescription>
-                All permissions granted to this role
+                {t("final.church.roleAllPermissions")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -183,9 +183,9 @@ export function PermissionsViewer() {
         <TabsContent value="comparison" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle>Permission Comparison</CardTitle>
+              <CardTitle>{t("final.permissions.comparisonTitle")}</CardTitle>
               <CardDescription>
-                Compare permissions across all roles
+                {t("final.church.roleCompareHint")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -193,11 +193,11 @@ export function PermissionsViewer() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left p-2 font-semibold">Permission</th>
+                      <th className="text-left p-2 font-semibold">{t("final.permissions.permission")}</th>
                       {allRoles.map((role) => (
                         <th key={role} className="text-center p-2 font-semibold min-w-[120px]">
                           <div className="flex flex-col items-center gap-1">
-                            <span className="text-xs">{roleLabels[role]}</span>
+                            <span className="text-xs">{t(roleLabels[role])}</span>
                           </div>
                         </th>
                       ))}

@@ -6,7 +6,7 @@
  * Used by both NestJS backend and Next.js frontend
  */
 
-import type { MessageKey } from './i18n'
+import type { MessageKey, Translate } from './i18n'
 
 // ============================================================================
 // USER ROLES
@@ -727,9 +727,13 @@ export function getPermissionMetadata(permission: PermissionAction): PermissionM
 }
 
 /**
- * Get user-friendly reason why permission is denied
+ * Get user-friendly reason why permission is denied.
+ * Pass a translator to localise it; without one the English fallback is returned.
  */
-export function getPermissionDenialReason(permission: PermissionAction, role: UserRole): string {
+export function getPermissionDenialReason(permission: PermissionAction, role: UserRole, t?: Translate): string {
   const metadata = getPermissionMetadata(permission)
+  if (t) {
+    return t('final.permission.denialReason', { action: t(metadata.labelKey).toLowerCase() })
+  }
   return `You don't have permission to "${metadata.label.toLowerCase()}". This action requires a higher role.`
 }

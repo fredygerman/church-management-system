@@ -71,3 +71,27 @@ Open:
 - The mobile permission copy will drift if `PERMISSION_MAP` changes.
 - No automated test harness for web or mobile (W-02: no test setup).
 - Rebuild `packages/config` before the web and mobile type-checks.
+
+## Status 2026-11-25 (fourth batch, code work)
+
+Verified for this batch: `@church/config` build and copy tests (parity and placeholders), `@church/db` build, API type-check and jest (19 suites, 143 tests), web type-check, web tests (13) and `next build` with placeholder build-only env values, mobile type-check, mobile tests (12) and Android export. Not run: iOS export, any live API or device run, the dev deploy.
+
+Done:
+- Member scope: members see only their own record on list and single-member reads; search and zone listing return 403 to members. Zone and department leaders are scoped on list, search, zone, single-member reads, dashboard stats, and member edit and delete.
+- Member services: `GET /attendance/sessions` returns only open or upcoming, non-draft sessions to members. Web portal and mobile Home show the next three.
+- Staff documents (web): upload, soft delete, and a Visible to members toggle that sends `visibleToMembers` to `PATCH /api/files/:id`.
+- Web library search. Mobile staff tabs are hidden by role, using a copy of the permission grants (checked by tests).
+- Language switch on web (cookie) and mobile (device). Swahili copy covers the member portal, staff dashboard, mobile screens, navigation, shared states, error messages and permission labels. Keys live in `packages/config/src/i18n/messages/`; the type-checker and the copy test enforce parity. Claude wrote and reviewed the copy.
+- Migrations 0010 to 0012 applied on dev through a one-off scheduled task (DEC-12).
+- Fixes found by tests: library size rounding near 1 MB; a permission lookup that matched inherited object names; the mobile bundle importing the database package (now `@church/config/i18n`).
+
+Open, code (deferred by decision, DEC-14):
+- AI configuration, AI testing and the AI feedback route (needs a table). The AI answer sources and uncertainty fields are implemented and displayed.
+
+Open, human, after all code work (DEC-10, DEC-13):
+- Q-02 device and accessibility checks, including a mobile device run.
+- D-01 design review.
+- Native-speaker review of every `sw` string in `packages/config/src/i18n/messages/`.
+- Visibility toggle check: a staff toggle changes what members see in the Library.
+- Production migrations need Fredy's approval (dev only so far).
+

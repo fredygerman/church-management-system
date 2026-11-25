@@ -95,7 +95,7 @@ export function DashboardLayout({
                 setSidebarOpen(prev => !prev)
               }}
               className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors"
-              aria-label="Toggle sidebar"
+              aria-label={t("final.a11y.toggleSidebar")}
             >
               <Menu className="h-5 w-5" />
             </button>
@@ -117,7 +117,7 @@ export function DashboardLayout({
                       src={
                         user?.image || "https://i.ibb.co/R0rhgvP/shadcn-avatar.jpg"
                       }
-                      alt={user?.name || "User"}
+                      alt={user?.name || t("final.common.user")}
                     />
                     <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
                   </Avatar>

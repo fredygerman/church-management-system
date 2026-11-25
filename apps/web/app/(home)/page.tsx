@@ -5,9 +5,11 @@ import { redirect } from "next/navigation"
 import { CreateChurchDialog } from "@/components/church-management/create-church-dialog"
 import { ChurchCard } from "@/components/church-management/church-card"
 import { hasPermission } from "@/lib/permissions"
+import { getTranslator } from "@/lib/i18n/server"
 
 export default async function HomePage() {
   const session = await getSession()
+  const t = await getTranslator()
 
   if (!session?.user) {
     redirect('/auth/signin')
@@ -29,10 +31,10 @@ export default async function HomePage() {
       <div className="mb-8 flex w-full items-center justify-between">
         <div className="text-left">
           <h1 className="text-4xl font-bold text-foreground">
-            My Churches
+            {t("final.home.title")}
           </h1>
           <p className="mt-2 text-xl text-muted-foreground">
-            Select a church to continue
+            {t("final.home.subtitle")}
           </p>
         </div>
         {canManageChurches ? <div className="text-right">

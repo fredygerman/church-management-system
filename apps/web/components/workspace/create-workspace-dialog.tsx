@@ -16,8 +16,10 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useT } from "@/components/i18n/locale-provider"
 
 export function CreateChurchDialog() {
+  const { t } = useT()
   const [name, setName] = useState("")
   const [location, setLocation] = useState("")
   const [leadPastorName, setLeadPastorName] = useState("")
@@ -29,12 +31,12 @@ export function CreateChurchDialog() {
 
   const handleCreate = async () => {
     if (!session?.user) {
-      toast.error("User not authenticated")
+      toast.error(t("final.church.userMissing"))
       return
     }
 
     if (!name || !location || !leadPastorName) {
-      toast.error("Please fill in required fields")
+      toast.error(t("final.church.fillRequired"))
       return
     }
 
@@ -49,13 +51,13 @@ export function CreateChurchDialog() {
       })
       
       if (response && response.id) {
-        toast.success("Church created successfully 🎉")
+        toast.success(t("final.church.created"))
         router.push(`/${response.id}/dashboard`)
       } else {
-        throw new Error("Failed to create church")
+        throw new Error(t("final.church.createFailed"))
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create church")
+      toast.error(error instanceof Error ? error.message : t("final.church.createFailed"))
     } finally {
       setIsLoading(false)
     }
@@ -68,43 +70,43 @@ export function CreateChurchDialog() {
           variant="ghost"
           className="bg-blue-600 text-background hover:bg-blue-700 hover:text-background"
         >
-          Create Church
+          {t("final.church.createButton")}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create New Church</DialogTitle>
+          <DialogTitle>{t("final.church.createTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name">Church Name *</Label>
+            <Label htmlFor="name">{t("final.church.nameLabel")}</Label>
             <Input
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Mito Ya Baraka Church"
+              placeholder={t("final.church.namePlaceholder")}
             />
           </div>
           <div>
-            <Label htmlFor="location">Location *</Label>
+            <Label htmlFor="location">{t("final.church.locationLabel")}</Label>
             <Input
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              placeholder="e.g., Dar Es Salaam, Tanzania"
+              placeholder={t("final.church.locationPlaceholder")}
             />
           </div>
           <div>
-            <Label htmlFor="leadPastorName">Lead Pastor Name *</Label>
+            <Label htmlFor="leadPastorName">{t("final.church.pastorLabel")}</Label>
             <Input
               id="leadPastorName"
               value={leadPastorName}
               onChange={(e) => setLeadPastorName(e.target.value)}
-              placeholder="e.g., Rev. John Doe"
+              placeholder={t("final.church.pastorPlaceholder")}
             />
           </div>
           <div>
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("final.church.emailLabel")}</Label>
             <Input
               id="email"
               type="email"
@@ -114,7 +116,7 @@ export function CreateChurchDialog() {
             />
           </div>
           <div>
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">{t("final.church.phoneLabel")}</Label>
             <Input
               id="phone"
               value={phone}
@@ -127,7 +129,7 @@ export function CreateChurchDialog() {
             disabled={isLoading}
             className="w-full"
           >
-            {isLoading ? "Creating..." : "Create Church"}
+            {isLoading ? t("final.church.creating") : t("final.church.createButton")}
           </Button>
         </div>
       </DialogContent>

@@ -1,4 +1,5 @@
 import { getDepartments } from "@/actions/department"
+import { getTranslator } from "@/lib/i18n/server"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -6,21 +7,22 @@ interface PageProps {
 
 export default async function PortalDepartmentsPage({ params }: PageProps) {
   const { churchId } = await params
+  const t = await getTranslator()
   const departments = await getDepartments(churchId)
 
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold text-foreground">Departments</h1>
+        <h1 className="text-2xl font-semibold text-foreground">{t("portal.nav.departments")}</h1>
         <p className="text-sm text-muted-foreground">
-          View the departments you lead.
+          {t("final.portal.departments.subtitle")}
         </p>
       </div>
 
       {departments.length === 0 ? (
         <div className="rounded-lg border border-border bg-card p-5">
           <p className="text-sm text-muted-foreground">
-            You don&apos;t lead any departments yet.
+            {t("final.portal.departments.empty")}
           </p>
         </div>
       ) : (
@@ -35,7 +37,7 @@ export default async function PortalDepartmentsPage({ params }: PageProps) {
               )}
               <div className="flex items-center gap-4 text-xs text-muted-foreground">
                 {department.meetingDay && (
-                  <span>Meeting: {department.meetingDay}</span>
+                  <span>{t("final.portal.departments.meeting", { day: department.meetingDay })}</span>
                 )}
               </div>
             </div>

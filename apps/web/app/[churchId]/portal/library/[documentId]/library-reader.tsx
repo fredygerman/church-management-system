@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react"
 
 import { getLibraryDownloadUrl } from "@/actions/library"
 import { Button } from "@/components/ui/button"
+import { useT } from "@/components/i18n/locale-provider"
 
 type ReaderState =
   | { status: "loading" }
@@ -29,6 +30,7 @@ export function LibraryReader({
   title: string
   contentType: string
 }) {
+  const { t } = useT()
   const [state, setState] = useState<ReaderState>({ status: "loading" })
   const requestRef = useRef(0)
 
@@ -75,7 +77,7 @@ export function LibraryReader({
       <div
         className="border-border bg-card h-[70vh] animate-pulse rounded-lg border"
         aria-busy="true"
-        aria-label="Preparing document"
+        aria-label={t("final.library.preparing")}
       />
     )
   }
@@ -83,14 +85,14 @@ export function LibraryReader({
   if (state.status === "expired" || state.status === "error") {
     const message =
       state.status === "expired"
-        ? "This secure link has expired. Retry to open the document again."
+        ? t("final.library.expired")
         : state.message
 
     return (
       <div className="border-destructive/50 bg-card rounded-lg border p-5" role="alert">
         <p className="text-destructive text-sm">{message}</p>
         <Button type="button" variant="outline" className="mt-4" onClick={retry}>
-          Retry
+          {t("common.retry")}
         </Button>
       </div>
     )
@@ -112,7 +114,7 @@ export function LibraryReader({
           rel="noopener noreferrer"
           className="text-muted-foreground text-sm underline-offset-4 hover:underline"
         >
-          Open in a new tab
+          {t("final.library.openNewTab")}
         </a>
       </div>
     )
@@ -129,7 +131,7 @@ export function LibraryReader({
           onError={() =>
             setState({
               status: "error",
-              message: "This image could not be displayed. Retry to try again.",
+              message: t("final.library.imageFailed"),
             })
           }
         />
@@ -139,7 +141,7 @@ export function LibraryReader({
           rel="noopener noreferrer"
           className="text-muted-foreground text-sm underline-offset-4 hover:underline"
         >
-          Open in a new tab
+          {t("final.library.openNewTab")}
         </a>
       </div>
     )
@@ -148,11 +150,11 @@ export function LibraryReader({
   return (
     <div className="border-border bg-card rounded-lg border p-5">
       <p className="text-muted-foreground text-sm">
-        This file type cannot be previewed in the portal.
+        {t("final.library.cannotPreview")}
       </p>
       <Button asChild variant="outline" className="mt-4">
         <a href={state.url} target="_blank" rel="noopener noreferrer">
-          Download file
+          {t("final.library.download")}
         </a>
       </Button>
     </div>

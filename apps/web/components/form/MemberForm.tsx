@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation"
 import { createMember } from "@/actions/member"
 import { toast } from "sonner"
 
-import { memberFormSchema, type MemberFormData } from "@/types/member"
+import { buildMemberFormSchema, type MemberFormData } from "@/types/member"
 import { Button } from "@/components/ui/button"
+import { useT } from "@/components/i18n/locale-provider"
 
 import { ChurchInfoStep } from "./ChurchInfoStep"
 import { ContactInfoStep } from "./ContactInfoStep"
@@ -14,11 +15,11 @@ import { EmergencyContactsStep } from "./EmergencyContactsStep"
 import { PersonalInfoStep } from "./PersonalInfoStep"
 
 const steps = [
-  "Personal Information",
-  "Church Information",
-  "Contact Information",
-  "Emergency Contacts",
-]
+  "final.memberForm.stepPersonal",
+  "final.memberForm.stepChurch",
+  "final.memberForm.stepContact",
+  "final.memberForm.stepEmergency",
+] as const
 
 export function MemberForm({
   churchId,
@@ -27,6 +28,8 @@ export function MemberForm({
   churchId: string
   zones: any[]
 }) {
+  // Named `translate` because the toast callbacks below use `t` for the toast instance.
+  const { t: translate } = useT()
   const [currentStep, setCurrentStep] = useState(0)
   const [formData, setFormData] = useState<Partial<MemberFormData>>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -48,7 +51,7 @@ export function MemberForm({
   const handleFormSubmit = async () => {
     setIsSubmitting(true)
     try {
-      const validatedData = memberFormSchema.parse(formData)
+      const validatedData = buildMemberFormSchema(translate).parse(formData)
 
       // Ensure optional date fields are either null or valid date strings
       const sanitizedData = {
@@ -78,7 +81,7 @@ export function MemberForm({
         toast.custom((t) => (
           <div className="rounded-lg border border-green-200 bg-white p-6 shadow-md">
             <p className="mb-4 text-sm font-semibold text-gray-900">
-              Member added successfully!
+              {translate("final.memberForm.success")}
             </p>
             <div className="flex gap-2">
               <Button
@@ -89,7 +92,7 @@ export function MemberForm({
                   router.push(`/${churchId}/dashboard/members`)
                 }}
               >
-                View Members
+                {translate("final.memberForm.viewMembers")}
               </Button>
               <Button
                 variant="outline"
@@ -100,17 +103,17 @@ export function MemberForm({
                   setFormData({})
                 }}
               >
-                Add Another
+                {translate("final.memberForm.addAnother")}
               </Button>
             </div>
           </div>
         ))
       } else {
-        toast.error("An error occurred while submitting the form")
+        toast.error(translate("final.memberForm.submitFailed"))
       }
     } catch (error) {
       console.error("Validation error:", error)
-      toast.error("Please check your inputs and try again.")
+      toast.error(translate("final.memberForm.checkInputs"))
     } finally {
       setIsSubmitting(false)
       // scroll to top of the page
@@ -121,7 +124,7 @@ export function MemberForm({
   return (
     <div className="mx-auto max-w-2xl space-y-8">
       <div className="mb-8 text-center">
-        <h2 className="text-2xl font-bold">{steps[currentStep]}</h2>
+        <h2 className="text-2xl font-bold">{translate(steps[currentStep])}</h2>
         <div className="mt-4 flex justify-center space-x-2">
           {steps.map((_, index) => (
             <div

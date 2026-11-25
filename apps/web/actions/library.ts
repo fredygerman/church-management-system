@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache"
 import { apiRequest } from "@/lib/api-client"
+import { getTranslator } from "@/lib/i18n/server"
 
 export interface LibraryDocument {
   id: string
@@ -35,6 +36,7 @@ function isNextRedirect(error: unknown): boolean {
 }
 
 export async function getLibraryDocuments(churchId: string): Promise<LibraryResult> {
+  const t = await getTranslator()
   try {
     const response = await apiRequest<LibraryDocumentsPayload | LibraryDocument[]>({
       requestConfig: {
@@ -47,7 +49,7 @@ export async function getLibraryDocuments(churchId: string): Promise<LibraryResu
     if (!response.success) {
       return {
         status: "unavailable",
-        message: "We could not load the shared library. Please try again.",
+        message: t("final.libraryAction.loadFailed"),
       }
     }
 
@@ -57,7 +59,7 @@ export async function getLibraryDocuments(churchId: string): Promise<LibraryResu
     if (!Array.isArray(documents)) {
       return {
         status: "unavailable",
-        message: "We could not load the shared library. Please try again.",
+        message: t("final.libraryAction.loadFailed"),
       }
     }
 
@@ -70,7 +72,7 @@ export async function getLibraryDocuments(churchId: string): Promise<LibraryResu
     console.error("Error fetching library documents:", error)
     return {
       status: "unavailable",
-      message: "We could not load the shared library. Please try again.",
+      message: t("final.libraryAction.loadFailed"),
     }
   }
 }
@@ -79,6 +81,7 @@ export async function getLibraryDownloadUrl(
   churchId: string,
   documentId: string
 ): Promise<DownloadUrlResult> {
+  const t = await getTranslator()
   try {
     const response = await apiRequest<DownloadUrlPayload>({
       requestConfig: {
@@ -91,7 +94,7 @@ export async function getLibraryDownloadUrl(
     if (!response.success || !response.data?.url) {
       return {
         status: "unavailable",
-        message: "This document is no longer available. Please refresh the page.",
+        message: t("final.libraryAction.gone"),
       }
     }
 
@@ -108,7 +111,7 @@ export async function getLibraryDownloadUrl(
     console.error("Error creating library download URL:", error)
     return {
       status: "unavailable",
-      message: "This document is no longer available. Please refresh the page.",
+      message: t("final.libraryAction.gone"),
     }
   }
 }
@@ -116,15 +119,16 @@ export async function getLibraryDownloadUrl(
 // Staff upload: POST /api/files/upload (multipart, requires manage:files).
 // Visibility is set at upload time through the metadata JSON; setStaffDocumentVisibility changes it later.
 export async function uploadStaffDocument(churchId: string, formData: FormData): Promise<void> {
+  const t = await getTranslator()
   const file = formData.get("file")
   const title = String(formData.get("title") ?? "").trim()
   const description = String(formData.get("description") ?? "").trim()
 
   if (!(file instanceof File) || file.size === 0) {
-    throw new Error("Choose a file to upload.")
+    throw new Error(t("final.libraryAction.chooseFile"))
   }
   if (!title) {
-    throw new Error("Enter a title for the document.")
+    throw new Error(t("final.libraryAction.enterTitle"))
   }
 
   const body = new FormData()
@@ -149,7 +153,7 @@ export async function uploadStaffDocument(churchId: string, formData: FormData):
   })
 
   if (!response.success) {
-    throw new Error(response.message || "The document could not be uploaded.")
+    throw new Error(response.message || t("final.libraryAction.uploadFailed"))
   }
 
   revalidatePath(`/${churchId}/dashboard/content`)
@@ -157,6 +161,7 @@ export async function uploadStaffDocument(churchId: string, formData: FormData):
 
 // Staff delete: DELETE /api/files/:id is a soft delete (requires manage:files).
 export async function deleteStaffDocument(churchId: string, documentId: string): Promise<void> {
+  const t = await getTranslator()
   const response = await apiRequest<unknown>({
     requestConfig: {
       method: "DELETE",
@@ -166,7 +171,7 @@ export async function deleteStaffDocument(churchId: string, documentId: string):
   })
 
   if (!response.success) {
-    throw new Error(response.message || "The document could not be deleted.")
+    throw new Error(response.message || t("final.libraryAction.deleteFailed"))
   }
 
   revalidatePath(`/${churchId}/dashboard/content`)
@@ -178,6 +183,7 @@ export async function setStaffDocumentVisibility(
   documentId: string,
   visibleToMembers: boolean
 ): Promise<void> {
+  const t = await getTranslator()
   const response = await apiRequest<unknown>({
     requestConfig: {
       method: "PATCH",
@@ -188,7 +194,7 @@ export async function setStaffDocumentVisibility(
   })
 
   if (!response.success) {
-    throw new Error(response.message || "The document visibility could not be updated.")
+    throw new Error(response.message || t("final.libraryAction.visibilityFailed"))
   }
 
   revalidatePath(`/${churchId}/dashboard/content`)

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { apiGet, apiPost, apiPut, apiDelete } from '@/lib/api-helpers'
+import { getTranslator } from '@/lib/i18n/server'
 
 // Function to get all zones for a church
 export async function getZones(churchId: string): Promise<any[]> {
@@ -175,7 +176,8 @@ export async function unassignMemberFromZone(
     // If member is a leader, check if there's a replacement
     const zone = await getZoneById(churchId, zoneId)
     if (zone.leaderId === memberId && !newLeaderId) {
-      throw new Error('Cannot remove the zone leader without assigning a replacement leader')
+      const t = await getTranslator()
+      throw new Error(t('final.zone.leaderRequired'))
     }
 
     // If assigning a new leader, update zone

@@ -4,6 +4,7 @@ import { isValid, parseISO } from "date-fns"
 import { type MemberFormData } from "@/types/member"
 import { apiPost, apiGet, apiPut, apiDelete } from "@/lib/api-helpers"
 import { apiRequest } from "@/lib/api-client"
+import { getTranslator } from "@/lib/i18n/server"
 
 function isValidDate(dateStr: string): boolean {
   try {
@@ -129,9 +130,10 @@ export async function getMembers(
     if (error instanceof Error && error.message === 'NEXT_REDIRECT') {
       throw error
     }
+    const t = await getTranslator()
     return {
       status: "unavailable",
-      message: "Unable to load members right now. Please refresh the page to try again.",
+      message: t("final.members.unavailable"),
     }
   }
 }

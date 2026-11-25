@@ -17,9 +17,9 @@ export type {
 
 // Member types
 export {
-  personalInfoSchema,
-  churchInfoSchema,
-  contactInfoSchema,
+  buildPersonalInfoSchema,
+  buildChurchInfoSchema,
+  buildContactInfoSchema,
   type PersonalInfo,
   type ChurchInfo,
   type ContactInfo,

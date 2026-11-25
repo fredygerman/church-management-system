@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, Home, RotateCcw } from 'lucide-react'
 import { getUserFriendlyMessage, getErrorType } from '@/lib/error-handler'
+import { useT } from '@/components/i18n/locale-provider'
 
 export default function GlobalError({
   error,
@@ -13,9 +14,10 @@ export default function GlobalError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const { t } = useT()
   const router = useRouter()
   const errorType = getErrorType(error)
-  const message = getUserFriendlyMessage(error)
+  const message = getUserFriendlyMessage(error, t)
 
   useEffect(() => {
     // Log the error to an error reporting service
@@ -40,15 +42,15 @@ export default function GlobalError({
   const getErrorTitle = () => {
     switch (errorType) {
       case 'auth':
-        return 'Authentication Error'
+        return t('final.error.authTitle')
       case 'server':
-        return 'Server Error'
+        return t('final.error.serverTitle')
       case 'network':
-        return 'Connection Error'
+        return t('final.error.networkTitle')
       case 'client':
-        return 'Invalid Request'
+        return t('final.error.clientTitle')
       default:
-        return 'Something went wrong'
+        return t('final.error.fallbackTitle')
     }
   }
 
@@ -81,7 +83,7 @@ export default function GlobalError({
             {process.env.NODE_ENV === 'development' && (
               <details className="mb-6 rounded-md bg-gray-100 p-3 text-left">
                 <summary className="cursor-pointer text-xs font-semibold text-gray-700 hover:text-gray-900">
-                  Error Details
+                  {t('final.error.details')}
                 </summary>
                 <p className="mt-3 text-xs font-mono text-gray-700 break-words">
                   {error.message}
@@ -101,7 +103,7 @@ export default function GlobalError({
                 variant="default"
               >
                 <RotateCcw className="w-4 h-4 mr-2" />
-                Try again
+                {t('common.retry')}
               </Button>
               <Button
                 onClick={() => router.push(getRedirectPath())}
@@ -109,7 +111,7 @@ export default function GlobalError({
                 className="flex-1"
               >
                 <Home className="w-4 h-4 mr-2" />
-                {errorType === 'auth' ? 'Sign in' : 'Home'}
+                {errorType === 'auth' ? t('final.error.signIn') : t('nav.home')}
               </Button>
             </div>
           </div>

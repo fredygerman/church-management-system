@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { AlertCircle, Home, RotateCcw } from 'lucide-react'
 import { getUserFriendlyMessage, getErrorType } from '@/lib/error-handler'
+import { useT } from '@/components/i18n/locale-provider'
 
 export default function AuthError({
   error,
@@ -13,9 +14,10 @@ export default function AuthError({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const { t } = useT()
   const router = useRouter()
   const errorType = getErrorType(error)
-  const message = getUserFriendlyMessage(error)
+  const message = getUserFriendlyMessage(error, t)
 
   useEffect(() => {
     console.error('Auth error:', error)
@@ -31,7 +33,7 @@ export default function AuthError({
         </div>
 
         <h1 className="mb-2 text-2xl font-bold text-gray-900">
-          {errorType === 'auth' ? 'Authentication Error' : 'Sign In Error'}
+          {errorType === 'auth' ? t('final.error.authTitle') : t('final.error.signInTitle')}
         </h1>
 
         <p className="mb-4 text-gray-600">
@@ -41,7 +43,7 @@ export default function AuthError({
         {process.env.NODE_ENV === 'development' && (
           <details className="mb-6 rounded-md bg-gray-100 p-3 text-left">
             <summary className="cursor-pointer text-xs font-semibold text-gray-700">
-              Error Details
+              {t('final.error.details')}
             </summary>
             <p className="mt-3 text-xs font-mono text-gray-700 break-words">
               {error.message}
@@ -61,7 +63,7 @@ export default function AuthError({
             variant="default"
           >
             <RotateCcw className="w-4 h-4 mr-2" />
-            Try again
+            {t('common.retry')}
           </Button>
           <Button
             onClick={() => router.push('/auth/signin')}
@@ -69,7 +71,7 @@ export default function AuthError({
             className="flex-1"
           >
             <Home className="w-4 h-4 mr-2" />
-            Back to sign in
+            {t('final.error.backToSignIn')}
           </Button>
         </div>
       </div>

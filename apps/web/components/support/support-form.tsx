@@ -16,20 +16,26 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { useT } from "@/components/i18n/locale-provider"
+import type { Translate } from "@church/config"
 
-const formSchema = z.object({
-  name: z.string().min(2, {
-    message: "Name must be at least 2 characters.",
-  }),
-  email: z.string().email({
-    message: "Please enter a valid email address.",
-  }),
-  message: z.string().min(10, {
-    message: "Message must be at least 10 characters.",
-  }),
-})
+function buildFormSchema(t: Translate) {
+  return z.object({
+    name: z.string().min(2, {
+      message: t("final.support.nameMin"),
+    }),
+    email: z.string().email({
+      message: t("final.support.emailInvalid"),
+    }),
+    message: z.string().min(10, {
+      message: t("final.support.messageMin"),
+    }),
+  })
+}
 
 export function SupportForm() {
+  const { t } = useT()
+  const formSchema = buildFormSchema(t)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema as any),
     defaultValues: {
@@ -40,14 +46,14 @@ export function SupportForm() {
   })
 
   const onSubmit = (values: z.infer<typeof formSchema>) => {
-    toast.error("Support requests are not available at this time.")
+    toast.error(t("final.support.unavailableToast"))
   }
 
   return (
     <div className="max-w-lg space-y-4">
       <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
         <p className="text-sm text-yellow-800">
-          Support requests are not currently available. Please try again later or contact your church administrator.
+          {t("final.support.unavailableNotice")}
         </p>
       </div>
       <Form {...form}>
@@ -60,9 +66,9 @@ export function SupportForm() {
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Name</FormLabel>
+                <FormLabel>{t("final.support.name")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your name" {...field} />
+                  <Input placeholder={t("final.support.namePlaceholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -74,9 +80,9 @@ export function SupportForm() {
             name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Email</FormLabel>
+                <FormLabel>{t("final.support.email")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter your email" {...field} />
+                  <Input placeholder={t("final.support.emailPlaceholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -88,10 +94,10 @@ export function SupportForm() {
             name="message"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Message</FormLabel>
+                <FormLabel>{t("final.support.message")}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Enter your message"
+                    placeholder={t("final.support.messagePlaceholder")}
                     className="resize-none"
                     {...field}
                   />
@@ -101,7 +107,7 @@ export function SupportForm() {
             )}
           />
 
-          <Button type="submit" disabled>Send Message</Button>
+          <Button type="submit" disabled>{t("final.support.send")}</Button>
         </form>
       </Form>
     </div>

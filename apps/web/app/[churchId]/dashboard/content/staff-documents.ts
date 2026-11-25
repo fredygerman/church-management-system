@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api-client"
+import { getTranslator } from "@/lib/i18n/server"
 
 export interface StaffDocument {
   id: string
@@ -16,9 +17,6 @@ export type StaffDocumentsResult =
   | { status: "error"; message: string }
   | { status: "unavailable"; message: string }
 
-const ERROR_MESSAGE = "Documents could not be loaded. Please try again."
-const UNAVAILABLE_MESSAGE =
-  "Documents are unavailable right now because the server could not be reached."
 
 function isNextRedirect(error: unknown): boolean {
   return error instanceof Error && error.message.includes("NEXT_REDIRECT")
@@ -29,6 +27,9 @@ function isNextRedirect(error: unknown): boolean {
 export async function getStaffDocuments(
   churchId: string
 ): Promise<StaffDocumentsResult> {
+  const t = await getTranslator()
+  const ERROR_MESSAGE = t("final.staffDocs.loadFailed")
+  const UNAVAILABLE_MESSAGE = t("final.staffDocs.unavailable")
   try {
     const response = await apiRequest<StaffDocument[]>({
       requestConfig: {
@@ -50,7 +51,7 @@ export async function getStaffDocuments(
     if (!Array.isArray(response.data)) {
       return {
         status: "unavailable",
-        message: "Documents returned an unexpected response.",
+        message: t("final.staffDocs.unexpected"),
       }
     }
 

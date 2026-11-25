@@ -30,7 +30,7 @@ export function isStaffRole(role: string | undefined): boolean {
 // here would pull @church/db (native bcrypt) into the app bundle. Keep in sync; the API checks every call.
 export type StaffTabPermission = "read:member" | "view:attendance" | "manage:files"
 
-const STAFF_TAB_PERMISSIONS: Record<string, StaffTabPermission[]> = {
+export const STAFF_TAB_PERMISSIONS: Record<string, StaffTabPermission[]> = {
   super_admin: ["read:member", "view:attendance", "manage:files"],
   admin: ["read:member", "view:attendance", "manage:files"],
   branch_admin: ["read:member", "view:attendance", "manage:files"],
@@ -39,5 +39,6 @@ const STAFF_TAB_PERMISSIONS: Record<string, StaffTabPermission[]> = {
 }
 
 export function roleHasTabPermission(role: string | undefined, permission: StaffTabPermission): boolean {
-  return Boolean(role && STAFF_TAB_PERMISSIONS[role]?.includes(permission))
+  // Own keys only: a role such as "constructor" must not resolve to an inherited Object property.
+  return Boolean(role && Object.hasOwn(STAFF_TAB_PERMISSIONS, role) && STAFF_TAB_PERMISSIONS[role].includes(permission))
 }

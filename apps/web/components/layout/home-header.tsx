@@ -23,22 +23,24 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ModeToggle } from "@/components/layout/mode-toggle"
+import { useT } from "@/components/i18n/locale-provider"
 
 export default function HomeHeader() {
+  const { t } = useT()
   const { data: session, status } = useSession()
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
 
-  if (status === "loading") return <div>Loading...</div>
+  if (status === "loading") return <div>{t("common.loading")}</div>
   if (status === "unauthenticated") return null
 
   const user = session?.user
 
-  if (!user) return <div>Error</div>
+  if (!user) return <div>{t("final.home.error")}</div>
 
   return (
     <header className="sticky top-0 z-50 flex h-14 items-center justify-between border-b border-border/40 px-6 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="flex items-center gap-4">
-        <div className="text-sm font-semibold">Church Management System</div>
+        <div className="text-sm font-semibold">{t("sidebar.footer.appName")}</div>
       </div>
       <div className="flex items-center gap-2">
         <ModeToggle />
@@ -50,7 +52,7 @@ export default function HomeHeader() {
                   src={
                     user.image || "https://i.ibb.co/R0rhgvP/shadcn-avatar.jpg"
                   }
-                  alt={user.name || "User"}
+                  alt={user.name || t("final.common.user")}
                 />
                 <AvatarFallback>{user.name?.charAt(0) || "C"}</AvatarFallback>
               </Avatar>
@@ -71,7 +73,7 @@ export default function HomeHeader() {
               className="cursor-pointer bg-destructive text-destructive-foreground"
             >
               <LogOut className="mr-2 size-4" />
-              <span>Log out</span>
+              <span>{t("nav.logout.menu")}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -79,11 +81,11 @@ export default function HomeHeader() {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Are you sure you want to log out?</DialogTitle>
+            <DialogTitle>{t("nav.logout.title")}</DialogTitle>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Link
               href="/auth/signout"
@@ -94,7 +96,7 @@ export default function HomeHeader() {
                 variant="destructive"
                 className="cursor-pointer bg-destructive text-destructive-foreground"
               >
-                Yes
+                {t("nav.logout.yes")}
               </Button>
             </Link>
           </DialogFooter>

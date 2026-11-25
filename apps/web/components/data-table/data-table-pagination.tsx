@@ -7,6 +7,7 @@ import {
 import { type Table } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
+import { useT } from "@/components/i18n/locale-provider"
 import {
   Select,
   SelectContent,
@@ -24,16 +25,17 @@ export function DataTablePagination<TData>({
   table,
   pageSizeOptions = [10, 20, 30, 40, 50],
 }: DataTablePaginationProps<TData>) {
+  const { t } = useT()
   return (
     <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-auto p-1 sm:flex-row sm:gap-8">
       <div className="flex-1 whitespace-nowrap text-sm text-muted-foreground">
         {/* {table.getFilteredSelectedRowModel().rows.length} of{" "}
         {table.getFilteredRowModel().rows.length} row(s) selected. */}
-        Showing {table.getFilteredRowModel().rows.length} rows.
+        {t("final.table.showing", { count: table.getFilteredRowModel().rows.length })}
       </div>
       <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
         <div className="flex items-center space-x-2">
-          <p className="whitespace-nowrap text-sm font-medium">Rows per page</p>
+          <p className="whitespace-nowrap text-sm font-medium">{t("final.table.rowsPerPage")}</p>
           <Select
             value={`${table.getState().pagination.pageSize}`}
             onValueChange={(value) => {
@@ -53,12 +55,11 @@ export function DataTablePagination<TData>({
           </Select>
         </div>
         <div className="flex items-center justify-center text-sm font-medium">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
+          {t("final.table.page", { page: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}
         </div>
         <div className="flex items-center space-x-2">
           <Button
-            aria-label="Go to first page"
+            aria-label={t("final.table.firstPage")}
             variant="outline"
             className="hidden size-8 p-0 lg:flex"
             onClick={() => table.setPageIndex(0)}
@@ -67,7 +68,7 @@ export function DataTablePagination<TData>({
             <DoubleArrowLeftIcon className="size-4" aria-hidden="true" />
           </Button>
           <Button
-            aria-label="Go to previous page"
+            aria-label={t("final.table.prevPage")}
             variant="outline"
             size="icon"
             className="size-8"
@@ -77,7 +78,7 @@ export function DataTablePagination<TData>({
             <ChevronLeftIcon className="size-4" aria-hidden="true" />
           </Button>
           <Button
-            aria-label="Go to next page"
+            aria-label={t("final.table.nextPage")}
             variant="outline"
             size="icon"
             className="size-8"
@@ -87,7 +88,7 @@ export function DataTablePagination<TData>({
             <ChevronRightIcon className="size-4" aria-hidden="true" />
           </Button>
           <Button
-            aria-label="Go to last page"
+            aria-label={t("final.table.lastPage")}
             variant="outline"
             size="icon"
             className="hidden size-8 lg:flex"

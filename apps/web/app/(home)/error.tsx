@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
 import { getUserFriendlyMessage } from '@/lib/error-handler'
+import { useT } from '@/components/i18n/locale-provider'
 
 export default function Error({
   error,
@@ -12,12 +13,13 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  const { t } = useT()
   useEffect(() => {
     // Log the error to an error reporting service
     console.error('Home page error:', error)
   }, [error])
 
-  const message = getUserFriendlyMessage(error)
+  const message = getUserFriendlyMessage(error, t)
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-slate-50 to-slate-100 p-4">
@@ -29,7 +31,7 @@ export default function Error({
         </div>
 
         <h1 className="mb-2 text-2xl font-bold text-gray-900">
-          Something went wrong
+          {t('final.error.fallbackTitle')}
         </h1>
 
         <p className="mb-4 text-gray-600">
@@ -54,14 +56,14 @@ export default function Error({
             onClick={() => reset()}
             className="flex-1"
           >
-            Try again
+            {t('common.retry')}
           </Button>
           <Button
             onClick={() => window.location.href = '/setup'}
             variant="outline"
             className="flex-1"
           >
-            Go to setup
+            {t('final.home.setup')}
           </Button>
         </div>
       </div>

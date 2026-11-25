@@ -3,6 +3,7 @@
 import { validateAiResponse, type AiComponent, type AiSource } from "@church/config"
 
 import { apiRequest } from "@/lib/api-client"
+import { getTranslator } from "@/lib/i18n/server"
 
 interface AiChatPayload {
   conversationId?: string
@@ -15,9 +16,6 @@ export type AiSendResult =
   | { status: "ok"; conversationId: string; components: AiComponent[]; sources: AiSource[]; uncertain: boolean }
   | { status: "unavailable"; message: string }
   | { status: "error"; message: string }
-
-const UNAVAILABLE_MESSAGE = "AI is not available right now."
-const ERROR_MESSAGE = "The assistant could not answer. Please try again."
 
 // validateAiResponse only checks components, so sources and uncertain are read here, as plain titles.
 function readSources(value: unknown): AiSource[] {
@@ -34,6 +32,7 @@ export async function sendAiMessage(
   message: string,
   conversationId?: string
 ): Promise<AiSendResult> {
+  const t = await getTranslator()
   try {
     const response = await apiRequest<AiChatPayload>({
       requestConfig: {
@@ -45,23 +44,23 @@ export async function sendAiMessage(
 
     // 503 means the API has no AI provider configured (DEC-08).
     if (response.statusCode === 503) {
-      return { status: "unavailable", message: UNAVAILABLE_MESSAGE }
+      return { status: "unavailable", message: t("final.ai.unavailable") }
     }
 
     if (!response.success) {
-      return { status: "error", message: ERROR_MESSAGE }
+      return { status: "error", message: t("final.ai.error") }
     }
 
     const payload = response.data
     if (typeof payload?.conversationId !== "string" || payload.conversationId.length === 0) {
-      return { status: "unavailable", message: UNAVAILABLE_MESSAGE }
+      return { status: "unavailable", message: t("final.ai.unavailable") }
     }
 
     // Never render unvalidated AI output: an invalid answer is treated as unavailable.
     const validated = validateAiResponse({ components: payload.components })
     if (!validated.ok) {
       console.error("AI response failed validation:", validated.errors)
-      return { status: "unavailable", message: UNAVAILABLE_MESSAGE }
+      return { status: "unavailable", message: t("final.ai.unavailable") }
     }
 
     return {
@@ -77,6 +76,6 @@ export async function sendAiMessage(
     }
 
     console.error("Error sending AI message:", error)
-    return { status: "error", message: ERROR_MESSAGE }
+    return { status: "error", message: t("final.ai.error") }
   }
 }

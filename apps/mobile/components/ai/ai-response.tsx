@@ -1,6 +1,7 @@
 import { router, type Href } from "expo-router"
 import { Button, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
 import type { AiComponent, AiFormField, AiTableComponent } from "@church/config/ai"
+import { useT } from "../../lib/locale"
 
 // Native renderer for the AI contract. Plain text only: no HTML, markdown or links
 // beyond the in-app routes listed here. Input must already pass validateAiResponse.
@@ -14,13 +15,12 @@ function appRoute(href: string | undefined): Href | null {
   return null
 }
 
-const ACTION_NOTICE = "This action is not available yet"
-
 export function AiResponseView({ components }: { components: AiComponent[] }) {
   return <View style={styles.stack}>{components.map((component, index) => <AiComponentView key={index} component={component} />)}</View>
 }
 
 function AiComponentView({ component }: { component: AiComponent }) {
+  const { t } = useT()
   switch (component.type) {
     case "text":
       return <Text style={styles.text}>{component.text}</Text>
@@ -62,7 +62,7 @@ function AiComponentView({ component }: { component: AiComponent }) {
         <View style={styles.box}>
           {component.fields.map((field) => <DisabledField key={field.name} field={field} />)}
           <Button disabled title={component.submit.label} onPress={() => undefined} />
-          <Text style={styles.notice}>{ACTION_NOTICE}</Text>
+          <Text style={styles.notice}>{t("final.ai.notAvailable")}</Text>
         </View>
       )
     case "confirm_action":
@@ -70,8 +70,8 @@ function AiComponentView({ component }: { component: AiComponent }) {
         <View style={styles.box}>
           <Text style={styles.itemTitle}>{component.title}</Text>
           <Text style={styles.text}>{component.summary}</Text>
-          <Button disabled title="Confirm" onPress={() => undefined} />
-          <Text style={styles.notice}>{ACTION_NOTICE}</Text>
+          <Button disabled title={t("common.confirm")} onPress={() => undefined} />
+          <Text style={styles.notice}>{t("final.ai.notAvailable")}</Text>
         </View>
       )
     case "link_button": {

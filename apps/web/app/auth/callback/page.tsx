@@ -5,8 +5,10 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { toast } from "sonner"
 import { getOAuthTokensFromCookies } from "@/actions/auth"
+import { useT } from "@/components/i18n/locale-provider"
 
 export default function OAuthCallbackPage() {
+  const { t } = useT()
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isProcessing, setIsProcessing] = useState(true)
@@ -20,7 +22,7 @@ export default function OAuthCallbackPage() {
         // Handle OAuth errors
         if (errorParam) {
           setError(errorParam)
-          toast.error(`Authentication failed: ${errorParam}`)
+          toast.error(t("final.callback.failed", { reason: errorParam }))
           setIsProcessing(false)
 
           setTimeout(() => {
@@ -34,8 +36,8 @@ export default function OAuthCallbackPage() {
         const tokenResult = await getOAuthTokensFromCookies()
 
         if (!tokenResult.success || !tokenResult.tokens) {
-          setError("No tokens received from authentication server")
-          toast.error("Authentication failed: Missing tokens")
+          setError(t("final.callback.noTokens"))
+          toast.error(t("final.callback.failed", { reason: t("final.callback.missingTokens") }))
           setIsProcessing(false)
 
           setTimeout(() => {
@@ -55,8 +57,8 @@ export default function OAuthCallbackPage() {
         })
 
         if (!result?.ok) {
-          setError("Failed to create session")
-          toast.error("Failed to create session")
+          setError(t("final.callback.sessionFailed"))
+          toast.error(t("final.callback.sessionFailed"))
           setIsProcessing(false)
           
           setTimeout(() => {
@@ -65,15 +67,15 @@ export default function OAuthCallbackPage() {
           return
         }
 
-        toast.success("Sign-in successful!")
+        toast.success(t("final.callback.success"))
         
         // Get redirect URL from search params or use default
         const callbackUrl = searchParams.get("callbackUrl") || "/"
         router.push(callbackUrl)
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown error"
+        const message = err instanceof Error ? err.message : t("final.callback.unknownError")
         setError(message)
-        toast.error(`Sign-in error: ${message}`)
+        toast.error(t("final.callback.error", { message }))
         setIsProcessing(false)
         
         setTimeout(() => {
@@ -83,24 +85,24 @@ export default function OAuthCallbackPage() {
     }
 
     processCallback()
-  }, [searchParams, router])
+  }, [searchParams, router, t])
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
       <div className="rounded-lg bg-white p-8 shadow-md text-center">
         {isProcessing ? (
           <>
-            <h1 className="mb-4 text-2xl font-bold">Completing sign-in...</h1>
-            <p className="text-gray-600">Please wait while we complete your authentication.</p>
+            <h1 className="mb-4 text-2xl font-bold">{t("final.callback.heading")}</h1>
+            <p className="text-gray-600">{t("final.callback.wait")}</p>
             <div className="mt-6 flex justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
             </div>
           </>
         ) : error ? (
           <>
-            <h1 className="mb-4 text-2xl font-bold text-red-600">Authentication Failed</h1>
+            <h1 className="mb-4 text-2xl font-bold text-red-600">{t("final.callback.failedHeading")}</h1>
             <p className="text-gray-600 mb-4">{error}</p>
-            <p className="text-sm text-gray-500">Redirecting to sign-in...</p>
+            <p className="text-sm text-gray-500">{t("final.callback.redirecting")}</p>
           </>
         ) : null}
       </div>

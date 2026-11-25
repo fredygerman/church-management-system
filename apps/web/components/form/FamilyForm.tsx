@@ -18,14 +18,20 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { useT } from '@/components/i18n/locale-provider'
+import type { Translate } from '@church/config'
 
-const familyFormSchema = z.object({
-  familyName: z.string().min(2, 'Family name must be at least 2 characters'),
-})
+function buildFamilyFormSchema(t: Translate) {
+  return z.object({
+    familyName: z.string().min(2, t('final.family.nameMin')),
+  })
+}
 
-type FamilyFormData = z.infer<typeof familyFormSchema>
+type FamilyFormData = z.infer<ReturnType<typeof buildFamilyFormSchema>>
 
 export function FamilyForm({ churchId }: { churchId: string }) {
+  const { t } = useT()
+  const familyFormSchema = buildFamilyFormSchema(t)
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -44,12 +50,12 @@ export function FamilyForm({ churchId }: { churchId: string }) {
         familyName: data.familyName,
       })
 
-      toast.success('Family added successfully!')
+      toast.success(t('final.family.success'))
       router.push(`/${churchId}/dashboard/families`)
     } catch (error) {
       console.error('Error creating family:', error)
       toast.error(
-        error instanceof Error ? error.message : 'Failed to add family'
+        error instanceof Error ? error.message : t('final.family.failed')
       )
     } finally {
       setIsSubmitting(false)
@@ -65,9 +71,9 @@ export function FamilyForm({ churchId }: { churchId: string }) {
             name="familyName"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Family Name *</FormLabel>
+                <FormLabel>{t('final.family.label')}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter family name" {...field} />
+                  <Input placeholder={t('final.family.placeholder')} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -81,10 +87,10 @@ export function FamilyForm({ churchId }: { churchId: string }) {
               onClick={() => router.back()}
               disabled={isSubmitting}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Adding...' : 'Add Family'}
+              {isSubmitting ? t('final.family.adding') : t('final.family.add')}
             </Button>
           </div>
         </form>

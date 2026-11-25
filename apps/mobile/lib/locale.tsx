@@ -1,6 +1,7 @@
 import * as SecureStore from "expo-secure-store"
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
 import { DEFAULT_LOCALE, parseLocale, translatorFor, type Locale, type Translate } from "@church/config/i18n"
+import { setApiLocale } from "./api"
 
 const LOCALE_KEY = "church.locale"
 
@@ -11,6 +12,10 @@ const LocaleContext = createContext<LocaleContextValue | null>(null)
 /** Holds the chosen language for this device. English until the user picks Swahili. */
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>(DEFAULT_LOCALE)
+
+  useEffect(() => {
+    setApiLocale(locale)
+  }, [locale])
 
   useEffect(() => {
     SecureStore.getItemAsync(LOCALE_KEY)

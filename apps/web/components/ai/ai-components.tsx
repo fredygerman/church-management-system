@@ -16,8 +16,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-
-const ACTION_NOT_AVAILABLE = "This action is not available yet"
+import { useT } from "@/components/i18n/locale-provider"
+import type { Translate } from "@church/config"
 
 // Only registered actions may run. The registry ships empty (DEC-08).
 function isActionAvailable(actionId: string): boolean {
@@ -29,9 +29,9 @@ function isRelativeHref(href: string): boolean {
   return href.startsWith("/") && !href.startsWith("//") && !href.includes("\\")
 }
 
-function formatCell(value: AiCellValue | undefined): string {
+function formatCell(value: AiCellValue | undefined, t: Translate): string {
   if (value === null || value === undefined) return "-"
-  if (typeof value === "boolean") return value ? "Yes" : "No"
+  if (typeof value === "boolean") return value ? t("final.ai.yes") : t("final.ai.no")
   return String(value)
 }
 
@@ -62,8 +62,9 @@ function TableBlock({
   columns: { key: string; label: string }[]
   rows: Record<string, AiCellValue>[]
 }) {
+  const { t } = useT()
   return (
-    <Table aria-label="Assistant results">
+    <Table aria-label={t("final.ai.resultsLabel")}>
       <TableHeader>
         <TableRow>
           {columns.map((col) => (
@@ -77,14 +78,14 @@ function TableBlock({
         {rows.length === 0 && (
           <TableRow>
             <TableCell colSpan={columns.length} className="text-muted-foreground">
-              No rows
+              {t("final.ai.noRows")}
             </TableCell>
           </TableRow>
         )}
         {rows.map((row, i) => (
           <TableRow key={i}>
             {columns.map((col) => (
-              <TableCell key={col.key}>{formatCell(row[col.key])}</TableCell>
+              <TableCell key={col.key}>{formatCell(row[col.key], t)}</TableCell>
             ))}
           </TableRow>
         ))}
@@ -129,6 +130,7 @@ function FormFieldInput({
   disabled: boolean
   onChange: (value: string) => void
 }) {
+  const { t } = useT()
   const common = {
     id,
     name: field.name,
@@ -147,7 +149,7 @@ function FormFieldInput({
         {...common}
         className="border-input bg-background h-9 w-full rounded-md border px-3 text-sm disabled:opacity-50"
       >
-        <option value="">Select</option>
+        <option value="">{t("final.ai.select")}</option>
         {(field.options ?? []).map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -174,6 +176,7 @@ function FormBlock({
   fields: AiFormField[]
   submit: { label: string; actionId: string }
 }) {
+  const { t } = useT()
   const baseId = useId()
   const [values, setValues] = useState<Record<string, string>>({})
   const available = isActionAvailable(submit.actionId)
@@ -200,7 +203,7 @@ function FormBlock({
       ))}
       {!available && (
         <p id={noticeId} role="status" className="text-muted-foreground text-xs">
-          {ACTION_NOT_AVAILABLE}
+          {t("final.ai.notAvailable")}
         </p>
       )}
       <Button type="submit" disabled={!available}>
@@ -219,6 +222,7 @@ function ConfirmActionBlock({
   summary: string
   actionId: string
 }) {
+  const { t } = useT()
   const baseId = useId()
   const available = isActionAvailable(actionId)
   const noticeId = `${baseId}-notice`
@@ -230,7 +234,7 @@ function ConfirmActionBlock({
         <p className="text-muted-foreground text-sm">{summary}</p>
         {!available && (
           <p id={noticeId} role="status" className="text-muted-foreground text-xs">
-            {ACTION_NOT_AVAILABLE}
+            {t("final.ai.notAvailable")}
           </p>
         )}
         {/* TODO: run the registered action after the user confirms, with their own token. */}

@@ -2,6 +2,8 @@
  * Error handling utilities for the application
  */
 
+import type { Translate } from '@church/config'
+
 export interface ApiErrorResponse {
   success: false
   message: string
@@ -49,23 +51,23 @@ export class ApiError extends Error {
     return this.statusCode >= 400 && this.statusCode < 500
   }
 
-  getDisplayMessage(): string {
+  getDisplayMessage(t: Translate): string {
     if (this.isNetworkError()) {
-      return 'Network connection error. Please check your internet connection.'
+      return t('final.error.networkMessage')
     }
     if (this.isAuthError()) {
-      return 'Your session has expired. Please sign in again.'
+      return t('final.api.sessionExpired')
     }
     if (this.isForbiddenError()) {
-      return 'You do not have permission to access this resource.'
+      return t('final.error.forbiddenMessage')
     }
     if (this.isNotFoundError()) {
-      return 'The resource you are looking for does not exist.'
+      return t('final.error.notFoundMessage')
     }
     if (this.isServerError()) {
-      return 'A server error occurred. Please try again later.'
+      return t('final.error.serverMessage')
     }
-    return this.message || 'An unexpected error occurred.'
+    return this.message || t('final.error.unexpected')
   }
 }
 
@@ -99,18 +101,18 @@ export function handleApiError(error: any): never {
 }
 
 /**
- * Get user-friendly error message
+ * Get user-friendly error message. Client-side: the caller passes its translator (from useT).
  */
-export function getUserFriendlyMessage(error: any): string {
+export function getUserFriendlyMessage(error: any, t: Translate): string {
   if (error instanceof ApiError) {
-    return error.getDisplayMessage()
+    return error.getDisplayMessage(t)
   }
 
   if (error instanceof Error) {
-    return error.message || 'An unexpected error occurred.'
+    return error.message || t('final.error.unexpected')
   }
 
-  return 'An unexpected error occurred.'
+  return t('final.error.unexpected')
 }
 
 /**

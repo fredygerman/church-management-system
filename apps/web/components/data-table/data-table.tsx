@@ -12,6 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { DataTablePagination } from "@/components/data-table/data-table-pagination"
+import { useT } from "@/components/i18n/locale-provider"
 
 interface DataTableProps<TData> extends React.HTMLAttributes<HTMLDivElement> {
   /**
@@ -44,9 +45,10 @@ export function DataTable<TData>({
   children,
   className,
   disablePagination = false,
-  emptyMessage = "No results.",
+  emptyMessage,
   ...props
 }: DataTableProps<TData>) {
+  const { t } = useT()
   return (
     <div
       className={cn("w-full space-y-2.5 overflow-auto", className)}
@@ -95,7 +97,7 @@ export function DataTable<TData>({
                   colSpan={table.getAllColumns().length}
                   className="h-24 text-center"
                 >
-                  {emptyMessage}
+                  {emptyMessage ?? t("final.table.noResults")}
                 </TableCell>
               </TableRow>
             )}

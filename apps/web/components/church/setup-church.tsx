@@ -21,23 +21,29 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { setupChurch } from '@/actions/church'
+import { useT } from '@/components/i18n/locale-provider'
+import type { Translate } from '@church/config'
 
-const churchFormSchema = z.object({
-  name: z.string().min(2, 'Church name must be at least 2 characters'),
-  location: z.string().min(2, 'Location must be at least 2 characters'),
-  leadPastorName: z.string().min(2, 'Pastor name must be at least 2 characters'),
-  phone: z.string().optional(),
-  email: z.string().email().optional().or(z.literal('')),
-  description: z.string().optional(),
-}) as any
+function buildChurchFormSchema(t: Translate) {
+  return z.object({
+    name: z.string().min(2, t('final.setup.nameMin')),
+    location: z.string().min(2, t('final.setup.locationMin')),
+    leadPastorName: z.string().min(2, t('final.setup.pastorMin')),
+    phone: z.string().optional(),
+    email: z.string().email().optional().or(z.literal('')),
+    description: z.string().optional(),
+  }) as any
+}
 
-type ChurchFormValues = z.infer<typeof churchFormSchema>
+type ChurchFormValues = z.infer<ReturnType<typeof buildChurchFormSchema>>
 
 interface SetupChurchProps {
   onSuccess?: (churchId: string) => void
 }
 
 export function SetupChurch({ onSuccess }: SetupChurchProps) {
+  const { t } = useT()
+  const churchFormSchema = buildChurchFormSchema(t)
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -69,7 +75,7 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
       })
 
       // After successful setup, authenticate with NextAuth using the returned tokens
-      toast.success('Church setup completed! Signing you in...')
+      toast.success(t('final.setup.success'))
       
       // Sign in with the tokens returned from setup endpoint
       const signInResult = await signIn('credentials', {
@@ -79,7 +85,7 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
       })
 
       if (!signInResult?.ok) {
-        throw new Error('Failed to sign in after setup')
+        throw new Error(t('final.setup.signInFailed'))
       }
 
       if (onSuccess) {
@@ -91,7 +97,7 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
         router.push(`/${result.church.id}/dashboard`)
       }, 500)
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to setup church'
+      const errorMessage = error instanceof Error ? error.message : t('final.setup.failed')
       console.error('Church setup error:', error)
       setError(errorMessage)
       toast.error(errorMessage)
@@ -122,9 +128,9 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
               </svg>
             </div>
           </div>
-          <CardTitle className="text-2xl">Setup Your Church</CardTitle>
+          <CardTitle className="text-2xl">{t('final.setup.title')}</CardTitle>
           <CardDescription>
-            Create your headquarters church to get started with the system
+            {t('final.setup.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -140,9 +146,9 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Church Name</FormLabel>
+                    <FormLabel>{t('final.setup.nameLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Mito ya Baraka Church" {...field} />
+                      <Input placeholder={t('final.setup.namePlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -154,12 +160,12 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
                 name="location"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Location</FormLabel>
+                    <FormLabel>{t('final.setup.locationLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Dar Es Salaam, Tanzania" {...field} />
+                      <Input placeholder={t('final.setup.locationPlaceholder')} {...field} />
                     </FormControl>
                     <FormDescription>
-                      City and country where the church is located
+                      {t('final.setup.locationHint')}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -171,9 +177,9 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
                 name="leadPastorName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Lead Pastor Name</FormLabel>
+                    <FormLabel>{t('final.setup.pastorLabel')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Rev. John Doe" {...field} />
+                      <Input placeholder={t('final.setup.pastorPlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -185,7 +191,7 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
                 name="phone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Phone Number (Optional)</FormLabel>
+                    <FormLabel>{t('final.setup.phoneLabel')}</FormLabel>
                     <FormControl>
                       <Input placeholder="+254 700 000 000" {...field} />
                     </FormControl>
@@ -199,7 +205,7 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email (Optional)</FormLabel>
+                    <FormLabel>{t('final.setup.emailLabel')}</FormLabel>
                     <FormControl>
                       <Input type="email" placeholder="church@example.com" {...field} />
                     </FormControl>
@@ -213,10 +219,10 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormLabel>{t('final.setup.descriptionLabel')}</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Brief description about your church..."
+                        placeholder={t('final.setup.descriptionPlaceholder')}
                         className="resize-none"
                         rows={3}
                         {...field}
@@ -228,7 +234,7 @@ export function SetupChurch({ onSuccess }: SetupChurchProps) {
               />
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating Church...' : 'Create Church'}
+                {isLoading ? t('final.setup.creating') : t('final.setup.create')}
               </Button>
             </form>
           </Form>

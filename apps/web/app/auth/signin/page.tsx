@@ -6,8 +6,10 @@ import { signIn } from "next-auth/react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { useT } from "@/components/i18n/locale-provider"
 
 export default function SignInPage() {
+  const { t } = useT()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get("callbackUrl")
   const [isRegistering, setIsRegistering] = useState(false)
@@ -15,9 +17,9 @@ export default function SignInPage() {
 
   useEffect(() => {
     if (callbackUrl) {
-      toast.error(`You need to be signed in to access ${callbackUrl}`)
+      toast.error(t("final.signin.needSignIn", { url: callbackUrl }))
     }
-  }, [callbackUrl])
+  }, [callbackUrl, t])
 
   const handleGoogleSignIn = () => {
     try {
@@ -37,7 +39,7 @@ export default function SignInPage() {
       window.location.href = callback.toString()
     } catch (error) {
       console.error("Sign-in error:", error)
-      toast.error("Failed to initiate sign-in. Please try again.")
+      toast.error(t("final.signin.googleFailed"))
     }
   }
 
@@ -45,7 +47,7 @@ export default function SignInPage() {
     event.preventDefault()
     const form = new FormData(event.currentTarget)
     const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL
-    if (!apiBase) return toast.error("Sign-in is not configured")
+    if (!apiBase) return toast.error(t("final.signin.notConfigured"))
 
     setIsSubmitting(true)
     try {
@@ -60,17 +62,17 @@ export default function SignInPage() {
       })
       const body = await response.json()
       const result = body.data ?? body
-      if (!response.ok || !result.accessToken) throw new Error(body.message || "Sign-in failed")
+      if (!response.ok || !result.accessToken) throw new Error(body.message || t("final.signin.failed"))
 
       const signedIn = await signIn("credentials", {
         accessToken: result.accessToken,
         refreshToken: result.refreshToken,
         redirect: false,
       })
-      if (!signedIn?.ok) throw new Error("Could not create a session")
+      if (!signedIn?.ok) throw new Error(t("final.signin.sessionFailed"))
       window.location.assign(callbackUrl || (result.user.activeChurchId || result.user.churchId ? `/${result.user.activeChurchId || result.user.churchId}/dashboard` : "/setup"))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Sign-in failed")
+      toast.error(error instanceof Error ? error.message : t("final.signin.failed"))
     } finally {
       setIsSubmitting(false)
     }
@@ -81,7 +83,7 @@ export default function SignInPage() {
       <div className="rounded-lg bg-card p-8 shadow-md">
         {callbackUrl && (
           <p className="mb-4 text-center text-destructive">
-            To access {callbackUrl}, you need to be signed in.
+            {t("final.signin.needSignInInline", { url: callbackUrl })}
           </p>
         )}
         <div className="mb-6 flex justify-center">
@@ -111,22 +113,22 @@ export default function SignInPage() {
           </svg>
         </div>
         <form onSubmit={handleCredentials} className="space-y-3">
-          {isRegistering && <input className="w-full rounded border p-2" name="name" placeholder="Full name" required />}
-          <input className="w-full rounded border p-2" name="email" type="email" placeholder="Email" required />
-          <input className="w-full rounded border p-2" name="password" type="password" minLength={12} placeholder="Password" required />
+          {isRegistering && <input className="w-full rounded border p-2" name="name" placeholder={t("final.signin.fullName")} required />}
+          <input className="w-full rounded border p-2" name="email" type="email" placeholder={t("final.signin.email")} required />
+          <input className="w-full rounded border p-2" name="password" type="password" minLength={12} placeholder={t("final.signin.password")} required />
           <Button className="w-full" disabled={isSubmitting} type="submit">
-            {isSubmitting ? "Please wait…" : isRegistering ? "Create account" : "Sign in with email"}
+            {isSubmitting ? t("final.signin.pleaseWait") : isRegistering ? t("final.signin.createAccount") : t("final.signin.withEmail")}
           </Button>
         </form>
         <button className="mt-3 w-full text-sm underline" onClick={() => setIsRegistering((value) => !value)} type="button">
-          {isRegistering ? "Already have an account? Sign in" : "Need an account? Register"}
+          {isRegistering ? t("final.signin.haveAccount") : t("final.signin.needAccount")}
         </button>
         <div className="my-4 border-t" />
         <Button
           onClick={handleGoogleSignIn}
           className="w-full"
         >
-          Sign in with Google
+          {t("final.signin.withGoogle")}
         </Button>
       </div>
     </div>

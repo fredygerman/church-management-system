@@ -8,6 +8,7 @@ import { signIn } from "next-auth/react"
 
 import { switchChurch } from "@/actions/church"
 import { Button } from "@/components/ui/button"
+import { useT } from "@/components/i18n/locale-provider"
 import {
   Card,
   CardContent,
@@ -35,6 +36,7 @@ export function ChurchCard({
   totalMembers,
   className,
 }: ChurchCardProps) {
+  const { t } = useT()
   const router = useRouter()
   const [isOpening, setIsOpening] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -57,14 +59,14 @@ export function ChurchCard({
       })
 
       if (result?.error) {
-        throw new Error("Could not update your session")
+        throw new Error(t("final.church.sessionError"))
       }
 
       const isStaff = church.membershipRole && church.membershipRole !== "member"
       router.push(`/${church.id}/${isStaff ? "dashboard" : "portal"}`)
       router.refresh()
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Could not open church")
+      setError(caughtError instanceof Error ? caughtError.message : t("final.church.openError"))
     } finally {
       setIsOpening(false)
     }
@@ -100,22 +102,22 @@ export function ChurchCard({
             <div className="flex items-center space-x-2">
               <Users className="size-5 text-muted-foreground" />
               <span className="text-sm font-medium">
-                {totalMembers.toLocaleString()} members
+                {t("final.church.membersCount", { count: totalMembers.toLocaleString() })}
               </span>
             </div>
             <div className="flex items-center space-x-1 text-sm font-medium text-green-600">
               <CheckCircle className="size-4" />
-              <span>{church.membershipStatus || "Active"}</span>
+              <span>{church.membershipStatus || t("final.church.cardActive")}</span>
             </div>
           </div>
           {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
         </CardContent>
         <CardFooter className="flex justify-between p-4">
           <div className="text-sm text-muted-foreground">
-            {church.membershipRole?.replace("_", " ") || "member"}
+            {church.membershipRole?.replace("_", " ") || t("final.church.memberRoleFallback")}
           </div>
           <Button onClick={openChurch} disabled={isOpening || isSuspended}>
-            {isOpening ? "Opening" : "Open"}
+            {isOpening ? t("final.church.opening") : t("final.church.open")}
             <ArrowRight className="ml-2 size-4" />
           </Button>
         </CardFooter>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useSession } from "next-auth/react"
+import { useT } from "@/components/i18n/locale-provider"
 import {
   UserRole,
   PERMISSION_MAP,
@@ -124,5 +125,6 @@ export function useUserRole(): UserRole {
  */
 export function usePermissionDenialReason(permission: PermissionAction): string {
   const userRole = useUserRole()
-  return getPermissionDenialReason(permission, userRole)
+  const { t } = useT()
+  return getPermissionDenialReason(permission, userRole, t)
 }

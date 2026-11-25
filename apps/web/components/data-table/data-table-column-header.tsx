@@ -8,6 +8,7 @@ import { type Column } from "@tanstack/react-table"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
+import { useT } from "@/components/i18n/locale-provider"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,7 @@ export function DataTableColumnHeader<TData, TValue>({
   title,
   className,
 }: DataTableColumnHeaderProps<TData, TValue>) {
+  const { t } = useT()
   if (!column.getCanSort() && !column.getCanHide()) {
     return <div className={cn(className)}>{title}</div>
   }
@@ -38,10 +40,10 @@ export function DataTableColumnHeader<TData, TValue>({
           <Button
             aria-label={
               column.getIsSorted() === "desc"
-                ? "Sorted descending. Click to sort ascending."
+                ? t("final.table.sortedDesc")
                 : column.getIsSorted() === "asc"
-                  ? "Sorted ascending. Click to sort descending."
-                  : "Not sorted. Click to sort ascending."
+                  ? t("final.table.sortedAsc")
+                  : t("final.table.notSorted")
             }
             variant="ghost"
             size="sm"
@@ -61,24 +63,24 @@ export function DataTableColumnHeader<TData, TValue>({
           {column.getCanSort() && (
             <>
               <DropdownMenuItem
-                aria-label="Sort ascending"
+                aria-label={t("final.table.sortAsc")}
                 onClick={() => column.toggleSorting(false)}
               >
                 <ArrowUpIcon
                   className="mr-2 size-3.5 text-muted-foreground/70"
                   aria-hidden="true"
                 />
-                Asc
+                {t("final.table.asc")}
               </DropdownMenuItem>
               <DropdownMenuItem
-                aria-label="Sort descending"
+                aria-label={t("final.table.sortDesc")}
                 onClick={() => column.toggleSorting(true)}
               >
                 <ArrowDownIcon
                   className="mr-2 size-3.5 text-muted-foreground/70"
                   aria-hidden="true"
                 />
-                Desc
+                {t("final.table.desc")}
               </DropdownMenuItem>
             </>
           )}
@@ -87,14 +89,14 @@ export function DataTableColumnHeader<TData, TValue>({
           )}
           {column.getCanHide() && (
             <DropdownMenuItem
-              aria-label="Hide column"
+              aria-label={t("final.table.hideColumn")}
               onClick={() => column.toggleVisibility(false)}
             >
               <EyeNoneIcon
                 className="mr-2 size-3.5 text-muted-foreground/70"
                 aria-hidden="true"
               />
-              Hide
+              {t("final.table.hide")}
             </DropdownMenuItem>
           )}
         </DropdownMenuContent>

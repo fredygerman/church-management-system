@@ -6,8 +6,10 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { apiPost } from "@/lib/api-helpers"
+import { useT } from "@/components/i18n/locale-provider"
 
 export default function SignOutPage() {
+  const { t } = useT()
   const handleLogout = async (callbackUrl: string) => {
     try {
       // Revoke the user's tokens on the API while the session still exists.
@@ -18,9 +20,9 @@ export default function SignOutPage() {
         new Promise((resolve) => setTimeout(resolve, 3000)),
       ])
       await signOut({ callbackUrl })
-      toast.info("You have been signed out")
+      toast.info(t("final.signout.done"))
     } catch (error) {
-      toast.error("An error occurred during logout")
+      toast.error(t("final.signout.failed"))
     }
   }
 
@@ -31,13 +33,13 @@ export default function SignOutPage() {
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gray-100">
-      <h1 className="mb-4 text-2xl font-bold">Signing out...</h1>
+      <h1 className="mb-4 text-2xl font-bold">{t("final.signout.heading")}</h1>
       <Button
         onClick={async () => {
           await handleLogout("/auth/signin")
         }}
       >
-        Click here if you&apos;re not redirected
+        {t("final.signout.retry")}
       </Button>
     </div>
   )

@@ -3,6 +3,7 @@
 import { type ReactNode } from "react"
 import { usePermission, useHasAnyPermission, useHasAllPermissions, usePermissionDenialReason } from "@/hooks/use-permissions"
 import type { PermissionAction } from "@church/config"
+import { useT } from "@/components/i18n/locale-provider"
 import {
   Tooltip,
   TooltipContent,
@@ -58,6 +59,7 @@ export function PermissionGate({
   const hasSinglePermission = usePermission(permission!)
   const hasAnyOfPermissions = useHasAnyPermission(permissions || [])
   const hasAllOfPermissions = useHasAllPermissions(permissions || [])
+  const { t } = useT()
   const denialReason = usePermissionDenialReason(permission!)
 
   // Single permission check
@@ -106,7 +108,7 @@ export function PermissionGate({
               </div>
             </TooltipTrigger>
             <TooltipContent className="bg-red-600">
-              <p>You don&apos;t have permission to perform this action</p>
+              <p>{t("final.permission.denied")}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
