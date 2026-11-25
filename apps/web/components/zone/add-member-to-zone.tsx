@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import { assignMemberToZone } from "@/actions/zone"
+import { useT } from "@/components/i18n/locale-provider"
 
 interface Member {
   id: string
@@ -43,6 +44,7 @@ export function AddMemberToZone({
   const [open, setOpen] = React.useState(false)
   const [selectedMember, setSelectedMember] = React.useState<Member | null>(null)
   const [isLoading, setIsLoading] = React.useState(false)
+  const { t } = useT()
 
   const handleAddMember = async () => {
     if (!selectedMember) return
@@ -50,12 +52,12 @@ export function AddMemberToZone({
     setIsLoading(true)
     try {
       await assignMemberToZone(zoneId, selectedMember.id, false, churchId) // Not a leader by default
-      toast.success(`${selectedMember.firstName} ${selectedMember.lastName} added to zone`)
+      toast.success(t("staff.zones.memberAddedNamed", { name: `${selectedMember.firstName} ${selectedMember.lastName}` }))
       setSelectedMember(null)
       setOpen(false)
       onMemberAdded?.()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to add member")
+      toast.error(error instanceof Error ? error.message : t("staff.groups.addError"))
     } finally {
       setIsLoading(false)
     }
@@ -73,14 +75,14 @@ export function AddMemberToZone({
           >
             {selectedMember
               ? `${selectedMember.firstName} ${selectedMember.lastName}`
-              : "Search members..."}
+              : t("staff.groups.searchMembersPlaceholder")}
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[300px] p-0">
           <Command>
-            <CommandInput placeholder="Search members..." />
-            <CommandEmpty>No members found.</CommandEmpty>
+            <CommandInput placeholder={t("staff.groups.searchMembersPlaceholder")} />
+            <CommandEmpty>{t("staff.groups.noMembersFound")}</CommandEmpty>
             <CommandGroup>
               {availableMembers.map((member) => (
                 <CommandItem
@@ -116,7 +118,7 @@ export function AddMemberToZone({
         size="sm"
       >
         <UserPlus className="mr-2 h-4 w-4" />
-        {isLoading ? "Adding..." : "Add Member"}
+        {isLoading ? t("staff.groups.adding") : t("staff.groups.addMember")}
       </Button>
     </div>
   )

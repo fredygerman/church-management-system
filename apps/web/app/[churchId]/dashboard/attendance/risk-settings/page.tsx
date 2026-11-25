@@ -1,11 +1,13 @@
 import { revalidatePath } from 'next/cache'
 import { getRiskSettings, upsertRiskSettings } from '@/actions/attendance'
+import { getTranslator } from '@/lib/i18n/server'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
 }
 
 export default async function AttendanceRiskSettingsPage({ params }: PageProps) {
+  const t = await getTranslator()
   const { churchId } = await params
   const settings = await getRiskSettings(churchId).catch(() => null) as any
 
@@ -21,18 +23,18 @@ export default async function AttendanceRiskSettingsPage({ params }: PageProps) 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Risk Settings</h1>
-        <p className="text-sm text-muted-foreground">Configure the consecutive missed-services threshold used for at-risk flags.</p>
+        <h1 className="text-2xl font-semibold">{t('staff.attendance.riskSettings.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('staff.attendance.riskSettings.description')}</p>
       </div>
 
       <div className="rounded-md border p-4 text-sm">
-        <p>Global Default Threshold: <span className="font-medium">{settings?.globalDefault?.consecutiveMissedThreshold ?? 4}</span></p>
-        <p>Effective Threshold: <span className="font-medium">{settings?.effectiveThreshold ?? 4}</span></p>
+        <p>{t('staff.attendance.riskSettings.globalDefault')}: <span className="font-medium">{settings?.globalDefault?.consecutiveMissedThreshold ?? 4}</span></p>
+        <p>{t('staff.attendance.riskSettings.effective')}: <span className="font-medium">{settings?.effectiveThreshold ?? 4}</span></p>
       </div>
 
       <form action={saveAction} className="grid max-w-xl gap-3 rounded-md border p-4">
         <label className="grid gap-1 text-sm">
-          Consecutive Missed Threshold
+          {t('staff.attendance.riskSettings.threshold')}
           <input
             name="consecutiveMissedThreshold"
             type="number"
@@ -49,10 +51,10 @@ export default async function AttendanceRiskSettingsPage({ params }: PageProps) 
             type="checkbox"
             defaultChecked={settings?.churchSetting?.isActive ?? true}
           />
-          Enable church override
+          {t('staff.attendance.riskSettings.enableOverride')}
         </label>
 
-        <button type="submit" className="w-fit rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Save</button>
+        <button type="submit" className="w-fit rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">{t('common.save')}</button>
       </form>
     </div>
   )

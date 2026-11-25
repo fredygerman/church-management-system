@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createZone, updateZone } from "@/actions/zone"
 import { toast } from "sonner"
@@ -28,14 +28,19 @@ import {
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import type { Translate } from "@church/config"
+import { useT } from "@/components/i18n/locale-provider"
 
-const zoneFormSchema = z.object({
-  name: z.string().min(2, "Zone name must be at least 2 characters"),
-  description: z.string().optional(),
-  meetingDay: z.string().optional(),
-})
+// Validation messages are translated, so the schema is built per locale.
+function buildZoneFormSchema(t: Translate) {
+  return z.object({
+    name: z.string().min(2, t("sweep.a.zone.nameMin")),
+    description: z.string().optional(),
+    meetingDay: z.string().optional(),
+  })
+}
 
-type ZoneFormData = z.infer<typeof zoneFormSchema>
+type ZoneFormData = z.infer<ReturnType<typeof buildZoneFormSchema>>
 
 interface ZoneFormProps {
   churchId: string
@@ -43,17 +48,20 @@ interface ZoneFormProps {
   isEditMode?: boolean
 }
 
+// Values are stored in English; only the labels are translated.
 const daysOfWeek = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-]
+  { value: "Monday", labelKey: "sweep.a.day.monday" },
+  { value: "Tuesday", labelKey: "sweep.a.day.tuesday" },
+  { value: "Wednesday", labelKey: "sweep.a.day.wednesday" },
+  { value: "Thursday", labelKey: "sweep.a.day.thursday" },
+  { value: "Friday", labelKey: "sweep.a.day.friday" },
+  { value: "Saturday", labelKey: "sweep.a.day.saturday" },
+  { value: "Sunday", labelKey: "sweep.a.day.sunday" },
+] as const
 
 export function ZoneForm({ churchId, initialData, isEditMode = false }: ZoneFormProps) {
+  const { t } = useT()
+  const zoneFormSchema = useMemo(() => buildZoneFormSchema(t), [t])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
@@ -71,18 +79,18 @@ export function ZoneForm({ churchId, initialData, isEditMode = false }: ZoneForm
     try {
       if (isEditMode && initialData?.id) {
         await updateZone(initialData.id, data, churchId)
-        toast.success("Zone updated successfully!")
+        toast.success(t("sweep.a.zone.updated"))
         router.push(`/${churchId}/dashboard/zones/${initialData.id}`)
       } else {
         const newZone = await createZone({
           churchId,
           ...data,
         })
-        toast.success("Zone created successfully!")
+        toast.success(t("sweep.a.zone.created"))
         router.push(`/${churchId}/dashboard/zones/${newZone.id}`)
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An error occurred")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.form.genericError"))
     } finally {
       setIsSubmitting(false)
     }
@@ -97,9 +105,9 @@ export function ZoneForm({ churchId, initialData, isEditMode = false }: ZoneForm
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Zone Name</FormLabel>
+                <FormLabel>{t("sweep.a.zone.nameLabel")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter zone name" {...field} />
+                  <Input placeholder={t("sweep.a.zone.namePlaceholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -111,17 +119,17 @@ export function ZoneForm({ churchId, initialData, isEditMode = false }: ZoneForm
             name="meetingDay"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Meeting Day</FormLabel>
+                <FormLabel>{t("sweep.a.form.meetingDay")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a day" />
+                      <SelectValue placeholder={t("sweep.a.form.selectDay")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
                     {daysOfWeek.map((day) => (
-                      <SelectItem key={day} value={day}>
-                        {day}
+                      <SelectItem key={day.value} value={day.value}>
+                        {t(day.labelKey)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -136,16 +144,16 @@ export function ZoneForm({ churchId, initialData, isEditMode = false }: ZoneForm
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t("sweep.a.form.description")}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Enter zone description"
+                    placeholder={t("sweep.a.zone.descriptionPlaceholder")}
                     className="min-h-32"
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Optional description for the zone
+                  {t("sweep.a.zone.descriptionHelp")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -159,10 +167,10 @@ export function ZoneForm({ churchId, initialData, isEditMode = false }: ZoneForm
               className="flex-1"
             >
               {isSubmitting
-                ? "Saving..."
+                ? t("sweep.a.form.saving")
                 : isEditMode
-                ? "Update Zone"
-                : "Create Zone"}
+                ? t("sweep.a.zone.update")
+                : t("sweep.a.zone.create")}
             </Button>
             <Button
               type="button"
@@ -170,7 +178,7 @@ export function ZoneForm({ churchId, initialData, isEditMode = false }: ZoneForm
               onClick={() => router.back()}
               className="flex-1"
             >
-              Cancel
+              {t("sweep.a.form.cancel")}
             </Button>
           </div>
         </form>

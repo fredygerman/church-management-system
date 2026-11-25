@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { getServiceSessions, manualCheckin, qrCheckin } from '@/actions/attendance'
 import { searchMembers } from '@/actions/member'
 import { checkPermission, ensurePermission } from '@/lib/permissions-server'
+import { getTranslator } from '@/lib/i18n/server'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -14,6 +15,7 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
   await ensurePermission('view:attendance')
   const { churchId } = await params
   const { q = '', ok = '', err = '' } = await searchParams
+  const t = await getTranslator()
   const canManageAttendance = await checkPermission('manage:attendance')
 
   const [sessions, members] = await Promise.all([
@@ -23,42 +25,44 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
 
   async function manualAction(formData: FormData) {
     'use server'
+    const t = await getTranslator()
     const sessionId = String(formData.get('sessionId') || '')
     const memberId = String(formData.get('memberId') || '')
     const qParam = String(formData.get('q') || '')
     if (!sessionId || !memberId) {
-      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('Select both session and member.')}`)
+      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent(t('staff.attendance.checkin.errSelectBoth'))}`)
     }
     if (!(await checkPermission('manage:attendance'))) {
-      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('You are not allowed to check in members.')}`)
+      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent(t('staff.attendance.checkin.errNotAllowed'))}`)
     }
     try {
       await manualCheckin({ churchId, sessionId, memberId })
       revalidatePath(`/${churchId}/dashboard/attendance/check-in`)
       redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&ok=manual`)
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Manual check-in failed.'
+      const message = e instanceof Error ? e.message : t('staff.attendance.checkin.errManualFailed')
       redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent(message)}`)
     }
   }
 
   async function qrAction(formData: FormData) {
     'use server'
+    const t = await getTranslator()
     const token = String(formData.get('token') || '')
     const memberId = String(formData.get('memberId') || '')
     const qParam = String(formData.get('q') || '')
     if (!token || !memberId) {
-      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('Provide QR token and member.')}`)
+      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent(t('staff.attendance.checkin.errProvide'))}`)
     }
     if (!(await checkPermission('manage:attendance'))) {
-      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent('You are not allowed to check in members.')}`)
+      redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent(t('staff.attendance.checkin.errNotAllowed'))}`)
     }
     try {
       await qrCheckin({ churchId, token, memberId })
       revalidatePath(`/${churchId}/dashboard/attendance/check-in`)
       redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&ok=qr`)
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'QR check-in failed.'
+      const message = e instanceof Error ? e.message : t('staff.attendance.checkin.errQrFailed')
       redirect(`/${churchId}/dashboard/attendance/check-in?q=${encodeURIComponent(qParam)}&err=${encodeURIComponent(message)}`)
     }
   }
@@ -66,18 +70,18 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Live Check-In</h1>
-        <p className="text-sm text-muted-foreground">Use manual member selection or QR token check-in for open sessions.</p>
+        <h1 className="text-2xl font-semibold">{t('staff.attendance.checkin.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('staff.attendance.checkin.description')}</p>
       </div>
 
       <form className="flex max-w-xl gap-2" method="get">
-        <input name="q" defaultValue={q} placeholder="Search member by name or phone" className="flex-1 rounded-md border px-3 py-2 text-sm" />
-        <button type="submit" className="rounded-md border px-4 py-2 text-sm">Search</button>
+        <input name="q" defaultValue={q} placeholder={t('staff.attendance.checkin.searchPlaceholder')} className="flex-1 rounded-md border px-3 py-2 text-sm" />
+        <button type="submit" className="rounded-md border px-4 py-2 text-sm">{t('staff.attendance.checkin.search')}</button>
       </form>
 
       {ok && (
         <div className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-          {ok === 'manual' ? 'Manual check-in completed.' : 'QR check-in completed.'}
+          {ok === 'manual' ? t('staff.attendance.checkin.manualDone') : t('staff.attendance.checkin.qrDone')}
         </div>
       )}
       {err && (
@@ -89,45 +93,45 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
       <div className="grid gap-4 md:grid-cols-2">
         <form action={manualAction} className="space-y-2 rounded-md border p-4">
           <input type="hidden" name="q" value={q} />
-          <h2 className="font-medium">Manual Check-In</h2>
+          <h2 className="font-medium">{t('staff.attendance.checkin.manualHeading')}</h2>
           <select name="sessionId" className="w-full rounded-md border px-2 py-2 text-sm" required>
-            <option value="">Select open session</option>
+            <option value="">{t('staff.attendance.checkin.selectSession')}</option>
             {sessions.map((session: any) => (
               <option key={session.id} value={session.id}>{session.title || session.serviceType?.name || session.sessionDate}</option>
             ))}
           </select>
           <select name="memberId" className="w-full rounded-md border px-2 py-2 text-sm" required>
-            <option value="">Select member</option>
+            <option value="">{t('staff.attendance.checkin.selectMember')}</option>
             {members.map((member: any) => (
               <option key={member.id} value={member.id}>{member.firstName} {member.lastName} {member.phone ? `(${member.phone})` : ''}</option>
             ))}
           </select>
-          <button type="submit" disabled={!canManageAttendance} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">Check In</button>
+          <button type="submit" disabled={!canManageAttendance} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{t('staff.attendance.checkin.checkIn')}</button>
         </form>
 
         <form action={qrAction} className="space-y-2 rounded-md border p-4">
           <input type="hidden" name="q" value={q} />
-          <h2 className="font-medium">QR Token Check-In</h2>
-          <input name="token" placeholder="Paste session QR token" className="w-full rounded-md border px-2 py-2 text-sm" required />
+          <h2 className="font-medium">{t('staff.attendance.checkin.qrHeading')}</h2>
+          <input name="token" placeholder={t('staff.attendance.checkin.qrTokenPlaceholder')} className="w-full rounded-md border px-2 py-2 text-sm" required />
           <select name="memberId" className="w-full rounded-md border px-2 py-2 text-sm" required>
-            <option value="">Select member</option>
+            <option value="">{t('staff.attendance.checkin.selectMember')}</option>
             {members.map((member: any) => (
               <option key={member.id} value={member.id}>{member.firstName} {member.lastName} {member.phone ? `(${member.phone})` : ''}</option>
             ))}
           </select>
-          <button type="submit" disabled={!canManageAttendance} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">Check In by QR</button>
+          <button type="submit" disabled={!canManageAttendance} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{t('staff.attendance.checkin.checkInByQr')}</button>
         </form>
       </div>
 
       {!canManageAttendance && (
-        <p className="text-sm text-muted-foreground">You can view check-in data, but only permitted roles can submit check-ins.</p>
+        <p className="text-sm text-muted-foreground">{t('staff.attendance.checkin.noPermission')}</p>
       )}
 
       {sessions.length === 0 && (
         <p className="text-sm text-muted-foreground">
-          No open sessions.{" "}
+          {t('staff.attendance.noOpenSessions')}{" "}
           <Link className="underline" href={`/${churchId}/dashboard/attendance/sessions`}>
-            Open a session first
+            {t('staff.attendance.checkin.openFirst')}
           </Link>
           .
         </p>

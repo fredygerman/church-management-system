@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { type ColumnDef } from "@tanstack/react-table"
 import { Eye, UserCheck, Trash2 } from "lucide-react"
+import type { Translate } from "@church/config"
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import type { Visitor } from "@church/db"
@@ -14,6 +15,7 @@ type VisitorWithActions = Visitor & {
 
 export function getVisitorColumns(
   churchId: string,
+  t: Translate,
   handlers?: {
     onConvert?: (visitorId: string) => Promise<void>
     onDelete?: (visitorId: string) => Promise<void>
@@ -23,7 +25,7 @@ export function getVisitorColumns(
     {
       accessorKey: "firstName",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="First Name" />
+        <DataTableColumnHeader column={column} title={t("staff.form.firstName")} />
       ),
       cell: ({ row }) => <div>{row.original.firstName}</div>,
       enableSorting: true,
@@ -31,10 +33,10 @@ export function getVisitorColumns(
     {
       accessorKey: "lastName",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Last Name" />
+        <DataTableColumnHeader column={column} title={t("staff.form.lastName")} />
       ),
       cell: ({ row }) => (
-        <Link 
+        <Link
           href={`/${churchId}/dashboard/visitors/${row.original.id}`}
           className="text-blue-600 hover:underline font-semibold"
         >
@@ -46,7 +48,7 @@ export function getVisitorColumns(
     {
       accessorKey: "phone",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Phone" />
+        <DataTableColumnHeader column={column} title={t("staff.form.phone")} />
       ),
       cell: ({ row }) => <div>{row.original.phone || "-"}</div>,
       enableSorting: true,
@@ -54,7 +56,7 @@ export function getVisitorColumns(
     {
       accessorKey: "email",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Email" />
+        <DataTableColumnHeader column={column} title={t("staff.form.email")} />
       ),
       cell: ({ row }) => <div className="text-sm">{row.original.email || "-"}</div>,
       enableSorting: true,
@@ -62,11 +64,11 @@ export function getVisitorColumns(
     {
       accessorKey: "visitDate",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Visit Date" />
+        <DataTableColumnHeader column={column} title={t("staff.visitors.visitDate")} />
       ),
       cell: ({ row }) => (
         <div>
-          {row.original.visitDate 
+          {row.original.visitDate
             ? new Date(row.original.visitDate).toLocaleDateString()
             : "-"
           }
@@ -77,7 +79,7 @@ export function getVisitorColumns(
     {
       accessorKey: "visitorSource",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Source" />
+        <DataTableColumnHeader column={column} title={t("staff.visitors.source")} />
       ),
       cell: ({ row }) => (
         <div className="capitalize text-sm">
@@ -88,22 +90,22 @@ export function getVisitorColumns(
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("staff.visitors.actions"),
       cell: ({ row }) => (
         <div className="flex flex-col gap-2">
-          <Link 
+          <Link
             href={`/${churchId}/dashboard/visitors/${row.original.id}`}
             className="flex items-center gap-2 text-blue-600 hover:underline text-sm"
           >
             <Eye className="h-4 w-4" />
-            View Details
+            {t("staff.visitors.viewDetails")}
           </Link>
 
           {handlers?.onConvert && (
             row.original.convertedToMemberId ? (
               <span className="flex items-center gap-2 text-emerald-700 text-sm">
                 <UserCheck className="h-4 w-4" />
-                Converted
+                {t("staff.visitors.converted")}
               </span>
             ) : (
               <button
@@ -111,7 +113,7 @@ export function getVisitorColumns(
                 className="flex items-center gap-2 text-green-600 hover:underline text-sm cursor-pointer"
               >
                 <UserCheck className="h-4 w-4" />
-                Convert to Member
+                {t("staff.visitors.convertToMember")}
               </button>
             )
           )}
@@ -122,7 +124,7 @@ export function getVisitorColumns(
               className="flex items-center gap-2 text-red-600 hover:underline text-sm cursor-pointer"
             >
               <Trash2 className="h-4 w-4" />
-              Delete
+              {t("staff.visitors.delete")}
             </button>
           )}
         </div>

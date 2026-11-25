@@ -2,6 +2,7 @@ import React from "react"
 import { getDepartmentById } from "@/actions/department"
 import { DepartmentForm } from "@/components/form/DepartmentForm"
 import { Separator } from "@/components/ui/separator"
+import { getTranslator } from "@/lib/i18n/server"
 
 interface PageProps {
   params: Promise<{ churchId: string; id: string }>
@@ -10,6 +11,7 @@ interface PageProps {
 export default async function EditDepartmentPage({ params }: PageProps) {
   const { churchId, id } = await params
   const department = await getDepartmentById(churchId, id)
+  const t = await getTranslator()
 
   return (
     <div className="flex flex-col space-y-6">
@@ -17,12 +19,12 @@ export default async function EditDepartmentPage({ params }: PageProps) {
         <div>
           <div className="flex items-center gap-2">
             <a href={`/${churchId}/dashboard/departments`} className="text-blue-600 hover:underline">
-              Departments
+              {t("staff.departments.title")}
             </a>
             <span className="text-muted-foreground">/</span>
-            <h2 className="text-2xl font-bold tracking-tight">Edit Department</h2>
+            <h2 className="text-2xl font-bold tracking-tight">{t("staff.departments.edit")}</h2>
           </div>
-          <p className="text-muted-foreground mt-1">Edit department details</p>
+          <p className="text-muted-foreground mt-1">{t("staff.departments.editDescription")}</p>
         </div>
       </div>
       <Separator />

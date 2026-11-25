@@ -5,6 +5,12 @@ import { memberMessages } from './messages/member'
 import { staffMessages } from './messages/staff'
 import { mobileMemberMessages } from './messages/mobile-member'
 import { mobileStaffMessages } from './messages/mobile-staff'
+import { staffAttendanceMessages } from './messages/staff-attendance'
+import { staffPeopleMessages } from './messages/staff-people'
+import { staffGroupsMessages } from './messages/staff-groups'
+import { staffEventsGivingMessages } from './messages/staff-events-giving'
+import { staffSweepAMessages } from './messages/staff-sweep-a'
+import { staffSweepBMessages } from './messages/staff-sweep-b'
 import { componentMessages } from './messages/components'
 import { mobileSharedMessages } from './messages/mobile-shared'
 
@@ -18,10 +24,10 @@ export function parseLocale(value: string | null | undefined): Locale {
 }
 
 // Explicit spreads (not Object.assign) so the type-checker reports any key missing from sw.
-const en = { ...commonMessages.en, ...memberMessages.en, ...staffMessages.en, ...mobileMemberMessages.en, ...mobileStaffMessages.en, ...componentMessages.en, ...mobileSharedMessages.en }
+const en = { ...commonMessages.en, ...memberMessages.en, ...staffMessages.en, ...mobileMemberMessages.en, ...mobileStaffMessages.en, ...componentMessages.en, ...mobileSharedMessages.en, ...staffAttendanceMessages.en, ...staffPeopleMessages.en, ...staffGroupsMessages.en, ...staffEventsGivingMessages.en, ...staffSweepAMessages.en, ...staffSweepBMessages.en }
 export type MessageKey = keyof typeof en
 
-const sw: Record<MessageKey, string> = { ...commonMessages.sw, ...memberMessages.sw, ...staffMessages.sw, ...mobileMemberMessages.sw, ...mobileStaffMessages.sw, ...componentMessages.sw, ...mobileSharedMessages.sw }
+const sw: Record<MessageKey, string> = { ...commonMessages.sw, ...memberMessages.sw, ...staffMessages.sw, ...mobileMemberMessages.sw, ...mobileStaffMessages.sw, ...componentMessages.sw, ...mobileSharedMessages.sw, ...staffAttendanceMessages.sw, ...staffPeopleMessages.sw, ...staffGroupsMessages.sw, ...staffEventsGivingMessages.sw, ...staffSweepAMessages.sw, ...staffSweepBMessages.sw }
 
 // Exposed for the parity test only; components use translate().
 export const dictionaries = { en, sw } as const

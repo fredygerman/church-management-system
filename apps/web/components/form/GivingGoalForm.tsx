@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createGivingGoal, updateGivingGoal } from "@/actions/giving-goal"
 import { centsFromDecimal } from "@/lib/utils"
@@ -22,23 +22,31 @@ import {
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import type { Translate } from "@church/config"
+import { useT } from "@/components/i18n/locale-provider"
 
-const givingGoalFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  description: z.string().optional(),
-  targetAmount: z
-    .string()
-    .min(1, "Target amount is required")
-    .refine((val) => !Number.isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-      message: "Target amount must be a positive number",
-    }),
-  currency: z.string().min(3, "Currency is required").max(3, "Use a 3-letter currency code"),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  isPublic: z.boolean(),
-})
+// Validation messages are translated, so the schema is built per locale.
+function buildGivingGoalFormSchema(t: Translate) {
+  return z.object({
+    name: z.string().min(2, t("sweep.a.goal.nameMin")),
+    description: z.string().optional(),
+    targetAmount: z
+      .string()
+      .min(1, t("sweep.a.goal.targetRequired"))
+      .refine((val) => !Number.isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+        message: t("sweep.a.goal.targetPositive"),
+      }),
+    currency: z
+      .string()
+      .min(3, t("sweep.a.form.currencyRequired"))
+      .max(3, t("sweep.a.form.currencyCode")),
+    startDate: z.string().optional(),
+    endDate: z.string().optional(),
+    isPublic: z.boolean(),
+  })
+}
 
-type GivingGoalFormData = z.infer<typeof givingGoalFormSchema>
+type GivingGoalFormData = z.infer<ReturnType<typeof buildGivingGoalFormSchema>>
 
 interface GivingGoalFormProps {
   churchId: string
@@ -47,6 +55,8 @@ interface GivingGoalFormProps {
 }
 
 export function GivingGoalForm({ churchId, initialData, isEditMode = false }: GivingGoalFormProps) {
+  const { t } = useT()
+  const givingGoalFormSchema = useMemo(() => buildGivingGoalFormSchema(t), [t])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
@@ -83,14 +93,14 @@ export function GivingGoalForm({ churchId, initialData, isEditMode = false }: Gi
 
       if (isEditMode && initialData?.id) {
         await updateGivingGoal(initialData.id, payload, churchId)
-        toast.success("Giving goal updated successfully!")
+        toast.success(t("sweep.a.goal.updated"))
       } else {
         await createGivingGoal({ churchId, ...payload })
-        toast.success("Giving goal created successfully!")
+        toast.success(t("sweep.a.goal.created"))
       }
       router.push(`/${churchId}/dashboard/offerings/goals`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An error occurred")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.form.genericError"))
     } finally {
       setIsSubmitting(false)
     }
@@ -105,9 +115,9 @@ export function GivingGoalForm({ churchId, initialData, isEditMode = false }: Gi
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Goal Name</FormLabel>
+                <FormLabel>{t("sweep.a.goal.nameLabel")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., New Church Bus" {...field} />
+                  <Input placeholder={t("sweep.a.goal.namePlaceholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -119,11 +129,11 @@ export function GivingGoalForm({ churchId, initialData, isEditMode = false }: Gi
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t("sweep.a.form.description")}</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="The pitch shown to members" className="min-h-24" {...field} />
+                  <Textarea placeholder={t("sweep.a.goal.descriptionPlaceholder")} className="min-h-24" {...field} />
                 </FormControl>
-                <FormDescription>Optional description shown on the public goal listing</FormDescription>
+                <FormDescription>{t("sweep.a.goal.descriptionHelp")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -135,11 +145,11 @@ export function GivingGoalForm({ churchId, initialData, isEditMode = false }: Gi
               name="targetAmount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Target Amount</FormLabel>
+                  <FormLabel>{t("sweep.a.goal.targetLabel")}</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" min="0" placeholder="0.00" {...field} />
                   </FormControl>
-                  <FormDescription>Enter the target as a decimal value</FormDescription>
+                  <FormDescription>{t("sweep.a.goal.targetHelp")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -150,11 +160,11 @@ export function GivingGoalForm({ churchId, initialData, isEditMode = false }: Gi
               name="currency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Currency</FormLabel>
+                  <FormLabel>{t("sweep.a.form.currency")}</FormLabel>
                   <FormControl>
                     <Input placeholder="KES" maxLength={3} {...field} />
                   </FormControl>
-                  <FormDescription>ISO code, e.g. KES, USD</FormDescription>
+                  <FormDescription>{t("sweep.a.form.currencyHelp")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -167,11 +177,11 @@ export function GivingGoalForm({ churchId, initialData, isEditMode = false }: Gi
               name="startDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Start Date</FormLabel>
+                  <FormLabel>{t("sweep.a.form.startDate")}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
-                  <FormDescription>Defaults to today if left blank</FormDescription>
+                  <FormDescription>{t("sweep.a.goal.startDateHelp")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -182,11 +192,11 @@ export function GivingGoalForm({ churchId, initialData, isEditMode = false }: Gi
               name="endDate"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>End Date (Optional)</FormLabel>
+                  <FormLabel>{t("sweep.a.goal.endDateLabel")}</FormLabel>
                   <FormControl>
                     <Input type="date" {...field} />
                   </FormControl>
-                  <FormDescription>Leave blank for an open-ended goal</FormDescription>
+                  <FormDescription>{t("sweep.a.goal.endDateHelp")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -202,9 +212,9 @@ export function GivingGoalForm({ churchId, initialData, isEditMode = false }: Gi
                   <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel>Publicly visible</FormLabel>
+                  <FormLabel>{t("sweep.a.goal.publicLabel")}</FormLabel>
                   <FormDescription>
-                    Show this goal and its progress on the member portal
+                    {t("sweep.a.goal.publicHelp")}
                   </FormDescription>
                 </div>
               </FormItem>
@@ -213,10 +223,14 @@ export function GivingGoalForm({ churchId, initialData, isEditMode = false }: Gi
 
           <div className="flex gap-4">
             <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Saving..." : isEditMode ? "Update Goal" : "Create Goal"}
+              {isSubmitting
+                ? t("sweep.a.form.saving")
+                : isEditMode
+                ? t("sweep.a.goal.update")
+                : t("sweep.a.goal.create")}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.back()} className="flex-1">
-              Cancel
+              {t("sweep.a.form.cancel")}
             </Button>
           </div>
         </form>

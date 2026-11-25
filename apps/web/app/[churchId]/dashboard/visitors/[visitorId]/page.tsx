@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Phone, Mail, Calendar, Edit2 } from 'lucide-react'
 import { getVisitorById } from '@/actions/visitor'
 import { checkPermission } from '@/lib/permissions-server'
+import { getTranslator } from '@/lib/i18n/server'
 import type { Visitor } from '@church/db'
 
 interface VisitorDetailPageProps {
@@ -15,6 +16,7 @@ interface VisitorDetailPageProps {
 
 export default async function VisitorDetailPage({ params }: VisitorDetailPageProps) {
   const { churchId, visitorId } = await params
+  const t = await getTranslator()
   let visitor: Visitor | null = null
   let error: string | null = null
   let canEdit = false
@@ -23,7 +25,7 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
     visitor = await getVisitorById(churchId, visitorId)
     canEdit = await checkPermission('update:visitor')
   } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load visitor'
+    error = err instanceof Error ? err.message : t('staff.visitors.loadError')
   }
 
   if (error) {
@@ -33,7 +35,7 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
           <Link href={`/${churchId}/dashboard/visitors`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Visitors
+              {t('staff.visitors.backToList')}
             </Button>
           </Link>
         </div>
@@ -51,12 +53,12 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
           <Link href={`/${churchId}/dashboard/visitors`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Visitors
+              {t('staff.visitors.backToList')}
             </Button>
           </Link>
         </div>
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-          <p className="text-yellow-700">Visitor not found</p>
+          <p className="text-yellow-700">{t('staff.visitors.notFound')}</p>
         </div>
       </div>
     )
@@ -87,22 +89,22 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
           <Link href={`/${churchId}/dashboard/visitors`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              {t('staff.members.detail.back')}
             </Button>
           </Link>
           <div>
             <h1 className="text-3xl font-bold">
               {visitor.firstName} {visitor.lastName}
             </h1>
-            <p className="text-sm text-muted-foreground">Visitor Details</p>
+            <p className="text-sm text-muted-foreground">{t('staff.visitors.details')}</p>
           </div>
         </div>
-        
+
         {canEdit && (
           <Link href={`/${churchId}/dashboard/visitors/${visitorId}/edit`}>
             <Button>
               <Edit2 className="mr-2 h-4 w-4" />
-              Edit Visitor
+              {t('staff.visitors.edit')}
             </Button>
           </Link>
         )}
@@ -114,14 +116,14 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
           {/* Contact Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Contact Information</CardTitle>
+              <CardTitle className="text-lg">{t('staff.form.contactInformation')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {visitor.phone && (
                 <div className="flex items-center gap-3">
                   <Phone className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('staff.form.phone')}</p>
                     <p className="text-sm">{visitor.phone}</p>
                   </div>
                 </div>
@@ -130,7 +132,7 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
                 <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Email</p>
+                    <p className="text-sm font-medium text-muted-foreground">{t('staff.form.email')}</p>
                     <p className="text-sm">{visitor.email}</p>
                   </div>
                 </div>
@@ -141,18 +143,18 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
           {/* Visit Information */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Visit Information</CardTitle>
+              <CardTitle className="text-lg">{t('staff.visitors.visitInformation')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center gap-3">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Visit Date</p>
+                  <p className="text-sm font-medium text-muted-foreground">{t('staff.visitors.visitDate')}</p>
                   <p className="text-sm">{formatDate(visitor.visitDate)}</p>
                 </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">How They Found Us</p>
+                <p className="text-sm font-medium text-muted-foreground">{t('staff.visitors.howFound')}</p>
                 <p className="text-sm capitalize mt-1">
                   {visitor.visitorSource?.replace('_', ' ') || '-'}
                 </p>
@@ -166,16 +168,16 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
           {/* Status Card */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Status</CardTitle>
+              <CardTitle className="text-lg">{t('staff.form.status')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">
-                    Conversion Status
+                    {t('staff.visitors.conversionStatus')}
                   </p>
                   <div className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800">
-                    {visitor.convertedToMemberId ? 'Converted' : 'Pending'}
+                    {visitor.convertedToMemberId ? t('staff.visitors.converted') : t('staff.visitors.pending')}
                   </div>
                 </div>
               </div>
@@ -185,15 +187,15 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
           {/* Metadata */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Metadata</CardTitle>
+              <CardTitle className="text-lg">{t('staff.visitors.metadata')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Created</p>
+                <p className="text-xs font-medium text-muted-foreground">{t('staff.visitors.created')}</p>
                 <p className="text-sm">{formatDate(visitor.createdAt)}</p>
               </div>
               <div>
-                <p className="text-xs font-medium text-muted-foreground">Updated</p>
+                <p className="text-xs font-medium text-muted-foreground">{t('staff.visitors.updated')}</p>
                 <p className="text-sm">{formatDate(visitor.updatedAt)}</p>
               </div>
             </CardContent>

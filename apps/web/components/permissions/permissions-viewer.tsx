@@ -5,8 +5,11 @@ import {
   UserRole, 
   PERMISSION_MAP, 
   PERMISSION_METADATA,
-  type PermissionAction 
+  type MessageKey,
+  type PermissionAction,
+  type PermissionMetadata
 } from "@church/config"
+import { useT } from "@/components/i18n/locale-provider"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -38,16 +41,25 @@ const roleDescriptions: Record<UserRole, string> = {
   [UserRole.MEMBER]: "Regular church member with basic access",
 }
 
-const categoryLabels: Record<string, string> = {
-  member: "Members",
-  visitor: "Visitors",
-  zone: "Zones",
-  family: "Families",
-  visitation: "Visitation",
-  admin: "Administration",
+// Category labels reuse the profile page keys; the risk and attendance keys are sweep.b.
+const categoryKeys: Record<string, MessageKey> = {
+  member: "staff.profile.category.member",
+  visitor: "staff.profile.category.visitor",
+  zone: "staff.profile.category.zone",
+  family: "staff.profile.category.family",
+  visitation: "staff.profile.category.visitation",
+  admin: "staff.profile.category.admin",
+  attendance: "sweep.b.permission.category.attendance",
+}
+
+const riskKeys: Record<PermissionMetadata["riskLevel"], MessageKey> = {
+  high: "sweep.b.permission.risk.high",
+  medium: "sweep.b.permission.risk.medium",
+  low: "sweep.b.permission.risk.low",
 }
 
 export function PermissionsViewer() {
+  const { t } = useT()
   const [selectedRole, setSelectedRole] = useState<UserRole>(UserRole.ADMIN)
 
   const rolePermissions = PERMISSION_MAP[selectedRole] || []
@@ -126,7 +138,7 @@ export function PermissionsViewer() {
                   <div key={category}>
                     <h4 className="font-semibold mb-3 flex items-center gap-2">
                       <Shield className="size-4" />
-                      {categoryLabels[category] || category}
+                      {categoryKeys[category] ? t(categoryKeys[category]) : category}
                       <Badge variant="outline" className="ml-auto">
                         {permissions.length}
                       </Badge>
@@ -139,10 +151,10 @@ export function PermissionsViewer() {
                         >
                           <div className="flex-1 space-y-1">
                             <p className="text-sm font-medium leading-none">
-                              {metadata.label}
+                              {t(metadata.labelKey)}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {metadata.description}
+                              {t(metadata.descriptionKey)}
                             </p>
                             <Badge
                               variant={
@@ -154,7 +166,7 @@ export function PermissionsViewer() {
                               }
                               className="text-xs mt-1"
                             >
-                              {metadata.riskLevel} risk
+                              {t(riskKeys[metadata.riskLevel])}
                             </Badge>
                           </div>
                         </div>
@@ -196,9 +208,9 @@ export function PermissionsViewer() {
                       <tr key={permission} className="border-b hover:bg-muted/50">
                         <td className="p-2">
                           <div className="space-y-1">
-                            <p className="font-medium">{metadata.label}</p>
+                            <p className="font-medium">{t(metadata.labelKey)}</p>
                             <p className="text-xs text-muted-foreground">
-                              {metadata.description}
+                              {t(metadata.descriptionKey)}
                             </p>
                           </div>
                         </td>

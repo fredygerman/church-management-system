@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -22,14 +22,17 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
 import { createDepartment } from '@/actions/department'
+import { useT } from '@/components/i18n/locale-provider'
+import type { Translate } from '@church/config'
 
-const departmentCreateSchema = z.object({
-  name: z.string().min(2, 'Department name must be at least 2 characters'),
-  description: z.string().optional(),
-  meetingDay: z.string().optional(),
-})
+const departmentCreateSchema = (t: Translate) =>
+  z.object({
+    name: z.string().min(2, t('staff.departments.nameMinError')),
+    description: z.string().optional(),
+    meetingDay: z.string().optional(),
+  })
 
-type DepartmentCreateFormValues = z.infer<typeof departmentCreateSchema>
+type DepartmentCreateFormValues = z.infer<ReturnType<typeof departmentCreateSchema>>
 
 interface DepartmentCreateFormProps {
   churchId: string
@@ -37,10 +40,12 @@ interface DepartmentCreateFormProps {
 
 export function DepartmentCreateForm({ churchId }: DepartmentCreateFormProps) {
   const router = useRouter()
+  const { t } = useT()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const schema = useMemo(() => departmentCreateSchema(t), [t])
 
   const form = useForm<DepartmentCreateFormValues>({
-    resolver: zodResolver(departmentCreateSchema as any),
+    resolver: zodResolver(schema as any),
     defaultValues: {
       name: '',
       description: '',
@@ -52,10 +57,10 @@ export function DepartmentCreateForm({ churchId }: DepartmentCreateFormProps) {
     setIsSubmitting(true)
     try {
       await createDepartment({ churchId, ...data })
-      toast.success('Department created successfully!')
+      toast.success(t('staff.departments.createSuccess'))
       router.push(`/${churchId}/dashboard/departments`)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create department'
+      const errorMessage = err instanceof Error ? err.message : t('staff.departments.createError')
       toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
@@ -65,9 +70,9 @@ export function DepartmentCreateForm({ churchId }: DepartmentCreateFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Department Information</CardTitle>
+        <CardTitle>{t('staff.departments.infoTitle')}</CardTitle>
         <CardDescription>
-          Enter the details for the new department
+          {t('staff.departments.createInfoDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -78,10 +83,10 @@ export function DepartmentCreateForm({ churchId }: DepartmentCreateFormProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Department Name</FormLabel>
+                  <FormLabel>{t('staff.departments.name')}</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="e.g., Choir, Ushers, Intercessors"
+                      placeholder={t('staff.departments.namePlaceholder')}
                       {...field}
                     />
                   </FormControl>
@@ -95,12 +100,12 @@ export function DepartmentCreateForm({ churchId }: DepartmentCreateFormProps) {
               name="meetingDay"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Meeting Day (Optional)</FormLabel>
+                  <FormLabel>{t('staff.groups.meetingDayOptional')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Monday, Wednesday" {...field} />
+                    <Input placeholder={t('staff.groups.meetingDayPlaceholder')} {...field} />
                   </FormControl>
                   <FormDescription>
-                    The day this department meets
+                    {t('staff.departments.meetingDayHelp')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -112,17 +117,17 @@ export function DepartmentCreateForm({ churchId }: DepartmentCreateFormProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>{t('staff.groups.descriptionOptional')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter department description..."
+                      placeholder={t('staff.departments.descriptionPlaceholder')}
                       className="resize-none"
                       rows={4}
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Additional details about this department (e.g., purpose, activities)
+                    {t('staff.departments.descriptionHelpCreate')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -134,15 +139,15 @@ export function DepartmentCreateForm({ churchId }: DepartmentCreateFormProps) {
                 {isSubmitting ? (
                   <>
                     <Loader className="mr-2 h-4 w-4 animate-spin" />
-                    Creating...
+                    {t('staff.groups.creating')}
                   </>
                 ) : (
-                  'Create Department'
+                  t('staff.departments.create')
                 )}
               </Button>
               <Link href={`/${churchId}/dashboard/departments`}>
                 <Button type="button" variant="outline">
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Link>
             </div>

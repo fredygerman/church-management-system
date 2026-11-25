@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { unassignMemberFromZone } from "@/actions/zone"
+import { useT } from "@/components/i18n/locale-provider"
 
 interface LeaderReassignmentDialogProps {
   open: boolean
@@ -50,6 +51,7 @@ export function LeaderReassignmentDialog({
 }: LeaderReassignmentDialogProps) {
   const [selectedLeaderId, setSelectedLeaderId] = React.useState("")
   const [isRemoving, setIsRemoving] = React.useState(false)
+  const { t } = useT()
 
   // Filter out the current member and only show non-leaders
   const replacementCandidates = availableMembers.filter(
@@ -58,14 +60,14 @@ export function LeaderReassignmentDialog({
 
   const handleRemoveLeader = async () => {
     if (!selectedLeaderId) {
-      toast.error("Please select a replacement leader")
+      toast.error(t("staff.zones.selectReplacementError"))
       return
     }
 
     setIsRemoving(true)
     try {
       await unassignMemberFromZone(zoneId, memberId, churchId, selectedLeaderId)
-      toast.success("Member removed and new leader assigned")
+      toast.success(t("staff.zones.leaderReplaced"))
       
       setSelectedLeaderId("")
       onOpenChange(false)
@@ -74,7 +76,7 @@ export function LeaderReassignmentDialog({
         onSuccess()
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to remove member")
+      toast.error(error instanceof Error ? error.message : t("staff.groups.removeError"))
     } finally {
       setIsRemoving(false)
     }
@@ -84,26 +86,26 @@ export function LeaderReassignmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Remove Leader from Zone</DialogTitle>
+          <DialogTitle>{t("staff.zones.removeLeaderTitle")}</DialogTitle>
           <DialogDescription>
-            {memberName} is currently a zone leader. Please select a replacement leader before removing them.
+            {t("staff.zones.removeLeaderDescription", { name: memberName })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Current Leader Info */}
           <div className="rounded-lg border p-3 bg-muted/50">
-            <p className="text-sm font-medium text-muted-foreground mb-1">Current Leader</p>
+            <p className="text-sm font-medium text-muted-foreground mb-1">{t("staff.groups.currentLeader")}</p>
             <p className="font-semibold">{memberName}</p>
           </div>
 
           {/* Replacement Leader Selection */}
           {replacementCandidates.length > 0 ? (
             <div className="space-y-2">
-              <Label htmlFor="replacement-leader">Select New Leader</Label>
+              <Label htmlFor="replacement-leader">{t("staff.groups.selectNewLeader")}</Label>
               <Select value={selectedLeaderId} onValueChange={setSelectedLeaderId}>
                 <SelectTrigger id="replacement-leader">
-                  <SelectValue placeholder="Choose a replacement leader..." />
+                  <SelectValue placeholder={t("staff.groups.chooseReplacement")} />
                 </SelectTrigger>
                 <SelectContent>
                   {replacementCandidates.map((member) => (
@@ -117,7 +119,7 @@ export function LeaderReassignmentDialog({
           ) : (
             <div className="rounded-lg border border-destructive bg-destructive/10 p-3">
               <p className="text-sm text-destructive">
-                No other members available to be assigned as leader. Please add more members to the zone first.
+                {t("staff.zones.noReplacement")}
               </p>
             </div>
           )}
@@ -129,7 +131,7 @@ export function LeaderReassignmentDialog({
               onClick={() => onOpenChange(false)}
               disabled={isRemoving}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               variant="destructive"
@@ -139,12 +141,12 @@ export function LeaderReassignmentDialog({
               {isRemoving ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />
-                  Removing...
+                  {t("staff.groups.removing")}
                 </>
               ) : (
                 <>
                   <UserMinus className="mr-2 h-4 w-4" />
-                  Remove Leader
+                  {t("staff.groups.removeLeader")}
                 </>
               )}
             </Button>

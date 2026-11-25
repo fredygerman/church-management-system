@@ -1,5 +1,6 @@
 import { getAttendanceTrends } from '@/actions/attendance'
 import { ATTENDANCE_MEASURES } from '@/lib/report-catalog'
+import { getTranslator } from '@/lib/i18n/server'
 
 // The API groups by department too, but the page offers only these. "Branch" is not offered:
 // the API groups it by zone, so it would be mislabelled.
@@ -35,6 +36,7 @@ function isRedirect(error: unknown): boolean {
 }
 
 export default async function AttendanceAnalyticsPage({ params, searchParams }: PageProps) {
+  const t = await getTranslator()
   const { churchId } = await params
   const query = await searchParams
   const from = query.from || getPastDate(30)
@@ -59,35 +61,35 @@ export default async function AttendanceAnalyticsPage({ params, searchParams }: 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Attendance Trends</h1>
-        <p className="text-sm text-muted-foreground">Check-ins grouped by zone, gender or age band.</p>
+        <h1 className="text-2xl font-semibold">{t('staff.attendance.analytics.title')}</h1>
+        <p className="text-sm text-muted-foreground">{t('staff.attendance.analytics.description')}</p>
       </div>
 
       <form className="grid gap-2 rounded-md border p-4 md:grid-cols-4" method="get">
         <input name="from" type="date" defaultValue={from} className="rounded-md border px-3 py-2 text-sm" />
         <input name="to" type="date" defaultValue={to} className="rounded-md border px-3 py-2 text-sm" />
         <select name="groupBy" defaultValue={groupBy} className="rounded-md border px-3 py-2 text-sm">
-          <option value="zone">Zone</option>
-          <option value="gender">Gender</option>
-          <option value="age_band">Age Band</option>
+          <option value="zone">{t('staff.attendance.analytics.groupBy.zone')}</option>
+          <option value="gender">{t('staff.attendance.analytics.groupBy.gender')}</option>
+          <option value="age_band">{t('staff.attendance.analytics.groupBy.ageBand')}</option>
         </select>
-        <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">Apply</button>
+        <button type="submit" className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground">{t('staff.attendance.analytics.apply')}</button>
       </form>
 
       {unavailable ? (
         <p role="alert" className="rounded-md border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          Attendance trends are unavailable right now. Try again in a moment.
+          {t('staff.attendance.analytics.unavailable')}
         </p>
       ) : (
         <div className="rounded-md border">
           <table className="w-full text-sm">
             <thead className="bg-muted/40">
               <tr>
-                <th className="px-3 py-2 text-left">Group</th>
-                <th className="px-3 py-2 text-left">Total Check-Ins</th>
-                <th className="px-3 py-2 text-left">Unique Members</th>
-                <th className="px-3 py-2 text-left">Sessions</th>
-                <th className="px-3 py-2 text-left">Avg / Session</th>
+                <th className="px-3 py-2 text-left">{t('staff.attendance.analytics.group')}</th>
+                <th className="px-3 py-2 text-left">{t('staff.attendance.analytics.totalCheckins')}</th>
+                <th className="px-3 py-2 text-left">{t('staff.attendance.analytics.uniqueMembers')}</th>
+                <th className="px-3 py-2 text-left">{t('staff.attendance.analytics.sessions')}</th>
+                <th className="px-3 py-2 text-left">{t('staff.attendance.analytics.averagePerSession')}</th>
               </tr>
             </thead>
             <tbody>
@@ -102,7 +104,7 @@ export default async function AttendanceAnalyticsPage({ params, searchParams }: 
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-muted-foreground">No check-ins in the selected range.</td>
+                  <td colSpan={5} className="px-3 py-4 text-muted-foreground">{t('staff.attendance.analytics.empty')}</td>
                 </tr>
               )}
             </tbody>
@@ -113,8 +115,8 @@ export default async function AttendanceAnalyticsPage({ params, searchParams }: 
       <dl className="grid gap-2 text-sm md:grid-cols-2">
         {ATTENDANCE_MEASURES.map((measure) => (
           <div key={measure.label}>
-            <dt className="font-medium">{measure.label}</dt>
-            <dd className="text-muted-foreground">{measure.definition}</dd>
+            <dt className="font-medium">{t(measure.labelKey)}</dt>
+            <dd className="text-muted-foreground">{t(measure.definitionKey)}</dd>
           </div>
         ))}
       </dl>

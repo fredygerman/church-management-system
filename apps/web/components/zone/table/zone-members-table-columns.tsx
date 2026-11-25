@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { members } from "@church/db"
+import type { Translate } from "@church/config"
 
 type Handlers = {
   onAssignLeader?: (memberId: string) => Promise<void>
@@ -21,13 +22,14 @@ type Handlers = {
 
 export function getZoneMembersColumns(
   churchId: string,
+  t: Translate,
   handlers?: Handlers
 ): ColumnDef<typeof members.$inferSelect>[] {
   return [
     {
       accessorKey: "firstName",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="First Name" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.firstName")} />
       ),
       cell: ({ row }) => {
         const isLeader = (row.original as any).isLeader
@@ -36,7 +38,7 @@ export function getZoneMembersColumns(
             <div>{row.original.firstName}</div>
             {isLeader && (
               <div className="inline-flex items-center rounded bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-800">
-                <Star className="mr-1 h-3 w-3" /> Leader
+                <Star className="mr-1 h-3 w-3" /> {t("staff.groups.leaderLabel")}
               </div>
             )}
           </div>
@@ -47,10 +49,10 @@ export function getZoneMembersColumns(
     {
       accessorKey: "lastName",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Last Name" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.lastName")} />
       ),
       cell: ({ row }) => (
-        <Link 
+        <Link
           href={`/${churchId}/dashboard/members/${row.original.id}`}
           className="text-blue-600 hover:underline font-semibold"
         >
@@ -62,7 +64,7 @@ export function getZoneMembersColumns(
     {
       accessorKey: "phone",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Phone" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.phone")} />
       ),
       cell: ({ row }) => <div>{row.original.phone || "-"}</div>,
       enableSorting: true,
@@ -70,7 +72,7 @@ export function getZoneMembersColumns(
     {
       accessorKey: "gender",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Gender" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.gender")} />
       ),
       cell: ({ row }) => <div className="capitalize">{row.original.gender}</div>,
       enableSorting: true,
@@ -78,19 +80,19 @@ export function getZoneMembersColumns(
     {
       accessorKey: "occupation",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Occupation" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.occupation")} />
       ),
       cell: ({ row }) => <div>{row.original.occupation || "-"}</div>,
       enableSorting: true,
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("staff.groups.actions"),
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">{t("staff.groups.openMenu")}</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -98,7 +100,7 @@ export function getZoneMembersColumns(
             <DropdownMenuItem asChild>
               <Link href={`/${churchId}/dashboard/members/${row.original.id}`} className="flex items-center gap-2 cursor-pointer">
                 <Eye className="h-4 w-4" />
-                View
+                {t("staff.groups.view")}
               </Link>
             </DropdownMenuItem>
 
@@ -108,7 +110,7 @@ export function getZoneMembersColumns(
                 className="flex items-center gap-2 cursor-pointer"
               >
                 <Star className="h-4 w-4" />
-                Set as Leader
+                {t("staff.groups.setLeader")}
               </DropdownMenuItem>
             )}
 
@@ -118,7 +120,7 @@ export function getZoneMembersColumns(
                 className="flex items-center gap-2 cursor-pointer text-destructive"
               >
                 <UserMinus className="h-4 w-4" />
-                Remove from Zone
+                {t("staff.zones.removeFromZone")}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>

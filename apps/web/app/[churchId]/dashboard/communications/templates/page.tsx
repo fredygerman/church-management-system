@@ -1,10 +1,12 @@
 import { revalidatePath } from 'next/cache'
 import { createTemplate, getTemplates } from '@/actions/communications'
+import { getTranslator } from '@/lib/i18n/server'
 
 interface PageProps { params: Promise<{ churchId: string }> }
 
 export default async function CommunicationTemplatesPage({ params }: PageProps) {
   const { churchId } = await params
+  const t = await getTranslator()
   const templates = await getTemplates(churchId).catch(() => []) as any[]
 
   async function createAction(formData: FormData) {
@@ -18,34 +20,38 @@ export default async function CommunicationTemplatesPage({ params }: PageProps) 
     revalidatePath(`/${churchId}/dashboard/communications/templates`)
   }
 
+  // The example variable contains braces, so it is passed as a value and split out to render as <code>.
+  const sample = '{{first_name}}'
+  const [descriptionBefore, descriptionAfter] = t('staff.communications.templates.description', { example: sample }).split(sample)
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Message Templates</h1>
-        <p className="text-sm text-muted-foreground">Create reusable templates with variables like <code>{'{{first_name}}'}</code>.</p>
+        <h1 className="text-2xl font-semibold">{t('staff.communications.templates.title')}</h1>
+        <p className="text-sm text-muted-foreground">{descriptionBefore}<code>{sample}</code>{descriptionAfter}</p>
       </div>
 
       <form action={createAction} className="grid gap-2 rounded-md border p-4">
         <div className="grid gap-2 md:grid-cols-3">
-          <input name="name" placeholder="Template name" className="rounded-md border px-3 py-2 text-sm" required />
+          <input name="name" placeholder={t('staff.communications.templates.name')} className="rounded-md border px-3 py-2 text-sm" required />
           <select name="channel" className="rounded-md border px-3 py-2 text-sm" required>
             <option value="sms">SMS</option>
-            <option value="email">Email</option>
+            <option value="email">{t('staff.communications.channel.email')}</option>
           </select>
-          <input name="subject" placeholder="Subject (required for email)" className="rounded-md border px-3 py-2 text-sm" />
+          <input name="subject" placeholder={t('staff.communications.templates.subject')} className="rounded-md border px-3 py-2 text-sm" />
         </div>
-        <textarea name="body" placeholder="Message body" className="min-h-28 rounded-md border px-3 py-2 text-sm" required />
-        <button className="w-fit rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground" type="submit">Create Template</button>
+        <textarea name="body" placeholder={t('staff.communications.templates.body')} className="min-h-28 rounded-md border px-3 py-2 text-sm" required />
+        <button className="w-fit rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground" type="submit">{t('staff.communications.templates.create')}</button>
       </form>
 
       <div className="rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
-              <th className="px-3 py-2 text-left">Name</th>
-              <th className="px-3 py-2 text-left">Channel</th>
-              <th className="px-3 py-2 text-left">Active</th>
-              <th className="px-3 py-2 text-left">Variables</th>
+              <th className="px-3 py-2 text-left">{t('staff.communications.table.name')}</th>
+              <th className="px-3 py-2 text-left">{t('staff.communications.table.channel')}</th>
+              <th className="px-3 py-2 text-left">{t('staff.communications.table.active')}</th>
+              <th className="px-3 py-2 text-left">{t('staff.communications.table.variables')}</th>
             </tr>
           </thead>
           <tbody>
@@ -53,12 +59,12 @@ export default async function CommunicationTemplatesPage({ params }: PageProps) 
               <tr key={template.id} className="border-t">
                 <td className="px-3 py-2">{template.name}</td>
                 <td className="px-3 py-2 uppercase">{template.channel}</td>
-                <td className="px-3 py-2">{template.isActive ? 'Yes' : 'No'}</td>
+                <td className="px-3 py-2">{template.isActive ? t('staff.common.yes') : t('staff.common.no')}</td>
                 <td className="px-3 py-2">{template.variables}</td>
               </tr>
             ))}
             {templates.length === 0 && (
-              <tr><td colSpan={4} className="px-3 py-4 text-muted-foreground">No templates yet.</td></tr>
+              <tr><td colSpan={4} className="px-3 py-4 text-muted-foreground">{t('staff.communications.templates.empty')}</td></tr>
             )}
           </tbody>
         </table>

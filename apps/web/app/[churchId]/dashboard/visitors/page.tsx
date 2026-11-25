@@ -2,6 +2,7 @@ import React from "react"
 import Link from "next/link"
 import { getVisitors } from "@/actions/visitor"
 import { checkPermission, ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
 
 import { Button } from "@/components/ui/button"
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
@@ -17,6 +18,7 @@ interface PageProps {
 export default async function VisitorsPage(props: PageProps) {
   await ensurePermission('view:visitors')
   const { churchId } = await props.params
+  const t = await getTranslator()
   const visitorPromise = getVisitors(churchId)
   const canCreateVisitor = await checkPermission('create:visitor')
   const canConvertVisitor = await checkPermission('convert:visitor')
@@ -25,15 +27,15 @@ export default async function VisitorsPage(props: PageProps) {
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Visitors</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t('staff.visitors.title')}</h2>
           <p className="text-muted-foreground">
-            Manage and track visitor information and follow-ups.
+            {t('staff.visitors.description')}
           </p>
         </div>
         {canCreateVisitor && (
           <div className="flex items-center gap-4">
             <Link href={`/${churchId}/dashboard/visitors/add`}>
-              <Button>Add Visitor</Button>
+              <Button>{t('staff.visitors.add')}</Button>
             </Link>
           </div>
         )}

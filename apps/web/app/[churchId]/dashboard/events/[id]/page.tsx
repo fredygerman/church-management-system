@@ -1,5 +1,7 @@
 import Link from "next/link"
 import { ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
+import type { Translate } from "@church/config"
 import { getEventById, getEventRsvps } from "@/actions/event"
 
 import { Button } from "@/components/ui/button"
@@ -29,9 +31,22 @@ const statusBadgeVariant: Record<string, "default" | "secondary" | "destructive"
   cancelled: "destructive",
 }
 
+function eventStatusLabel(t: Translate, status: string): string {
+  if (status === "draft") return t("staff.events.status.draft")
+  if (status === "published") return t("staff.events.status.published")
+  if (status === "cancelled") return t("staff.events.status.cancelled")
+  return status
+}
+
 export default async function EventDetailPage({ params }: PageProps) {
   await ensurePermission("manage:events")
+  const t = await getTranslator()
   const { churchId, id } = await params
+  const rsvpLabel = {
+    going: t("component.rsvp.going"),
+    maybe: t("component.rsvp.maybe"),
+    declined: t("component.rsvp.declined"),
+  }
 
   const [event, roster] = await Promise.all([
     getEventById(churchId, id),
@@ -59,9 +74,9 @@ export default async function EventDetailPage({ params }: PageProps) {
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-bold tracking-tight">{event.title}</h2>
             <Badge variant={statusBadgeVariant[event.status] || "secondary"} className="capitalize">
-              {event.status}
+              {eventStatusLabel(t, event.status)}
             </Badge>
-            {event.scope === "network" && <Badge variant="outline">Network</Badge>}
+            {event.scope === "network" && <Badge variant="outline">{t("staff.events.detail.networkBadge")}</Badge>}
           </div>
           <p className="text-muted-foreground mt-1">
             {formatDateTime(event.startsAt)}
@@ -70,7 +85,7 @@ export default async function EventDetailPage({ params }: PageProps) {
           </p>
         </div>
         <Link href={`/${churchId}/dashboard/events/${id}/edit`}>
-          <Button variant="outline">Edit Event</Button>
+          <Button variant="outline">{t("staff.events.edit")}</Button>
         </Link>
       </div>
       <Separator />
@@ -78,7 +93,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       {event.description && (
         <Card>
           <CardHeader>
-            <CardTitle>Description</CardTitle>
+            <CardTitle>{t("staff.events.detail.description")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">{event.description}</p>
@@ -89,7 +104,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Going</CardTitle>
+            <CardTitle className="text-sm font-medium">{rsvpLabel.going}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{counts.going ?? byStatus.going.length}</div>
@@ -97,7 +112,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Maybe</CardTitle>
+            <CardTitle className="text-sm font-medium">{rsvpLabel.maybe}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{counts.maybe ?? byStatus.maybe.length}</div>
@@ -105,7 +120,7 @@ export default async function EventDetailPage({ params }: PageProps) {
         </Card>
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Declined</CardTitle>
+            <CardTitle className="text-sm font-medium">{rsvpLabel.declined}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{counts.declined ?? byStatus.declined.length}</div>
@@ -116,7 +131,7 @@ export default async function EventDetailPage({ params }: PageProps) {
       {event.scope === "network" && byChurch.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>RSVPs by Branch</CardTitle>
+            <CardTitle>{t("staff.events.detail.rsvpsByBranch")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
@@ -136,14 +151,14 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>RSVP Roster</CardTitle>
+          <CardTitle>{t("staff.events.detail.rsvpRoster")}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {(["going", "maybe", "declined"] as const).map((status) => (
             <div key={status}>
-              <h4 className="mb-1 text-sm font-medium capitalize">{status}</h4>
+              <h4 className="mb-1 text-sm font-medium capitalize">{rsvpLabel[status]}</h4>
               {byStatus[status].length === 0 ? (
-                <p className="text-sm text-muted-foreground">No one yet.</p>
+                <p className="text-sm text-muted-foreground">{t("staff.events.detail.noOne")}</p>
               ) : (
                 <ul className="space-y-1">
                   {byStatus[status].map((row) => (
@@ -160,7 +175,7 @@ export default async function EventDetailPage({ params }: PageProps) {
 
       <Card>
         <CardHeader>
-          <CardTitle>Mark Attendance</CardTitle>
+          <CardTitle>{t("staff.events.detail.markAttendance")}</CardTitle>
         </CardHeader>
         <CardContent>
           <AttendanceForm

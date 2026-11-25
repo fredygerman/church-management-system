@@ -6,6 +6,7 @@ import { type getZones } from "@/actions/zone"
 import { useDataTable } from "@/hooks/use-data-table"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import { useT } from "@/components/i18n/locale-provider"
 
 import { getColumns } from "./zone-table-columns"
 import { ZoneTableToolbarActions } from "./zone-table-toolbar-actions"
@@ -17,7 +18,8 @@ interface ZoneTableProps {
 
 export function ZoneTable({ zonePromise, churchId }: ZoneTableProps) {
   const zones = React.use(zonePromise)
-  const columns = React.useMemo(() => getColumns(churchId), [churchId])
+  const { t } = useT()
+  const columns = React.useMemo(() => getColumns(churchId, t), [churchId, t])
 
   const { table } = useDataTable({
     data: zones,

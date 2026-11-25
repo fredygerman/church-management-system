@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createDepartment, updateDepartment } from "@/actions/department"
 import { toast } from "sonner"
@@ -21,14 +21,19 @@ import {
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import type { Translate } from "@church/config"
+import { useT } from "@/components/i18n/locale-provider"
 
-const departmentFormSchema = z.object({
-  name: z.string().min(2, "Department name must be at least 2 characters"),
-  description: z.string().optional(),
-  meetingDay: z.string().optional(),
-})
+// Validation messages are translated, so the schema is built per locale.
+function buildDepartmentFormSchema(t: Translate) {
+  return z.object({
+    name: z.string().min(2, t("sweep.a.department.nameMin")),
+    description: z.string().optional(),
+    meetingDay: z.string().optional(),
+  })
+}
 
-type DepartmentFormData = z.infer<typeof departmentFormSchema>
+type DepartmentFormData = z.infer<ReturnType<typeof buildDepartmentFormSchema>>
 
 interface DepartmentFormProps {
   churchId: string
@@ -37,6 +42,8 @@ interface DepartmentFormProps {
 }
 
 export function DepartmentForm({ churchId, initialData, isEditMode = false }: DepartmentFormProps) {
+  const { t } = useT()
+  const departmentFormSchema = useMemo(() => buildDepartmentFormSchema(t), [t])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
@@ -54,18 +61,18 @@ export function DepartmentForm({ churchId, initialData, isEditMode = false }: De
     try {
       if (isEditMode && initialData?.id) {
         await updateDepartment(initialData.id, data, churchId)
-        toast.success("Department updated successfully!")
+        toast.success(t("sweep.a.department.updated"))
         router.push(`/${churchId}/dashboard/departments/${initialData.id}`)
       } else {
         const newDepartment = await createDepartment({
           churchId,
           ...data,
         })
-        toast.success("Department created successfully!")
+        toast.success(t("sweep.a.department.created"))
         router.push(`/${churchId}/dashboard/departments/${newDepartment.id}`)
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An error occurred")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.form.genericError"))
     } finally {
       setIsSubmitting(false)
     }
@@ -80,9 +87,9 @@ export function DepartmentForm({ churchId, initialData, isEditMode = false }: De
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Department Name</FormLabel>
+                <FormLabel>{t("sweep.a.department.nameLabel")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter department name" {...field} />
+                  <Input placeholder={t("sweep.a.department.namePlaceholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -94,12 +101,12 @@ export function DepartmentForm({ churchId, initialData, isEditMode = false }: De
             name="meetingDay"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Meeting Day</FormLabel>
+                <FormLabel>{t("sweep.a.form.meetingDay")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Monday, Wednesday" {...field} />
+                  <Input placeholder={t("sweep.a.form.meetingDayPlaceholder")} {...field} />
                 </FormControl>
                 <FormDescription>
-                  The day this department meets
+                  {t("sweep.a.department.meetingDayHelp")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -111,16 +118,16 @@ export function DepartmentForm({ churchId, initialData, isEditMode = false }: De
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t("sweep.a.form.description")}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Enter department description"
+                    placeholder={t("sweep.a.department.descriptionPlaceholder")}
                     className="min-h-32"
                     {...field}
                   />
                 </FormControl>
                 <FormDescription>
-                  Optional description for the department
+                  {t("sweep.a.department.descriptionHelp")}
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -134,10 +141,10 @@ export function DepartmentForm({ churchId, initialData, isEditMode = false }: De
               className="flex-1"
             >
               {isSubmitting
-                ? "Saving..."
+                ? t("sweep.a.form.saving")
                 : isEditMode
-                ? "Update Department"
-                : "Create Department"}
+                ? t("sweep.a.department.update")
+                : t("sweep.a.department.create")}
             </Button>
             <Button
               type="button"
@@ -145,7 +152,7 @@ export function DepartmentForm({ churchId, initialData, isEditMode = false }: De
               onClick={() => router.back()}
               className="flex-1"
             >
-              Cancel
+              {t("sweep.a.form.cancel")}
             </Button>
           </div>
         </form>

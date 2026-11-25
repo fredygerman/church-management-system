@@ -1,6 +1,7 @@
 import React from "react"
 import Link from "next/link"
 import { getZones } from "@/actions/zone"
+import { getTranslator } from "@/lib/i18n/server"
 
 import { Button } from "@/components/ui/button"
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
@@ -17,19 +18,20 @@ interface PageProps {
 export default async function ZonesPage({ params }: PageProps) {
   const { churchId } = await params
   const zonePromise = getZones(churchId)
+  const t = await getTranslator()
 
   return (
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Zones</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("staff.zones.title")}</h2>
           <p className="text-muted-foreground">
-            Manage and monitor your church zones.
+            {t("staff.zones.description")}
           </p>
         </div>
         <div className="flex items-center gap-4">
           <Link href={`/${churchId}/dashboard/zones/add`}>
-            <Button>Add Zone</Button>
+            <Button>{t("staff.zones.add")}</Button>
           </Link>
         </div>
       </div>

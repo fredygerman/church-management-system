@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Edit2, Phone, MapPin } from 'lucide-react'
 import { getMemberById, getMemberZones } from '@/actions/member'
 import { getChurchById } from '@/actions/church'
+import { getTranslator } from '@/lib/i18n/server'
 import type { Member } from '@church/db'
 
 interface MemberDetailPageProps {
@@ -15,6 +16,7 @@ interface MemberDetailPageProps {
 
 export default async function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { churchId, memberId } = await params
+  const t = await getTranslator()
   let member: Member | null = null
   let church: any = null
   let zones: any[] = []
@@ -27,7 +29,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
       zones = await getMemberZones(churchId, memberId)
     }
   } catch (err) {
-    error = err instanceof Error ? err.message : 'Failed to load member'
+    error = err instanceof Error ? err.message : t('staff.members.detail.loadError')
   }
 
   if (error) {
@@ -37,7 +39,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           <Link href={`/${churchId}/dashboard/members`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Members
+              {t('staff.members.detail.backToList')}
             </Button>
           </Link>
         </div>
@@ -55,12 +57,12 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           <Link href={`/${churchId}/dashboard/members`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Members
+              {t('staff.members.detail.backToList')}
             </Button>
           </Link>
         </div>
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-          <p className="text-yellow-700">Member not found</p>
+          <p className="text-yellow-700">{t('staff.members.detail.notFound')}</p>
         </div>
       </div>
     )
@@ -96,21 +98,21 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           <Link href={`/${churchId}/dashboard/members`}>
             <Button variant="outline" size="sm">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back
+              {t('staff.members.detail.back')}
             </Button>
           </Link>
           <div>
             <h1 className="text-3xl font-bold">
               {member.firstName} {member.lastName}
             </h1>
-            <p className="text-gray-600">Member Details</p>
+            <p className="text-gray-600">{t('staff.members.detail.title')}</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Link href={`/${churchId}/dashboard/members/${memberId}/edit`}>
             <Button variant="outline" size="sm">
               <Edit2 className="mr-2 h-4 w-4" />
-              Edit
+              {t('staff.members.detail.edit')}
             </Button>
           </Link>
         </div>
@@ -122,36 +124,36 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           {/* Personal Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Personal Information</CardTitle>
+              <CardTitle>{t('staff.members.detail.personal')}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 sm:grid-cols-2">
               <div>
-                <p className="text-sm font-medium text-gray-600">First Name</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.form.firstName')}</p>
                 <p className="mt-1 text-lg font-semibold">{member.firstName}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Last Name</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.form.lastName')}</p>
                 <p className="mt-1 text-lg font-semibold">{member.lastName}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Gender</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.form.gender')}</p>
                 <p className="mt-1 text-lg font-semibold capitalize">{capitalizeText(member.gender)}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Date of Birth</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.form.dateOfBirth')}</p>
                 <p className="mt-1 text-lg font-semibold">
                   {formatDate(member.dateOfBirth)}
                 </p>
                 {age !== null && (
-                  <p className="mt-1 text-sm text-gray-600">Age: {age} years</p>
+                  <p className="mt-1 text-sm text-gray-600">{t('staff.members.detail.ageLine', { age })}</p>
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Marital Status</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.form.maritalStatus')}</p>
                 <p className="mt-1 text-lg font-semibold capitalize">{capitalizeText(member.maritalStatus)}</p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Occupation</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.form.occupation')}</p>
                 <p className="mt-1 text-lg font-semibold">{member.occupation || '-'}</p>
               </div>
             </CardContent>
@@ -160,11 +162,11 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           {/* Contact Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Contact Information</CardTitle>
+              <CardTitle>{t('staff.form.contactInformation')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <p className="text-sm font-medium text-gray-600">Phone</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.form.phone')}</p>
                 {member.phone ? (
                   <div className="mt-1 flex items-center gap-2">
                     <Phone className="h-4 w-4 text-gray-600" />
@@ -182,11 +184,11 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           {/* Church Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Church Information</CardTitle>
+              <CardTitle>{t('staff.members.detail.church')}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-6 sm:grid-cols-2">
               <div>
-                <p className="text-sm font-medium text-gray-600">Church</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.members.detail.churchLabel')}</p>
                 {church ? (
                   <div className="mt-1">
                     <p className="text-lg font-semibold">{church.name}</p>
@@ -200,25 +202,25 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
                 )}
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Date of Salvation</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.members.detail.dateOfSalvation')}</p>
                 <p className="mt-1 text-lg font-semibold">
                   {formatDate(member.dateOfSalvation)}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Baptism Status</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.members.detail.baptismStatus')}</p>
                 <p className="mt-1 text-lg font-semibold capitalize">
                   {member.baptismStatus ? capitalizeText(member.baptismStatus.replace(/_/g, ' ')) : '-'}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Member Since</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.members.detail.memberSince')}</p>
                 <p className="mt-1 text-lg font-semibold">
                   {formatDate(member.createdAt)}
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-600">Last Updated</p>
+                <p className="text-sm font-medium text-gray-600">{t('staff.members.detail.lastUpdated')}</p>
                 <p className="mt-1 text-lg font-semibold">
                   {formatDate(member.updatedAt)}
                 </p>
@@ -229,7 +231,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           {/* Zones */}
           <Card>
             <CardHeader>
-              <CardTitle>Zones</CardTitle>
+              <CardTitle>{t('staff.members.detail.zones')}</CardTitle>
             </CardHeader>
             <CardContent>
               {zones && zones.length > 0 ? (
@@ -240,7 +242,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
                         <p className="font-semibold">{zone.name}</p>
                         {zone.isLeader && (
                           <p className="inline-flex items-center rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700 mt-1">
-                            Zone Leader
+                            {t('staff.members.detail.zoneLeader')}
                           </p>
                         )}
                       </div>
@@ -248,7 +250,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-600">Not assigned to any zones</p>
+                <p className="text-gray-600">{t('staff.members.detail.noZones')}</p>
               )}
             </CardContent>
           </Card>
@@ -257,7 +259,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           {member.notes && (
             <Card>
               <CardHeader>
-                <CardTitle>Notes</CardTitle>
+                <CardTitle>{t('staff.members.detail.notes')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="whitespace-pre-wrap text-base leading-relaxed text-gray-700">
@@ -272,7 +274,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Member ID</CardTitle>
+              <CardTitle className="text-base">{t('staff.members.detail.memberId')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="font-mono text-xs text-gray-600 break-all">{member.id}</p>
@@ -282,7 +284,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           {member.familyId && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Family ID</CardTitle>
+                <CardTitle className="text-base">{t('staff.members.detail.familyId')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="font-mono text-xs text-gray-600 break-all">{member.familyId}</p>
@@ -292,16 +294,16 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Status</CardTitle>
+              <CardTitle className="text-base">{t('staff.form.status')}</CardTitle>
             </CardHeader>
             <CardContent>
               {member.deletedAt ? (
                 <p className="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700">
-                  Inactive
+                  {t('staff.members.detail.inactive')}
                 </p>
               ) : (
                 <p className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700">
-                  Active
+                  {t('staff.members.detail.active')}
                 </p>
               )}
             </CardContent>
@@ -309,11 +311,11 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
 
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">Age</CardTitle>
+              <CardTitle className="text-base">{t('staff.members.detail.ageCard')}</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-bold">
-                {age !== null ? `${age} years` : '-'}
+                {age !== null ? t('staff.members.detail.ageValue', { age }) : '-'}
               </p>
             </CardContent>
           </Card>

@@ -2,6 +2,7 @@ import React from "react"
 import Link from "next/link"
 import { getOfferingCategories } from "@/actions/offering"
 import { ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
@@ -26,13 +27,12 @@ async function CategoriesTable({
   categoriesPromise: ReturnType<typeof getOfferingCategories>
   churchId: string
 }) {
+  const t = await getTranslator()
   const categories = await categoriesPromise
 
   if (categories.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No offering categories yet. Create one to start recording offerings.
-      </p>
+      <p className="text-sm text-muted-foreground">{t("staff.giving.categories.empty")}</p>
     )
   }
 
@@ -40,9 +40,9 @@ async function CategoriesTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Description</TableHead>
-          <TableHead className="w-24 text-right">Actions</TableHead>
+          <TableHead>{t("staff.common.name")}</TableHead>
+          <TableHead>{t("staff.giving.description")}</TableHead>
+          <TableHead className="w-24 text-right">{t("staff.giving.actions")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -55,7 +55,7 @@ async function CategoriesTable({
                 href={`/${churchId}/dashboard/offerings/categories/${category.id}/edit`}
                 className="text-blue-600 hover:underline"
               >
-                Edit
+                {t("staff.giving.edit")}
               </Link>
             </TableCell>
           </TableRow>
@@ -67,6 +67,7 @@ async function CategoriesTable({
 
 export default async function OfferingCategoriesPage({ params }: PageProps) {
   await ensurePermission("manage:offerings")
+  const t = await getTranslator()
   const { churchId } = await params
   const categoriesPromise = getOfferingCategories(churchId)
 
@@ -74,15 +75,15 @@ export default async function OfferingCategoriesPage({ params }: PageProps) {
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Offering Categories</h2>
-          <p className="text-muted-foreground">Manage the giving categories your church uses.</p>
+          <h2 className="text-2xl font-bold tracking-tight">{t("staff.giving.categories.title")}</h2>
+          <p className="text-muted-foreground">{t("staff.giving.categories.description")}</p>
         </div>
         <div className="flex items-center gap-4">
           <Link href={`/${churchId}/dashboard/offerings`}>
-            <Button variant="outline">Back to Offerings</Button>
+            <Button variant="outline">{t("staff.giving.backToOfferings")}</Button>
           </Link>
           <Link href={`/${churchId}/dashboard/offerings/categories/add`}>
-            <Button>Add Category</Button>
+            <Button>{t("staff.giving.categories.add")}</Button>
           </Link>
         </div>
       </div>

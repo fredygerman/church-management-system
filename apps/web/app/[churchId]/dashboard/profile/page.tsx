@@ -11,12 +11,14 @@ import {
   PERMISSION_METADATA,
   type PermissionAction 
 } from "@church/config"
+import { getTranslator } from "@/lib/i18n/server"
 
 export default async function ProfilePage({
   params,
 }: {
   params: Promise<{ churchId: string }>
 }) {
+  const t = await getTranslator()
   const { churchId } = await params
   const session = await getSession()
 
@@ -39,29 +41,36 @@ export default async function ProfilePage({
   }, {} as Record<string, Array<{ permission: PermissionAction; metadata: typeof PERMISSION_METADATA[PermissionAction] }>>)
 
   const categoryLabels: Record<string, string> = {
-    member: "Members",
-    visitor: "Visitors",
-    zone: "Zones",
-    family: "Families",
-    visitation: "Visitation",
-    admin: "Administration",
+    member: t("staff.profile.category.member"),
+    visitor: t("staff.profile.category.visitor"),
+    zone: t("staff.profile.category.zone"),
+    family: t("staff.profile.category.family"),
+    visitation: t("staff.profile.category.visitation"),
+    admin: t("staff.profile.category.admin"),
+    attendance: t("sweep.b.permission.category.attendance"),
+  }
+
+  const riskLabels: Record<string, string> = {
+    high: t("staff.profile.risk.high"),
+    medium: t("staff.profile.risk.medium"),
+    low: t("staff.profile.risk.low"),
   }
 
   const roleLabels: Record<UserRole, string> = {
-    [UserRole.SUPER_ADMIN]: "Super Administrator",
-    [UserRole.ADMIN]: "Administrator",
-    [UserRole.BRANCH_ADMIN]: "Branch Administrator",
-    [UserRole.ZONE_LEADER]: "Zone Leader",
-    [UserRole.DEPARTMENT_LEADER]: "Department Leader",
-    [UserRole.MEMBER]: "Member",
+    [UserRole.SUPER_ADMIN]: t("staff.profile.roleName.superAdmin"),
+    [UserRole.ADMIN]: t("staff.profile.roleName.admin"),
+    [UserRole.BRANCH_ADMIN]: t("staff.profile.roleName.branchAdmin"),
+    [UserRole.ZONE_LEADER]: t("staff.profile.roleName.zoneLeader"),
+    [UserRole.DEPARTMENT_LEADER]: t("staff.profile.roleName.departmentLeader"),
+    [UserRole.MEMBER]: t("staff.profile.roleName.member"),
   }
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t("staff.profile.title")}</h1>
         <p className="text-muted-foreground">
-          View your account information and permissions
+          {t("staff.profile.description")}
         </p>
       </div>
 
@@ -69,15 +78,15 @@ export default async function ProfilePage({
         {/* Profile Card */}
         <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle>Account Details</CardTitle>
-            <CardDescription>Your personal information</CardDescription>
+            <CardTitle>{t("staff.profile.accountTitle")}</CardTitle>
+            <CardDescription>{t("staff.profile.accountDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col items-center space-y-4">
               <Avatar className="size-24">
-                <AvatarImage src={user.image || undefined} alt={user.name || "User"} />
+                <AvatarImage src={user.image || undefined} alt={user.name || t("staff.profile.userAlt")} />
                 <AvatarFallback className="text-2xl">
-                  {user.name?.charAt(0) || "U"}
+                  {user.name?.charAt(0) || t("staff.profile.userInitial")}
                 </AvatarFallback>
               </Avatar>
               <div className="text-center space-y-1">
@@ -94,7 +103,7 @@ export default async function ProfilePage({
               <div className="flex items-center gap-3">
                 <Mail className="size-4 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">Email</p>
+                  <p className="text-sm font-medium">{t("staff.profile.email")}</p>
                   <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
               </div>
@@ -102,7 +111,7 @@ export default async function ProfilePage({
               <div className="flex items-center gap-3">
                 <Shield className="size-4 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">Role</p>
+                  <p className="text-sm font-medium">{t("staff.profile.roleLabel")}</p>
                   <p className="text-sm text-muted-foreground">{roleLabels[userRole]}</p>
                 </div>
               </div>
@@ -110,7 +119,7 @@ export default async function ProfilePage({
               <div className="flex items-center gap-3">
                 <User className="size-4 text-muted-foreground" />
                 <div>
-                  <p className="text-sm font-medium">User ID</p>
+                  <p className="text-sm font-medium">{t("staff.profile.userId")}</p>
                   <p className="text-sm text-muted-foreground font-mono truncate">
                     {user.id?.slice(0, 8)}...
                   </p>
@@ -123,9 +132,9 @@ export default async function ProfilePage({
         {/* Permissions Card */}
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>My Permissions</CardTitle>
+            <CardTitle>{t("staff.profile.permissionsTitle")}</CardTitle>
             <CardDescription>
-              Actions you are authorized to perform ({userPermissions.length} total)
+              {t("staff.profile.permissionsDescription", { count: userPermissions.length })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -147,10 +156,10 @@ export default async function ProfilePage({
                       >
                         <div className="flex-1 space-y-1">
                           <p className="text-sm font-medium leading-none">
-                            {metadata.label}
+                            {t(metadata.labelKey)}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            {metadata.description}
+                            {t(metadata.descriptionKey)}
                           </p>
                         </div>
                         <Badge
@@ -163,7 +172,7 @@ export default async function ProfilePage({
                           }
                           className="text-xs"
                         >
-                          {metadata.riskLevel}
+                          {riskLabels[metadata.riskLevel] ?? metadata.riskLevel}
                         </Badge>
                       </div>
                     ))}

@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
+import { useT } from "@/components/i18n/locale-provider"
 
 interface AddMemberDialogProps {
   departmentId: string
@@ -41,6 +42,7 @@ export function AddMemberDialog({
   onSuccess,
 }: AddMemberDialogProps) {
   const router = useRouter()
+  const { t } = useT()
   const [searchQuery, setSearchQuery] = React.useState("")
   const [members, setMembers] = React.useState<any[]>([])
   const [selectedMemberId, setSelectedMemberId] = React.useState("")
@@ -58,7 +60,7 @@ export function AddMemberDialog({
             setMembers(results)
           } catch (error) {
             console.error("Error searching members:", error)
-            toast.error("Failed to search members")
+            toast.error(t("staff.groups.searchError"))
             setMembers([])
           } finally {
             setIsSearching(false)
@@ -74,14 +76,14 @@ export function AddMemberDialog({
 
   const handleAssign = async () => {
     if (!selectedMemberId) {
-      toast.error("Please select a member")
+      toast.error(t("staff.groups.selectMemberError"))
       return
     }
 
     setIsAssigning(true)
     try {
       await assignMemberToDepartment(departmentId, selectedMemberId, false, churchId)
-      toast.success("Member added to department")
+      toast.success(t("staff.departments.memberAdded"))
 
       // Reset form
       setSearchQuery("")
@@ -94,7 +96,7 @@ export function AddMemberDialog({
         onSuccess()
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to add member")
+      toast.error(error instanceof Error ? error.message : t("staff.groups.addError"))
     } finally {
       setIsAssigning(false)
     }
@@ -106,20 +108,20 @@ export function AddMemberDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Member to Department</DialogTitle>
+          <DialogTitle>{t("staff.departments.addMemberTitle")}</DialogTitle>
           <DialogDescription>
-            Search for and add an existing member to this department
+            {t("staff.departments.addMemberDescription")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* Search Input */}
           <div className="space-y-2">
-            <Label htmlFor="search">Search Members</Label>
+            <Label htmlFor="search">{t("staff.groups.searchMembers")}</Label>
             <div className="relative">
               <Input
                 id="search"
-                placeholder="Search by name or phone..."
+                placeholder={t("staff.groups.searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pr-8"
@@ -133,10 +135,10 @@ export function AddMemberDialog({
           {/* Search Results */}
           {members.length > 0 && (
             <div className="space-y-2">
-              <Label htmlFor="member-select">Select Member</Label>
+              <Label htmlFor="member-select">{t("staff.groups.selectMember")}</Label>
               <Select value={selectedMemberId} onValueChange={setSelectedMemberId}>
                 <SelectTrigger id="member-select">
-                  <SelectValue placeholder="Choose a member..." />
+                  <SelectValue placeholder={t("staff.groups.chooseMember")} />
                 </SelectTrigger>
                 <SelectContent>
                   {members.map((member) => (
@@ -146,7 +148,7 @@ export function AddMemberDialog({
                           {member.firstName} {member.lastName}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {member.phone || "No phone"}
+                          {member.phone || t("staff.groups.noPhone")}
                         </span>
                       </div>
                     </SelectItem>
@@ -195,7 +197,7 @@ export function AddMemberDialog({
               onClick={() => onOpenChange(false)}
               disabled={isAssigning}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleAssign}
@@ -204,12 +206,12 @@ export function AddMemberDialog({
               {isAssigning ? (
                 <>
                   <Loader className="mr-2 h-4 w-4 animate-spin" />
-                  Adding...
+                  {t("staff.groups.adding")}
                 </>
               ) : (
                 <>
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Member
+                  {t("staff.groups.addMember")}
                 </>
               )}
             </Button>

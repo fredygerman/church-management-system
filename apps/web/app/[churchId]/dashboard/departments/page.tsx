@@ -1,6 +1,7 @@
 import React from "react"
 import Link from "next/link"
 import { getDepartments } from "@/actions/department"
+import { getTranslator } from "@/lib/i18n/server"
 
 import { Button } from "@/components/ui/button"
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
@@ -17,19 +18,20 @@ interface PageProps {
 export default async function DepartmentsPage({ params }: PageProps) {
   const { churchId } = await params
   const departmentsPromise = getDepartments(churchId)
+  const t = await getTranslator()
 
   return (
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Departments</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("staff.departments.title")}</h2>
           <p className="text-muted-foreground">
-            Manage and monitor your church departments.
+            {t("staff.departments.description")}
           </p>
         </div>
         <div className="flex items-center gap-4">
           <Link href={`/${churchId}/dashboard/departments/add`}>
-            <Button>Add Department</Button>
+            <Button>{t("staff.departments.add")}</Button>
           </Link>
         </div>
       </div>

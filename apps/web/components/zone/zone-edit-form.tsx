@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -23,14 +23,17 @@ import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { updateZone } from '@/actions/zone'
 import type { Zone } from '@church/db'
+import type { Translate } from '@church/config'
+import { useT } from '@/components/i18n/locale-provider'
 
-const zoneEditSchema = z.object({
-  name: z.string().min(2, 'Zone name must be at least 2 characters'),
-  description: z.string().optional(),
-  meetingDay: z.string().optional(),
-})
+const zoneEditSchema = (t: Translate) =>
+  z.object({
+    name: z.string().min(2, t('staff.zones.nameMinError')),
+    description: z.string().optional(),
+    meetingDay: z.string().optional(),
+  })
 
-type ZoneEditFormValues = z.infer<typeof zoneEditSchema>
+type ZoneEditFormValues = z.infer<ReturnType<typeof zoneEditSchema>>
 
 interface ZoneEditFormProps {
   zone: Zone
@@ -39,10 +42,12 @@ interface ZoneEditFormProps {
 
 export function ZoneEditForm({ zone, churchId }: ZoneEditFormProps) {
   const router = useRouter()
+  const { t } = useT()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const schema = useMemo(() => zoneEditSchema(t), [t])
 
   const form = useForm<ZoneEditFormValues>({
-    resolver: zodResolver(zoneEditSchema as any),
+    resolver: zodResolver(schema as any),
     defaultValues: {
       name: zone.name,
       description: zone.description || '',
@@ -54,10 +59,10 @@ export function ZoneEditForm({ zone, churchId }: ZoneEditFormProps) {
     setIsSubmitting(true)
     try {
       await updateZone(zone.id, data, churchId)
-      toast.success('Zone updated successfully!')
+      toast.success(t('staff.zones.updateSuccess'))
       router.push(`/${churchId}/dashboard/zones/${zone.id}`)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update zone'
+      const errorMessage = err instanceof Error ? err.message : t('staff.zones.updateError')
       toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
@@ -67,9 +72,9 @@ export function ZoneEditForm({ zone, churchId }: ZoneEditFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Zone Information</CardTitle>
+        <CardTitle>{t('staff.zones.infoTitle')}</CardTitle>
         <CardDescription>
-          Update the zone&apos;s basic information
+          {t('staff.zones.editInfoDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -80,9 +85,9 @@ export function ZoneEditForm({ zone, churchId }: ZoneEditFormProps) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Zone Name</FormLabel>
+                  <FormLabel>{t('staff.zones.name')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter zone name" {...field} />
+                    <Input placeholder={t('staff.zones.namePlaceholderEdit')} {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -94,12 +99,12 @@ export function ZoneEditForm({ zone, churchId }: ZoneEditFormProps) {
               name="meetingDay"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Meeting Day (Optional)</FormLabel>
+                  <FormLabel>{t('staff.groups.meetingDayOptional')}</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g., Monday, Wednesday" {...field} />
+                    <Input placeholder={t('staff.groups.meetingDayPlaceholder')} {...field} />
                   </FormControl>
                   <FormDescription>
-                    The day this zone meets
+                    {t('staff.zones.meetingDayHelp')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -111,17 +116,17 @@ export function ZoneEditForm({ zone, churchId }: ZoneEditFormProps) {
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
+                  <FormLabel>{t('staff.groups.descriptionOptional')}</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter zone description..."
+                      placeholder={t('staff.zones.descriptionPlaceholder')}
                       className="resize-none"
                       rows={4}
                       {...field}
                     />
                   </FormControl>
                   <FormDescription>
-                    Additional details about this zone
+                    {t('staff.zones.descriptionHelpEdit')}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -133,15 +138,15 @@ export function ZoneEditForm({ zone, churchId }: ZoneEditFormProps) {
                 {isSubmitting ? (
                   <>
                     <Loader className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    {t('common.saving')}
                   </>
                 ) : (
-                  'Save Changes'
+                  t('staff.zones.saveChanges')
                 )}
               </Button>
               <Link href={`/${churchId}/dashboard/zones/${zone.id}`}>
                 <Button type="button" variant="outline">
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Link>
             </div>

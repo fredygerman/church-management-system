@@ -1,12 +1,14 @@
 import { redirect } from "next/navigation"
 import { checkIsAdmin } from "@/lib/permissions-server"
 import { PermissionsViewer } from "@/components/permissions/permissions-viewer"
+import { getTranslator } from "@/lib/i18n/server"
 
 export default async function PermissionsPage({
   params,
 }: {
   params: Promise<{ churchId: string }>
 }) {
+  const t = await getTranslator()
   const { churchId } = await params
   
   // Only admins can view this page
@@ -18,9 +20,9 @@ export default async function PermissionsPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Permissions Overview</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{t('staff.permissions.title')}</h1>
         <p className="text-muted-foreground">
-          View all available permissions for each role in the system
+          {t('staff.permissions.description')}
         </p>
       </div>
 

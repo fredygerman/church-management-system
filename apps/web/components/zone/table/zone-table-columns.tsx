@@ -13,13 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { zones } from "@church/db"
+import type { Translate } from "@church/config"
 
-export function getColumns(churchId: string): ColumnDef<typeof zones.$inferSelect>[] {
+export function getColumns(churchId: string, t: Translate): ColumnDef<typeof zones.$inferSelect>[] {
   return [
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Zone Name" />
+        <DataTableColumnHeader column={column} title={t("staff.zones.name")} />
       ),
       cell: ({ row }) => (
         <Link 
@@ -34,7 +35,7 @@ export function getColumns(churchId: string): ColumnDef<typeof zones.$inferSelec
     {
       accessorKey: "description",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.description")} />
       ),
       cell: ({ row }) => <div>{row.original.description || "-"}</div>,
       enableSorting: false,
@@ -42,7 +43,7 @@ export function getColumns(churchId: string): ColumnDef<typeof zones.$inferSelec
     {
       accessorKey: "leaderId",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Leader" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.leaderLabel")} />
       ),
       cell: ({ row }) => <div>{row.original.leaderId || "-"}</div>,
       enableSorting: false,
@@ -50,7 +51,7 @@ export function getColumns(churchId: string): ColumnDef<typeof zones.$inferSelec
     {
       accessorKey: "meetingDay",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Meeting Day" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.meetingDay")} />
       ),
       cell: ({ row }) => <div className="capitalize">{row.original.meetingDay || "-"}</div>,
       enableSorting: true,
@@ -58,7 +59,7 @@ export function getColumns(churchId: string): ColumnDef<typeof zones.$inferSelec
     {
       accessorKey: "createdAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.created")} />
       ),
       cell: ({ row }) => {
         const createdAt = row.original.createdAt
@@ -70,12 +71,12 @@ export function getColumns(churchId: string): ColumnDef<typeof zones.$inferSelec
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("staff.groups.actions"),
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">{t("staff.groups.openMenu")}</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -83,7 +84,7 @@ export function getColumns(churchId: string): ColumnDef<typeof zones.$inferSelec
             <DropdownMenuItem asChild>
               <Link href={`/${churchId}/dashboard/zones/${row.original.id}`} className="flex items-center gap-2 cursor-pointer">
                 <Eye className="h-4 w-4" />
-                View Zone
+                {t("staff.zones.viewZone")}
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

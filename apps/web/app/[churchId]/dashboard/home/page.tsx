@@ -1,5 +1,6 @@
 import { getDashboardStats } from '@/actions/dashboard'
 import { UnavailableState } from '@/components/ui/unavailable-state'
+import { getTranslator } from '@/lib/i18n/server'
 
 interface DashboardHomeProps {
   params: Promise<{
@@ -8,14 +9,15 @@ interface DashboardHomeProps {
 }
 
 export default async function DashboardHome({ params }: DashboardHomeProps) {
+  const t = await getTranslator()
   const { churchId } = await params
   const statsResult = await getDashboardStats(churchId)
 
   if (statsResult.status === 'unavailable') {
     return (
       <UnavailableState
-        title="Dashboard unavailable"
-        message="Dashboard statistics are temporarily unavailable. Please try again later."
+        title={t('staff.home.unavailableTitle')}
+        message={t('staff.home.unavailableMessage')}
       />
     )
   }
@@ -30,7 +32,7 @@ export default async function DashboardHome({ params }: DashboardHomeProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Total Members
+                {t('staff.home.totalMembers')}
               </p>
               <p className="text-2xl font-bold">{stats.totalMembers}</p>
             </div>
@@ -57,7 +59,7 @@ export default async function DashboardHome({ params }: DashboardHomeProps) {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-muted-foreground">
-                Active Zones
+                {t('staff.home.activeZones')}
               </p>
               <p className="text-2xl font-bold">{stats.activeZones}</p>
             </div>

@@ -7,6 +7,7 @@ import { type getDepartmentMembers, assignMemberToDepartment, removeMemberFromDe
 import { useDataTable } from "@/hooks/use-data-table"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import { useT } from "@/components/i18n/locale-provider"
 
 import { getDepartmentMembersColumns } from "./department-members-table-columns"
 import { toast } from "sonner"
@@ -22,6 +23,7 @@ export function DepartmentMembersTable({
   churchId,
   departmentId,
 }: DepartmentMembersTableProps) {
+  const { t } = useT()
   const { members, pageCount = 1 } = React.use(membersPromise)
   const router = useRouter()
 
@@ -30,31 +32,31 @@ export function DepartmentMembersTable({
     try {
       if (makeLeader) {
         await addDepartmentLeader(departmentId, memberId, churchId)
-        toast.success("Member promoted to leader")
+        toast.success(t("sweep.a.departmentMembers.leaderPromoted"))
       } else {
         await removeDepartmentLeader(departmentId, memberId, churchId)
-        toast.success("Leader status removed")
+        toast.success(t("sweep.a.departmentMembers.leaderRemoved"))
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update leader status")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.departmentMembers.leaderError"))
     }
-  }, [departmentId, churchId])
+  }, [departmentId, churchId, t])
 
   const onRemove = React.useCallback(async (memberId: string) => {
-    const confirmed = window.confirm("Remove member from this department?")
+    const confirmed = window.confirm(t("sweep.a.departmentMembers.confirmRemove"))
     if (!confirmed) return
 
     try {
       await removeMemberFromDepartment(departmentId, memberId, churchId)
-      toast.success("Member removed from department")
+      toast.success(t("sweep.a.departmentMembers.removed"))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to remove member")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.departmentMembers.removeError"))
     }
-  }, [departmentId, churchId])
+  }, [departmentId, churchId, t])
 
   const columns = React.useMemo(
-    () => getDepartmentMembersColumns(churchId, { onToggleLeader, onRemove }),
-    [churchId, onToggleLeader, onRemove]
+    () => getDepartmentMembersColumns(churchId, t, { onToggleLeader, onRemove }),
+    [churchId, t, onToggleLeader, onRemove]
   )
 
   const { table } = useDataTable({

@@ -13,13 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { departments } from "@church/db"
+import type { Translate } from "@church/config"
 
-export function getDepartmentColumns(churchId: string): ColumnDef<typeof departments.$inferSelect>[] {
+export function getDepartmentColumns(churchId: string, t: Translate): ColumnDef<typeof departments.$inferSelect>[] {
   return [
     {
       accessorKey: "name",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Department Name" />
+        <DataTableColumnHeader column={column} title={t("staff.departments.name")} />
       ),
       cell: ({ row }) => (
         <Link
@@ -34,7 +35,7 @@ export function getDepartmentColumns(churchId: string): ColumnDef<typeof departm
     {
       accessorKey: "description",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Description" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.description")} />
       ),
       cell: ({ row }) => <div>{row.original.description || "-"}</div>,
       enableSorting: false,
@@ -42,7 +43,7 @@ export function getDepartmentColumns(churchId: string): ColumnDef<typeof departm
     {
       accessorKey: "meetingDay",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Meeting Day" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.meetingDay")} />
       ),
       cell: ({ row }) => <div className="capitalize">{row.original.meetingDay || "-"}</div>,
       enableSorting: true,
@@ -50,7 +51,7 @@ export function getDepartmentColumns(churchId: string): ColumnDef<typeof departm
     {
       accessorKey: "createdAt",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Created" />
+        <DataTableColumnHeader column={column} title={t("staff.groups.created")} />
       ),
       cell: ({ row }) => {
         const createdAt = row.original.createdAt
@@ -62,12 +63,12 @@ export function getDepartmentColumns(churchId: string): ColumnDef<typeof departm
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("staff.groups.actions"),
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">{t("staff.groups.openMenu")}</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -75,7 +76,7 @@ export function getDepartmentColumns(churchId: string): ColumnDef<typeof departm
             <DropdownMenuItem asChild>
               <Link href={`/${churchId}/dashboard/departments/${row.original.id}`} className="flex items-center gap-2 cursor-pointer">
                 <Eye className="h-4 w-4" />
-                View Department
+                {t("staff.departments.viewDepartment")}
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

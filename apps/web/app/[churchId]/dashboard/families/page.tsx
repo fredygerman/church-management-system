@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { getFamilies } from '@/actions/family'
+import { getTranslator } from '@/lib/i18n/server'
 
 interface PageProps {
   params: Promise<{
@@ -10,23 +11,24 @@ interface PageProps {
 
 export default async function FamiliesPage({ params }: PageProps) {
   const { churchId } = await params
+  const t = await getTranslator()
   const families = await getFamilies(churchId)
 
   return (
     <div className="flex min-h-screen w-full flex-col p-2">
       <main className="flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
         <div className="flex auto-rows-max items-end justify-between gap-4 md:gap-8 lg:col-span-2">
-          <h1 className="text-3xl font-bold">Families</h1>
+          <h1 className="text-3xl font-bold">{t('staff.families.title')}</h1>
           <Link href={`/${churchId}/dashboard/families/add`}>
             <Button className="rounded bg-blue-500 px-4 py-2 text-white">
-              Add Family
+              {t('staff.families.add')}
             </Button>
           </Link>
         </div>
 
         {families.length === 0 ? (
           <div className="rounded-lg border border-dashed border-gray-300 p-8 text-center">
-            <p className="text-gray-500">No families found. Create your first family to get started.</p>
+            <p className="text-gray-500">{t('staff.families.empty')}</p>
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

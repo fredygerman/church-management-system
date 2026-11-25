@@ -2,7 +2,9 @@ import React from "react"
 import Link from "next/link"
 import { getGivingGoals } from "@/actions/giving-goal"
 import { ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
 import { formatMoney } from "@/lib/utils"
+import type { Translate } from "@church/config"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -27,6 +29,13 @@ function statusVariant(status: string): "default" | "secondary" | "outline" {
   return "outline"
 }
 
+function goalStatusLabel(t: Translate, status: string): string {
+  if (status === "upcoming") return t("staff.giving.goals.statusUpcoming")
+  if (status === "active") return t("staff.giving.goals.statusActive")
+  if (status === "ended") return t("staff.giving.goals.statusEnded")
+  return status
+}
+
 async function GoalsTable({
   goalsPromise,
   churchId,
@@ -34,26 +43,23 @@ async function GoalsTable({
   goalsPromise: ReturnType<typeof getGivingGoals>
   churchId: string
 }) {
+  const t = await getTranslator()
   const goals = await goalsPromise
 
   if (goals.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        No giving goals yet. Create one to start a fundraising campaign.
-      </p>
-    )
+    return <p className="text-sm text-muted-foreground">{t("staff.giving.goals.empty")}</p>
   }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Name</TableHead>
-          <TableHead>Raised of Target</TableHead>
-          <TableHead>Progress</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Visibility</TableHead>
-          <TableHead className="w-24 text-right">Actions</TableHead>
+          <TableHead>{t("staff.common.name")}</TableHead>
+          <TableHead>{t("staff.giving.goals.raisedOfTarget")}</TableHead>
+          <TableHead>{t("staff.giving.goals.progress")}</TableHead>
+          <TableHead>{t("staff.giving.goals.status")}</TableHead>
+          <TableHead>{t("staff.giving.goals.visibility")}</TableHead>
+          <TableHead className="w-24 text-right">{t("staff.giving.actions")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -68,20 +74,23 @@ async function GoalsTable({
                 </Link>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                {formatMoney(goal.raisedCents ?? 0, goal.currency)} of {formatMoney(goal.targetCents, goal.currency)}
+                {t("staff.giving.goals.raisedOfTargetValue", {
+                  raised: formatMoney(goal.raisedCents ?? 0, goal.currency),
+                  target: formatMoney(goal.targetCents, goal.currency),
+                })}
               </TableCell>
               <TableCell>{percent}%</TableCell>
               <TableCell>
-                <Badge variant={statusVariant(goal.status)}>{goal.status}</Badge>
+                <Badge variant={statusVariant(goal.status)}>{goalStatusLabel(t, goal.status)}</Badge>
                 {goal.targetReached && (
                   <Badge variant="secondary" className="ml-2">
-                    Target reached
+                    {t("staff.giving.goals.targetReached")}
                   </Badge>
                 )}
               </TableCell>
               <TableCell>
                 <Badge variant={goal.isPublic ? "default" : "outline"}>
-                  {goal.isPublic ? "Public" : "Private"}
+                  {goal.isPublic ? t("staff.giving.public") : t("staff.giving.private")}
                 </Badge>
               </TableCell>
               <TableCell className="text-right">
@@ -89,7 +98,7 @@ async function GoalsTable({
                   href={`/${churchId}/dashboard/offerings/goals/${goal.id}/edit`}
                   className="text-blue-600 hover:underline"
                 >
-                  Edit
+                  {t("staff.giving.edit")}
                 </Link>
               </TableCell>
             </TableRow>
@@ -102,6 +111,7 @@ async function GoalsTable({
 
 export default async function GivingGoalsPage({ params }: PageProps) {
   await ensurePermission("manage:giving-goals")
+  const t = await getTranslator()
   const { churchId } = await params
   const goalsPromise = getGivingGoals(churchId)
 
@@ -109,15 +119,15 @@ export default async function GivingGoalsPage({ params }: PageProps) {
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Giving Goals</h2>
-          <p className="text-muted-foreground">Manage fundraising goals and track progress.</p>
+          <h2 className="text-2xl font-bold tracking-tight">{t("staff.giving.goals.title")}</h2>
+          <p className="text-muted-foreground">{t("staff.giving.goals.description")}</p>
         </div>
         <div className="flex items-center gap-4">
           <Link href={`/${churchId}/dashboard/offerings`}>
-            <Button variant="outline">Back to Offerings</Button>
+            <Button variant="outline">{t("staff.giving.backToOfferings")}</Button>
           </Link>
           <Link href={`/${churchId}/dashboard/offerings/goals/add`}>
-            <Button>Add Goal</Button>
+            <Button>{t("staff.giving.goals.add")}</Button>
           </Link>
         </div>
       </div>

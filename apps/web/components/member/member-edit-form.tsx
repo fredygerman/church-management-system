@@ -23,21 +23,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { useT } from '@/components/i18n/locale-provider'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { updateMember } from '@/actions/member'
 import type { Member } from '@church/db'
+import type { Translate } from '@church/config'
 
-const memberEditSchema = z.object({
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  dateOfBirth: z.string(),
-  gender: z.enum(['male', 'female', 'others']),
-  maritalStatus: z.enum(['single', 'married', 'divorced', 'widowed']),
-})
+function memberEditSchema(t: Translate) {
+  return z.object({
+    firstName: z.string().min(1, t('staff.form.firstNameRequired')),
+    lastName: z.string().min(1, t('staff.form.lastNameRequired')),
+    dateOfBirth: z.string(),
+    gender: z.enum(['male', 'female', 'others']),
+    maritalStatus: z.enum(['single', 'married', 'divorced', 'widowed']),
+  })
+}
 
-type MemberEditFormValues = z.infer<typeof memberEditSchema>
+type MemberEditFormValues = z.infer<ReturnType<typeof memberEditSchema>>
 
 interface MemberEditFormProps {
   member: Member
@@ -46,10 +50,11 @@ interface MemberEditFormProps {
 
 export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
   const router = useRouter()
+  const { t } = useT()
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<MemberEditFormValues>({
-    resolver: zodResolver(memberEditSchema as any),
+    resolver: zodResolver(memberEditSchema(t) as any),
     defaultValues: {
       firstName: member.firstName,
       lastName: member.lastName,
@@ -63,10 +68,10 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
     setIsSubmitting(true)
     try {
       await updateMember(churchId, member.id, data)
-      toast.success('Member updated successfully!')
+      toast.success(t('staff.form.memberUpdated'))
       router.push(`/${churchId}/dashboard/members/${member.id}`)
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update member'
+      const errorMessage = err instanceof Error ? err.message : t('staff.form.memberUpdateFailed')
       toast.error(errorMessage)
     } finally {
       setIsSubmitting(false)
@@ -76,9 +81,9 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Member Information</CardTitle>
+        <CardTitle>{t('staff.form.memberInformation')}</CardTitle>
         <CardDescription>
-          Update the member&apos;s basic information
+          {t('staff.form.memberInformationDescription')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -90,9 +95,9 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>{t('staff.form.firstName')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter first name" {...field} />
+                      <Input placeholder={t('staff.form.enterFirstName')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -104,9 +109,9 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>{t('staff.form.lastName')}</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter last name" {...field} />
+                      <Input placeholder={t('staff.form.enterLastName')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -120,7 +125,7 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
                 name="dateOfBirth"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Date of Birth</FormLabel>
+                    <FormLabel>{t('staff.form.dateOfBirth')}</FormLabel>
                     <FormControl>
                       <Input type="date" {...field} />
                     </FormControl>
@@ -134,17 +139,17 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
                 name="gender"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Gender</FormLabel>
+                    <FormLabel>{t('staff.form.gender')}</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
+                          <SelectValue placeholder={t('staff.form.selectGender')} />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="male">Male</SelectItem>
-                        <SelectItem value="female">Female</SelectItem>
-                        <SelectItem value="others">Others</SelectItem>
+                        <SelectItem value="male">{t('staff.form.genderMale')}</SelectItem>
+                        <SelectItem value="female">{t('staff.form.genderFemale')}</SelectItem>
+                        <SelectItem value="others">{t('staff.form.genderOthers')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -158,18 +163,18 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
               name="maritalStatus"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Marital Status</FormLabel>
+                  <FormLabel>{t('staff.form.maritalStatus')}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select marital status" />
+                        <SelectValue placeholder={t('staff.form.selectMaritalStatus')} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="single">Single</SelectItem>
-                      <SelectItem value="married">Married</SelectItem>
-                      <SelectItem value="divorced">Divorced</SelectItem>
-                      <SelectItem value="widowed">Widowed</SelectItem>
+                      <SelectItem value="single">{t('staff.form.maritalSingle')}</SelectItem>
+                      <SelectItem value="married">{t('staff.form.maritalMarried')}</SelectItem>
+                      <SelectItem value="divorced">{t('staff.form.maritalDivorced')}</SelectItem>
+                      <SelectItem value="widowed">{t('staff.form.maritalWidowed')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -182,15 +187,15 @@ export function MemberEditForm({ member, churchId }: MemberEditFormProps) {
                 {isSubmitting ? (
                   <>
                     <Loader className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
+                    {t('common.saving')}
                   </>
                 ) : (
-                  'Save Changes'
+                  t('staff.form.saveChanges')
                 )}
               </Button>
               <Link href={`/${churchId}/dashboard/members/${member.id}`}>
                 <Button type="button" variant="outline">
-                  Cancel
+                  {t('common.cancel')}
                 </Button>
               </Link>
             </div>

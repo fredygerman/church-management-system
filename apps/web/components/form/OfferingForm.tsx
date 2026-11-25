@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createOffering, updateOffering } from "@/actions/offering"
 import { centsFromDecimal } from "@/lib/utils"
@@ -29,29 +29,37 @@ import {
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import type { Translate } from "@church/config"
+import { useT } from "@/components/i18n/locale-provider"
 
 // No member/session picked -> sentinel value, stripped to undefined on submit
 // (Radix Select does not allow an empty-string item value).
 const UNSET = "none"
 
-const offeringFormSchema = z.object({
-  categoryId: z.string().min(1, "Category is required"),
-  amount: z
-    .string()
-    .min(1, "Amount is required")
-    .refine((val) => !Number.isNaN(parseFloat(val)) && parseFloat(val) > 0, {
-      message: "Amount must be a positive number",
-    }),
-  currency: z.string().min(3, "Currency is required").max(3, "Use a 3-letter currency code"),
-  offeringDate: z.string().min(1, "Date is required"),
-  memberId: z.string().optional(),
-  sessionId: z.string().optional(),
-  goalId: z.string().optional(),
-  showOnDonorWall: z.boolean(),
-  note: z.string().optional(),
-})
+// Validation messages are translated, so the schema is built per locale.
+function buildOfferingFormSchema(t: Translate) {
+  return z.object({
+    categoryId: z.string().min(1, t("sweep.a.offering.categoryRequired")),
+    amount: z
+      .string()
+      .min(1, t("sweep.a.offering.amountRequired"))
+      .refine((val) => !Number.isNaN(parseFloat(val)) && parseFloat(val) > 0, {
+        message: t("sweep.a.offering.amountPositive"),
+      }),
+    currency: z
+      .string()
+      .min(3, t("sweep.a.form.currencyRequired"))
+      .max(3, t("sweep.a.form.currencyCode")),
+    offeringDate: z.string().min(1, t("sweep.a.offering.dateRequired")),
+    memberId: z.string().optional(),
+    sessionId: z.string().optional(),
+    goalId: z.string().optional(),
+    showOnDonorWall: z.boolean(),
+    note: z.string().optional(),
+  })
+}
 
-type OfferingFormData = z.infer<typeof offeringFormSchema>
+type OfferingFormData = z.infer<ReturnType<typeof buildOfferingFormSchema>>
 
 interface OfferingFormProps {
   churchId: string
@@ -72,6 +80,8 @@ export function OfferingForm({
   initialData,
   isEditMode = false,
 }: OfferingFormProps) {
+  const { t } = useT()
+  const offeringFormSchema = useMemo(() => buildOfferingFormSchema(t), [t])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
@@ -126,14 +136,14 @@ export function OfferingForm({
 
       if (isEditMode && initialData?.id) {
         await updateOffering(initialData.id, payload, churchId)
-        toast.success("Offering updated successfully!")
+        toast.success(t("sweep.a.offering.updated"))
       } else {
         await createOffering({ churchId, ...payload })
-        toast.success("Offering recorded successfully!")
+        toast.success(t("sweep.a.offering.created"))
       }
       router.push(`/${churchId}/dashboard/offerings`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An error occurred")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.form.genericError"))
     } finally {
       setIsSubmitting(false)
     }
@@ -148,11 +158,11 @@ export function OfferingForm({
             name="categoryId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category</FormLabel>
+                <FormLabel>{t("sweep.a.offering.categoryLabel")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a category" />
+                      <SelectValue placeholder={t("sweep.a.offering.selectCategory")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -174,11 +184,11 @@ export function OfferingForm({
               name="amount"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Amount</FormLabel>
+                  <FormLabel>{t("sweep.a.form.amount")}</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" min="0.01" placeholder="0.00" {...field} />
                   </FormControl>
-                  <FormDescription>Enter the amount as a decimal value</FormDescription>
+                  <FormDescription>{t("sweep.a.offering.amountHelp")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -189,11 +199,11 @@ export function OfferingForm({
               name="currency"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Currency</FormLabel>
+                  <FormLabel>{t("sweep.a.form.currency")}</FormLabel>
                   <FormControl>
                     <Input placeholder="KES" maxLength={3} {...field} />
                   </FormControl>
-                  <FormDescription>ISO code, e.g. KES, USD</FormDescription>
+                  <FormDescription>{t("sweep.a.form.currencyHelp")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -205,7 +215,7 @@ export function OfferingForm({
             name="offeringDate"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Offering Date</FormLabel>
+                <FormLabel>{t("sweep.a.offering.dateLabel")}</FormLabel>
                 <FormControl>
                   <Input type="date" {...field} />
                 </FormControl>
@@ -219,15 +229,15 @@ export function OfferingForm({
             name="memberId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Member (Optional)</FormLabel>
+                <FormLabel>{t("sweep.a.offering.memberLabel")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Anonymous / basket total" />
+                      <SelectValue placeholder={t("sweep.a.offering.anonymous")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={UNSET}>Anonymous / basket total</SelectItem>
+                    <SelectItem value={UNSET}>{t("sweep.a.offering.anonymous")}</SelectItem>
                     {members.map((member) => (
                       <SelectItem key={member.id} value={member.id}>
                         {[member.firstName, member.lastName].filter(Boolean).join(" ") || member.id}
@@ -235,7 +245,7 @@ export function OfferingForm({
                     ))}
                   </SelectContent>
                 </Select>
-                <FormDescription>Leave unset for anonymous or basket contributions</FormDescription>
+                <FormDescription>{t("sweep.a.offering.memberHelp")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -246,15 +256,15 @@ export function OfferingForm({
             name="sessionId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Service Session (Optional)</FormLabel>
+                <FormLabel>{t("sweep.a.offering.sessionLabel")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Not linked to a session" />
+                      <SelectValue placeholder={t("sweep.a.offering.noSession")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={UNSET}>Not linked to a session</SelectItem>
+                    <SelectItem value={UNSET}>{t("sweep.a.offering.noSession")}</SelectItem>
                     {sessions.map((session) => (
                       <SelectItem key={session.id} value={session.id}>
                         {session.title || session.sessionDate || session.id}
@@ -272,15 +282,15 @@ export function OfferingForm({
             name="goalId"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Count Toward Goal (Optional)</FormLabel>
+                <FormLabel>{t("sweep.a.offering.goalLabel")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Not linked to a goal" />
+                      <SelectValue placeholder={t("sweep.a.offering.noGoal")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value={UNSET}>Not linked to a goal</SelectItem>
+                    <SelectItem value={UNSET}>{t("sweep.a.offering.noGoal")}</SelectItem>
                     {goals.map((goal) => (
                       <SelectItem key={goal.id} value={goal.id}>
                         {goal.name}
@@ -288,7 +298,7 @@ export function OfferingForm({
                     ))}
                   </SelectContent>
                 </Select>
-                <FormDescription>Link this offering to a fundraising goal&apos;s progress</FormDescription>
+                <FormDescription>{t("sweep.a.offering.goalHelp")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -307,11 +317,11 @@ export function OfferingForm({
                   />
                 </FormControl>
                 <div className="space-y-1 leading-none">
-                  <FormLabel>Show on donor wall</FormLabel>
+                  <FormLabel>{t("sweep.a.offering.donorWallLabel")}</FormLabel>
                   <FormDescription>
                     {hasMember
-                      ? "Recognize this giver by name on the public donor wall (never shows the amount)"
-                      : "Select a member to enable public recognition"}
+                      ? t("sweep.a.offering.donorWallOn")
+                      : t("sweep.a.offering.donorWallOff")}
                   </FormDescription>
                 </div>
               </FormItem>
@@ -323,9 +333,9 @@ export function OfferingForm({
             name="note"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Note</FormLabel>
+                <FormLabel>{t("sweep.a.offering.noteLabel")}</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Optional note" className="min-h-24" {...field} />
+                  <Textarea placeholder={t("sweep.a.offering.notePlaceholder")} className="min-h-24" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -334,10 +344,14 @@ export function OfferingForm({
 
           <div className="flex gap-4">
             <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Saving..." : isEditMode ? "Update Offering" : "Record Offering"}
+              {isSubmitting
+                ? t("sweep.a.form.saving")
+                : isEditMode
+                ? t("sweep.a.offering.update")
+                : t("sweep.a.offering.create")}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.back()} className="flex-1">
-              Cancel
+              {t("sweep.a.form.cancel")}
             </Button>
           </div>
         </form>

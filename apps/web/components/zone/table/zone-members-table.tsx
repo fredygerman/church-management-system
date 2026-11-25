@@ -7,6 +7,7 @@ import { type getZoneMembers, assignMemberToZone, unassignMemberFromZone, getZon
 import { useDataTable } from "@/hooks/use-data-table"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import { useT } from "@/components/i18n/locale-provider"
 import { LeaderReassignmentDialog } from "../leader-reassignment-dialog"
 
 import { getZoneMembersColumns } from "./zone-members-table-columns"
@@ -20,6 +21,7 @@ interface ZoneMembersTableProps {
 }
 
 export function ZoneMembersTable({ membersPromise, churchId, zoneId, zone }: ZoneMembersTableProps) {
+  const { t } = useT()
   const { members, pageCount = 1 } = React.use(membersPromise)
   const router = useRouter()
   const [reassignmentDialog, setReassignmentDialog] = React.useState<{
@@ -32,11 +34,11 @@ export function ZoneMembersTable({ membersPromise, churchId, zoneId, zone }: Zon
   const onAssignLeader = React.useCallback(async (memberId: string) => {
     try {
       await assignMemberToZone(zoneId, memberId, true, churchId)
-      toast.success("Leader assigned")
+      toast.success(t("sweep.a.zoneMembers.leaderAssigned"))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to assign leader")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.zoneMembers.assignLeaderError"))
     }
-  }, [zoneId, churchId])
+  }, [zoneId, churchId, t])
 
   const onUnassign = React.useCallback(async (memberId: string) => {
     const member = members.find(m => m.id === memberId)
@@ -53,20 +55,20 @@ export function ZoneMembersTable({ membersPromise, churchId, zoneId, zone }: Zon
     }
 
     // Otherwise, show confirmation and remove
-    const confirmed = window.confirm("Remove member from this zone?")
+    const confirmed = window.confirm(t("sweep.a.zoneMembers.confirmRemove"))
     if (!confirmed) return
 
     try {
       await unassignMemberFromZone(zoneId, memberId, churchId, undefined)
-      toast.success("Member removed from zone")
+      toast.success(t("sweep.a.zoneMembers.removed"))
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to remove member")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.zoneMembers.removeError"))
     }
-  }, [zoneId, churchId, members, zone])
+  }, [zoneId, churchId, members, zone, t])
 
   const columns = React.useMemo(
-    () => getZoneMembersColumns(churchId, { onAssignLeader, onUnassign }),
-    [churchId, onAssignLeader, onUnassign]
+    () => getZoneMembersColumns(churchId, t, { onAssignLeader, onUnassign }),
+    [churchId, t, onAssignLeader, onUnassign]
   )
 
   const { table } = useDataTable({

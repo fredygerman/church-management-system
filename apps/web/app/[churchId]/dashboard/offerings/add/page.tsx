@@ -2,6 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft } from "lucide-react"
 import { ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
 import { getOfferingCategories } from "@/actions/offering"
 import { getGivingGoals } from "@/actions/giving-goal"
 import { getMembers } from "@/actions/member"
@@ -15,6 +16,7 @@ interface PageProps {
 
 export default async function OfferingAddPage({ params }: PageProps) {
   await ensurePermission("manage:offerings")
+  const t = await getTranslator()
   const { churchId } = await params
 
   const [categories, membersResult, sessions, goals] = await Promise.all([
@@ -41,7 +43,7 @@ export default async function OfferingAddPage({ params }: PageProps) {
   if (membersResult.status === "unavailable") {
     return (
       <UnavailableState
-        title="Members unavailable"
+        title={t("component.members.unavailableTitle")}
         message={membersResult.message}
       />
     )
@@ -53,12 +55,12 @@ export default async function OfferingAddPage({ params }: PageProps) {
         <Link href={`/${churchId}/dashboard/offerings`}>
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t("staff.offerings.back")}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Record Offering</h1>
-          <p className="text-gray-600">Record a new offering or contribution</p>
+          <h1 className="text-3xl font-bold">{t("staff.offerings.record")}</h1>
+          <p className="text-gray-600">{t("staff.offerings.recordDescription")}</p>
         </div>
       </div>
 

@@ -10,6 +10,7 @@ import { convertVisitorToMember, deleteVisitor } from "@/actions/visitor"
 import { useDataTable } from "@/hooks/use-data-table"
 import { DataTable } from "@/components/data-table/data-table"
 import { DataTableToolbar } from "@/components/data-table/data-table-toolbar"
+import { useT } from "@/components/i18n/locale-provider"
 
 import { getVisitorColumns } from "./visitor-table-columns"
 
@@ -21,6 +22,7 @@ interface VisitorTableProps {
 
 export function VisitorTable({ visitorPromise, churchId, canConvert = false }: VisitorTableProps) {
   const router = useRouter()
+  const { t } = useT()
   const [isLoading, setIsLoading] = useState(false)
   
   // The action resolves to an array of visitors
@@ -28,45 +30,45 @@ export function VisitorTable({ visitorPromise, churchId, canConvert = false }: V
   const pageCount = 1
 
   const handleConvert = React.useCallback(async (visitorId: string) => {
-    const confirmed = window.confirm("Convert this visitor to a member now?")
+    const confirmed = window.confirm(t("sweep.a.visitors.confirmConvert"))
     if (!confirmed) return
 
     setIsLoading(true)
     try {
       await convertVisitorToMember({ churchId, visitorId })
-      toast.success("Visitor converted to member successfully")
+      toast.success(t("sweep.a.visitors.converted"))
       router.refresh()
     } catch (error) {
       console.error("Error converting visitor:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to convert visitor")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.visitors.convertError"))
     } finally {
       setIsLoading(false)
     }
-  }, [churchId, router])
+  }, [churchId, router, t])
 
   const handleDelete = React.useCallback(async (visitorId: string) => {
-    const confirmed = window.confirm("Delete this visitor?")
+    const confirmed = window.confirm(t("sweep.a.visitors.confirmDelete"))
     if (!confirmed) return
 
     setIsLoading(true)
     try {
       await deleteVisitor({ churchId, visitorId })
-      toast.success("Visitor deleted successfully")
+      toast.success(t("sweep.a.visitors.deleted"))
       router.refresh()
     } catch (error) {
       console.error("Error deleting visitor:", error)
-      toast.error(error instanceof Error ? error.message : "Failed to delete visitor")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.visitors.deleteError"))
     } finally {
       setIsLoading(false)
     }
-  }, [churchId, router])
+  }, [churchId, router, t])
 
   const handlers = React.useMemo(() => ({
     onConvert: canConvert ? handleConvert : undefined,
     onDelete: handleDelete,
   }), [canConvert, handleConvert, handleDelete])
 
-  const columns = React.useMemo(() => getVisitorColumns(churchId, handlers), [churchId, handlers])
+  const columns = React.useMemo(() => getVisitorColumns(churchId, t, handlers), [churchId, t, handlers])
 
   const { table } = useDataTable({
     data: visitors,

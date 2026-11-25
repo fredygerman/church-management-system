@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import type { Translate } from "@church/config"
 
 import { createEvent, updateEvent } from "@/actions/event"
 import { usePermission } from "@/hooks/use-permissions"
+import { useT } from "@/components/i18n/locale-provider"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -34,22 +36,25 @@ import {
 // see docs/superpowers/specs/2026-08-10-calendar-events-design.md). The
 // datetime-local value is sent through unchanged rather than round-tripped
 // through Date/toISOString, which would shift it by the browser's UTC offset.
-const eventFormSchema = z
-  .object({
-    title: z.string().min(1, "Title is required"),
-    description: z.string().optional(),
-    location: z.string().optional(),
-    startsAt: z.string().min(1, "Start date/time is required"),
-    endsAt: z.string().optional(),
-    scope: z.enum(["church", "network"]),
-    status: z.enum(["draft", "published", "cancelled"]),
-  })
-  .refine((data) => !data.endsAt || data.endsAt >= data.startsAt, {
-    message: "End must be after start",
-    path: ["endsAt"],
-  })
+// Validation messages are translated, so the schema is built per locale.
+function buildEventFormSchema(t: Translate) {
+  return z
+    .object({
+      title: z.string().min(1, t("staff.events.form.errorTitle")),
+      description: z.string().optional(),
+      location: z.string().optional(),
+      startsAt: z.string().min(1, t("staff.events.form.errorStartsAt")),
+      endsAt: z.string().optional(),
+      scope: z.enum(["church", "network"]),
+      status: z.enum(["draft", "published", "cancelled"]),
+    })
+    .refine((data) => !data.endsAt || data.endsAt >= data.startsAt, {
+      message: t("staff.events.form.errorEndsAt"),
+      path: ["endsAt"],
+    })
+}
 
-type EventFormData = z.infer<typeof eventFormSchema>
+type EventFormData = z.infer<ReturnType<typeof buildEventFormSchema>>
 
 interface EventFormProps {
   churchId: string
@@ -58,6 +63,8 @@ interface EventFormProps {
 }
 
 export function EventForm({ churchId, initialData, isEditMode = false }: EventFormProps) {
+  const { t } = useT()
+  const eventFormSchema = useMemo(() => buildEventFormSchema(t), [t])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const canSetNetworkScope = usePermission("manage:network-events")
@@ -90,14 +97,14 @@ export function EventForm({ churchId, initialData, isEditMode = false }: EventFo
 
       if (isEditMode && initialData?.id) {
         await updateEvent(initialData.id, payload, churchId)
-        toast.success("Event updated successfully!")
+        toast.success(t("staff.events.form.updated"))
       } else {
         await createEvent({ churchId, ...payload })
-        toast.success("Event created successfully!")
+        toast.success(t("staff.events.form.created"))
       }
       router.push(`/${churchId}/dashboard/events`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An error occurred")
+      toast.error(error instanceof Error ? error.message : t("staff.events.form.fallbackError"))
     } finally {
       setIsSubmitting(false)
     }
@@ -112,9 +119,9 @@ export function EventForm({ churchId, initialData, isEditMode = false }: EventFo
             name="title"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Title</FormLabel>
+                <FormLabel>{t("staff.events.form.title")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Camp Meeting 2026" {...field} />
+                  <Input placeholder={t("staff.events.form.titlePlaceholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -126,9 +133,9 @@ export function EventForm({ churchId, initialData, isEditMode = false }: EventFo
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t("staff.events.form.description")}</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Optional description" className="min-h-24" {...field} />
+                  <Textarea placeholder={t("staff.events.form.descriptionPlaceholder")} className="min-h-24" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -140,9 +147,9 @@ export function EventForm({ churchId, initialData, isEditMode = false }: EventFo
             name="location"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Location</FormLabel>
+                <FormLabel>{t("staff.events.form.location")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Optional location" {...field} />
+                  <Input placeholder={t("staff.events.form.locationPlaceholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -155,7 +162,7 @@ export function EventForm({ churchId, initialData, isEditMode = false }: EventFo
               name="startsAt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Starts At</FormLabel>
+                  <FormLabel>{t("staff.events.form.startsAt")}</FormLabel>
                   <FormControl>
                     <Input type="datetime-local" {...field} />
                   </FormControl>
@@ -169,11 +176,11 @@ export function EventForm({ churchId, initialData, isEditMode = false }: EventFo
               name="endsAt"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Ends At (Optional)</FormLabel>
+                  <FormLabel>{t("staff.events.form.endsAt")}</FormLabel>
                   <FormControl>
                     <Input type="datetime-local" {...field} />
                   </FormControl>
-                  <FormDescription>Leave blank for an open-ended event</FormDescription>
+                  <FormDescription>{t("staff.events.form.endsAtHelp")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -186,21 +193,19 @@ export function EventForm({ churchId, initialData, isEditMode = false }: EventFo
               name="scope"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Scope</FormLabel>
+                  <FormLabel>{t("staff.events.form.scope")}</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select scope" />
+                        <SelectValue placeholder={t("staff.events.form.scopePlaceholder")} />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="church">This church only</SelectItem>
-                      <SelectItem value="network">Whole network</SelectItem>
+                      <SelectItem value="church">{t("staff.events.form.scopeChurch")}</SelectItem>
+                      <SelectItem value="network">{t("staff.events.form.scopeNetwork")}</SelectItem>
                     </SelectContent>
                   </Select>
-                  <FormDescription>
-                    Network events are visible to every church once published.
-                  </FormDescription>
+                  <FormDescription>{t("staff.events.form.scopeHelp")}</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -212,20 +217,20 @@ export function EventForm({ churchId, initialData, isEditMode = false }: EventFo
             name="status"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Status</FormLabel>
+                <FormLabel>{t("staff.events.form.status")}</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder={t("staff.events.form.statusPlaceholder")} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="published">Published</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                    <SelectItem value="draft">{t("staff.events.status.draft")}</SelectItem>
+                    <SelectItem value="published">{t("staff.events.status.published")}</SelectItem>
+                    <SelectItem value="cancelled">{t("staff.events.status.cancelled")}</SelectItem>
                   </SelectContent>
                 </Select>
-                <FormDescription>Only published events are visible to members.</FormDescription>
+                <FormDescription>{t("staff.events.form.statusHelp")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -233,10 +238,10 @@ export function EventForm({ churchId, initialData, isEditMode = false }: EventFo
 
           <div className="flex gap-4">
             <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Saving..." : isEditMode ? "Update Event" : "Create Event"}
+              {isSubmitting ? t("common.saving") : isEditMode ? t("staff.events.form.update") : t("staff.events.create")}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.back()} className="flex-1">
-              Cancel
+              {t("common.cancel")}
             </Button>
           </div>
         </form>

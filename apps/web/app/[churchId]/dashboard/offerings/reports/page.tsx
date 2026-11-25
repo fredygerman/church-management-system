@@ -1,4 +1,5 @@
 import { ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
 import { getOfferingReportSummary, getOfferingCategories } from "@/actions/offering"
 import { formatMoney } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
@@ -24,8 +25,14 @@ function categoryLabel(row: { groupKey: string }, categoriesById: Map<string, st
 
 export default async function OfferingReportsPage({ params, searchParams }: PageProps) {
   await ensurePermission("view:giving-reports")
+  const t = await getTranslator()
   const { churchId } = await params
   const { period = "month", from, to } = await searchParams
+  const periodLabels = {
+    week: t("staff.giving.reports.periodWeek"),
+    month: t("staff.giving.reports.periodMonth"),
+    year: t("staff.giving.reports.periodYear"),
+  }
 
   const [byCategory, byPeriod, categories] = await Promise.all([
     getOfferingReportSummary(churchId, "category", { from, to }),
@@ -37,24 +44,22 @@ export default async function OfferingReportsPage({ params, searchParams }: Page
   return (
     <div className="flex flex-col space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Giving Reports</h2>
-        <p className="text-muted-foreground">
-          Totals by category and by period. Each currency is its own row - never combined.
-        </p>
+        <h2 className="text-2xl font-bold tracking-tight">{t("staff.giving.reports.title")}</h2>
+        <p className="text-muted-foreground">{t("staff.giving.reports.description")}</p>
       </div>
       <Separator />
 
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Totals by Category</h3>
+        <h3 className="text-lg font-semibold">{t("staff.giving.reports.byCategory")}</h3>
         {byCategory.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No data for this range.</p>
+          <p className="text-sm text-muted-foreground">{t("staff.giving.reports.noData")}</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Category</TableHead>
-                <TableHead>Currency</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead>{t("staff.giving.reports.category")}</TableHead>
+                <TableHead>{t("staff.giving.reports.currency")}</TableHead>
+                <TableHead className="text-right">{t("staff.giving.reports.total")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -73,16 +78,18 @@ export default async function OfferingReportsPage({ params, searchParams }: Page
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-lg font-semibold">Totals by Period ({period})</h3>
+        <h3 className="text-lg font-semibold">
+          {t("staff.giving.reports.byPeriod", { period: periodLabels[period] })}
+        </h3>
         {byPeriod.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No data for this range.</p>
+          <p className="text-sm text-muted-foreground">{t("staff.giving.reports.noData")}</p>
         ) : (
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Period</TableHead>
-                <TableHead>Currency</TableHead>
-                <TableHead className="text-right">Total</TableHead>
+                <TableHead>{t("staff.giving.reports.period")}</TableHead>
+                <TableHead>{t("staff.giving.reports.currency")}</TableHead>
+                <TableHead className="text-right">{t("staff.giving.reports.total")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

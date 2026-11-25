@@ -1,4 +1,5 @@
 import { ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
 import { getOfferingById, getOfferingCategories } from "@/actions/offering"
 import { getGivingGoals } from "@/actions/giving-goal"
 import { getMembers } from "@/actions/member"
@@ -13,6 +14,7 @@ interface PageProps {
 
 export default async function EditOfferingPage({ params }: PageProps) {
   await ensurePermission("manage:offerings")
+  const t = await getTranslator()
   const { churchId, id } = await params
 
   const [offering, categories, membersResult, sessions, allGoals] = await Promise.all([
@@ -40,7 +42,7 @@ export default async function EditOfferingPage({ params }: PageProps) {
   if (membersResult.status === "unavailable") {
     return (
       <UnavailableState
-        title="Members unavailable"
+        title={t("component.members.unavailableTitle")}
         message={membersResult.message}
       />
     )
@@ -58,12 +60,12 @@ export default async function EditOfferingPage({ params }: PageProps) {
         <div>
           <div className="flex items-center gap-2">
             <a href={`/${churchId}/dashboard/offerings`} className="text-blue-600 hover:underline">
-              Offerings
+              {t("nav.offerings")}
             </a>
             <span className="text-muted-foreground">/</span>
-            <h2 className="text-2xl font-bold tracking-tight">Edit Offering</h2>
+            <h2 className="text-2xl font-bold tracking-tight">{t("staff.offerings.editTitle")}</h2>
           </div>
-          <p className="text-muted-foreground mt-1">Edit offering details</p>
+          <p className="text-muted-foreground mt-1">{t("staff.offerings.editDescription")}</p>
         </div>
       </div>
       <Separator />

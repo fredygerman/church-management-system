@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useT } from "@/components/i18n/locale-provider"
 
 interface RosterRow {
   id: string
@@ -26,6 +27,7 @@ interface AttendanceFormProps {
 }
 
 export function AttendanceForm({ churchId, eventId, roster, initialHeadcount }: AttendanceFormProps) {
+  const { t } = useT()
   const router = useRouter()
   const [attended, setAttended] = useState<Set<string>>(
     new Set(roster.filter((row) => row.attended).map((row) => row.memberId))
@@ -53,10 +55,10 @@ export function AttendanceForm({ churchId, eventId, roster, initialHeadcount }: 
         attendedMemberIds: Array.from(attended),
         headcount: headcount ? Number(headcount) : undefined,
       })
-      toast.success("Attendance saved")
+      toast.success(t("sweep.a.attendance.saved"))
       router.refresh()
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save attendance")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.attendance.saveError"))
     } finally {
       setIsSubmitting(false)
     }
@@ -65,7 +67,7 @@ export function AttendanceForm({ churchId, eventId, roster, initialHeadcount }: 
   return (
     <div className="space-y-4">
       {roster.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No RSVPs to mark attendance for yet.</p>
+        <p className="text-sm text-muted-foreground">{t("sweep.a.attendance.noRsvps")}</p>
       ) : (
         <ul className="space-y-2">
           {roster.map((row) => (
@@ -86,19 +88,19 @@ export function AttendanceForm({ churchId, eventId, roster, initialHeadcount }: 
 
       <div className="flex items-end gap-3">
         <div className="flex flex-col gap-1">
-          <Label htmlFor="headcount">Headcount (optional)</Label>
+          <Label htmlFor="headcount">{t("sweep.a.attendance.headcountLabel")}</Label>
           <Input
             id="headcount"
             type="number"
             min="0"
-            placeholder="e.g. 500"
+            placeholder={t("sweep.a.attendance.headcountPlaceholder")}
             value={headcount}
             onChange={(e) => setHeadcount(e.target.value)}
             className="w-40"
           />
         </div>
         <Button onClick={onSubmit} disabled={isSubmitting}>
-          {isSubmitting ? "Saving..." : "Save Attendance"}
+          {isSubmitting ? t("sweep.a.form.saving") : t("sweep.a.attendance.save")}
         </Button>
       </div>
     </div>

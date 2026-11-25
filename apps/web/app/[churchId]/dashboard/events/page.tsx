@@ -5,6 +5,8 @@ import { format, startOfMonth, endOfMonth } from "date-fns"
 import { getEvents } from "@/actions/event"
 import { getServiceSessions } from "@/actions/attendance"
 import { ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
+import type { Translate } from "@church/config"
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -15,6 +17,13 @@ import { EventCalendarGrid } from "@/components/event/event-calendar-grid"
 interface PageProps {
   params: Promise<{ churchId: string }>
   searchParams: Promise<{ date?: string; month?: string }>
+}
+
+function eventStatusLabel(t: Translate, status: string): string {
+  if (status === "draft") return t("staff.events.status.draft")
+  if (status === "published") return t("staff.events.status.published")
+  if (status === "cancelled") return t("staff.events.status.cancelled")
+  return status
 }
 
 function formatTime(value: string | null | undefined): string {
@@ -35,6 +44,7 @@ async function DayAgenda({
   eventsPromise: Promise<any[]>
   sessionsPromise: Promise<any[]>
 }) {
+  const t = await getTranslator()
   const [events, sessions] = await Promise.all([eventsPromise, sessionsPromise])
 
   const dayEvents = events.filter((e) => String(e.startsAt).slice(0, 10) === selectedDate)
@@ -43,7 +53,7 @@ async function DayAgenda({
   const daySessions = sessions.filter((s) => String(s.sessionDate).slice(0, 10) === selectedDate)
 
   if (dayEvents.length === 0 && daySessions.length === 0) {
-    return <p className="text-sm text-muted-foreground">Nothing scheduled for this day.</p>
+    return <p className="text-sm text-muted-foreground">{t("staff.events.agenda.empty")}</p>
   }
 
   return (
@@ -62,7 +72,7 @@ async function DayAgenda({
               </p>
             </div>
             <Badge variant={event.status === "cancelled" ? "destructive" : "secondary"} className="capitalize">
-              {event.status}
+              {eventStatusLabel(t, event.status)}
             </Badge>
           </Link>
         </li>
@@ -74,11 +84,11 @@ async function DayAgenda({
         >
           <div>
             <p className="text-sm font-medium text-muted-foreground">
-              {session.title || "Service Session"}
+              {session.title || t("staff.sessions.fallbackName")}
             </p>
-            <p className="text-xs text-muted-foreground">Recurring service — not an event</p>
+            <p className="text-xs text-muted-foreground">{t("staff.events.agenda.serviceNote")}</p>
           </div>
-          <Badge variant="outline">Service</Badge>
+          <Badge variant="outline">{t("staff.events.agenda.serviceBadge")}</Badge>
         </li>
       ))}
     </ul>
@@ -87,6 +97,7 @@ async function DayAgenda({
 
 export default async function EventsCalendarPage({ params, searchParams }: PageProps) {
   await ensurePermission("view:events")
+  const t = await getTranslator()
   const { churchId } = await params
   const { date, month } = await searchParams
 
@@ -112,13 +123,11 @@ export default async function EventsCalendarPage({ params, searchParams }: PageP
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Events Calendar</h2>
-          <p className="text-muted-foreground">
-            Camp meetings, seminars and socials. Service sessions are shown for reference only.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">{t("staff.events.calendarTitle")}</h2>
+          <p className="text-muted-foreground">{t("staff.events.calendarDescription")}</p>
         </div>
         <Link href={`/${churchId}/dashboard/events/add`}>
-          <Button>Create Event</Button>
+          <Button>{t("staff.events.create")}</Button>
         </Link>
       </div>
       <Separator />

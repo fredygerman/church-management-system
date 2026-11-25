@@ -8,6 +8,7 @@ import { DepartmentMembersTable } from "@/components/department/table/department
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AddMemberDialogClient } from "@/components/department/add-member-dialog-client"
+import { getTranslator } from "@/lib/i18n/server"
 
 interface PageProps {
   params: Promise<{
@@ -29,6 +30,7 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
 
   // Get leaders (members with isLeader = true)
   const leaders = departmentMembers.filter((m) => m.isLeader)
+  const t = await getTranslator()
 
   return (
     <div className="flex flex-col space-y-6">
@@ -36,12 +38,12 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{department.name}</h2>
           <p className="text-muted-foreground mt-1">
-            View department details and manage members.
+            {t("staff.departments.detailDescription")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link href={`/${churchId}/dashboard/departments/${departmentId}/edit`}>
-            <Button variant="outline">Edit Department</Button>
+            <Button variant="outline">{t("staff.departments.edit")}</Button>
           </Link>
         </div>
       </div>
@@ -51,7 +53,7 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Department Name</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("staff.departments.name")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{department.name}</div>
@@ -60,18 +62,18 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Meeting Day</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("staff.groups.meetingDay")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold capitalize">
-              {department.meetingDay || "Not Set"}
+              {department.meetingDay || t("staff.groups.notSet")}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Leaders</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("staff.groups.leaders")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.leaders || 0}</div>
@@ -80,12 +82,14 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("staff.groups.totalMembers")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalMembers || 0}</div>
             <p className="text-xs text-muted-foreground mt-2">
-              {stats?.leaders || 0} leader{stats?.leaders !== 1 ? 's' : ''} • {stats?.regularMembers || 0} member{stats?.regularMembers !== 1 ? 's' : ''}
+              {t(stats?.leaders !== 1 ? "staff.groups.leaderCountPlural" : "staff.groups.leaderCount", { count: stats?.leaders || 0 })}
+              {" • "}
+              {t(stats?.regularMembers !== 1 ? "staff.groups.memberCountPlural" : "staff.groups.memberCount", { count: stats?.regularMembers || 0 })}
             </p>
           </CardContent>
         </Card>
@@ -94,7 +98,7 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
       {department.description && (
         <Card>
           <CardHeader>
-            <CardTitle>Description</CardTitle>
+            <CardTitle>{t("staff.groups.description")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">{department.description}</p>
@@ -106,7 +110,7 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
       {leaders.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Department Leaders</CardTitle>
+            <CardTitle>{t("staff.departments.leaders")}</CardTitle>
           </CardHeader>
           <CardContent>
             <ul className="space-y-2">
@@ -128,9 +132,9 @@ export default async function DepartmentDetailPage({ params }: PageProps) {
       {/* Department Members Section */}
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold">Department Members</h3>
+          <h3 className="text-lg font-semibold">{t("staff.departments.membersTitle")}</h3>
           <p className="text-muted-foreground text-sm">
-            Manage members assigned to this department.
+            {t("staff.departments.membersDescription")}
           </p>
         </div>
         <Separator />

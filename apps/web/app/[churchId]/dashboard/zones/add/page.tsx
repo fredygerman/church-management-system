@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
 import { ZoneCreateForm } from '@/components/zone/zone-create-form'
+import { getTranslator } from '@/lib/i18n/server'
 
 interface ZoneAddPageProps {
   params: Promise<{
@@ -11,6 +12,7 @@ interface ZoneAddPageProps {
 
 export default async function ZoneAddPage({ params }: ZoneAddPageProps) {
   const { churchId } = await params
+  const t = await getTranslator()
 
   return (
     <div className="flex min-h-screen w-full flex-col p-4">
@@ -19,12 +21,12 @@ export default async function ZoneAddPage({ params }: ZoneAddPageProps) {
         <Link href={`/${churchId}/dashboard/zones`}>
           <Button variant="outline" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            Back
+            {t("staff.groups.back")}
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Create New Zone</h1>
-          <p className="text-gray-600">Add a new zone to your church</p>
+          <h1 className="text-3xl font-bold">{t("staff.zones.createTitle")}</h1>
+          <p className="text-gray-600">{t("staff.zones.createDescription")}</p>
         </div>
       </div>
 

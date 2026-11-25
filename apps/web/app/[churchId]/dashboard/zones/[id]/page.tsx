@@ -8,6 +8,7 @@ import { ZoneMembersTable } from "@/components/zone/table/zone-members-table"
 import { Separator } from "@/components/ui/separator"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AddMemberDialogClient } from "@/components/zone/add-member-dialog-client"
+import { getTranslator } from "@/lib/i18n/server"
 
 interface PageProps {
   params: Promise<{
@@ -33,6 +34,7 @@ export default async function ZoneDetailPage({ params }: PageProps) {
 
   // Fetch zone statistics
   const stats = await getZoneStats(churchId, zoneId)
+  const t = await getTranslator()
 
   return (
     <div className="flex flex-col space-y-6">
@@ -40,12 +42,12 @@ export default async function ZoneDetailPage({ params }: PageProps) {
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{zone.name}</h2>
           <p className="text-muted-foreground mt-1">
-            View zone details and manage zone members.
+            {t("staff.zones.detailDescription")}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Link href={`/${churchId}/dashboard/zones/${zoneId}/edit`}>
-            <Button variant="outline">Edit Zone</Button>
+            <Button variant="outline">{t("staff.zones.edit")}</Button>
           </Link>
         </div>
       </div>
@@ -55,7 +57,7 @@ export default async function ZoneDetailPage({ params }: PageProps) {
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Zone Name</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("staff.zones.name")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{zone.name}</div>
@@ -64,34 +66,36 @@ export default async function ZoneDetailPage({ params }: PageProps) {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Meeting Day</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("staff.groups.meetingDay")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold capitalize">
-              {zone.meetingDay || "Not Set"}
+              {zone.meetingDay || t("staff.groups.notSet")}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Leader</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("staff.groups.leaderLabel")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {leader ? `${leader.firstName} ${leader.lastName}` : "Not Assigned"}
+              {leader ? `${leader.firstName} ${leader.lastName}` : t("staff.groups.notAssigned")}
             </div>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">Total Members</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("staff.groups.totalMembers")}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats?.totalMembers || 0}</div>
             <p className="text-xs text-muted-foreground mt-2">
-              {stats?.leaders || 0} leader{stats?.leaders !== 1 ? 's' : ''} • {stats?.regularMembers || 0} member{stats?.regularMembers !== 1 ? 's' : ''}
+              {t(stats?.leaders !== 1 ? "staff.groups.leaderCountPlural" : "staff.groups.leaderCount", { count: stats?.leaders || 0 })}
+              {" • "}
+              {t(stats?.regularMembers !== 1 ? "staff.groups.memberCountPlural" : "staff.groups.memberCount", { count: stats?.regularMembers || 0 })}
             </p>
           </CardContent>
         </Card>
@@ -100,7 +104,7 @@ export default async function ZoneDetailPage({ params }: PageProps) {
       {zone.description && (
         <Card>
           <CardHeader>
-            <CardTitle>Description</CardTitle>
+            <CardTitle>{t("staff.groups.description")}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground">{zone.description}</p>
@@ -111,9 +115,9 @@ export default async function ZoneDetailPage({ params }: PageProps) {
       {/* Zone Members Section */}
       <div className="space-y-4">
         <div>
-          <h3 className="text-lg font-semibold">Zone Members</h3>
+          <h3 className="text-lg font-semibold">{t("staff.zones.membersTitle")}</h3>
           <p className="text-muted-foreground text-sm">
-            Manage members assigned to this zone.
+            {t("staff.zones.membersDescription")}
           </p>
         </div>
         <Separator />

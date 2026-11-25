@@ -3,6 +3,7 @@ import Link from "next/link"
 import { getOfferings, getOfferingCategories } from "@/actions/offering"
 import { getGivingGoals } from "@/actions/giving-goal"
 import { ensurePermission } from "@/lib/permissions-server"
+import { getTranslator } from "@/lib/i18n/server"
 import { formatMoney } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
@@ -40,24 +41,25 @@ async function OfferingsTable({
   goals: Awaited<ReturnType<typeof getGivingGoals>>
   churchId: string
 }) {
+  const t = await getTranslator()
   const offerings = await offeringsPromise
   const categoryNameById = new Map(categories.map((category) => [category.id, category.name]))
   const goalNameById = new Map(goals.map((goal) => [goal.id, goal.name]))
 
   if (offerings.length === 0) {
-    return <p className="text-sm text-muted-foreground">No offerings recorded for this filter.</p>
+    return <p className="text-sm text-muted-foreground">{t("staff.offerings.empty")}</p>
   }
 
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Date</TableHead>
-          <TableHead>Category</TableHead>
-          <TableHead>Goal</TableHead>
-          <TableHead>Member</TableHead>
-          <TableHead className="text-right">Amount</TableHead>
-          <TableHead className="w-24 text-right">Actions</TableHead>
+          <TableHead>{t("staff.offerings.table.date")}</TableHead>
+          <TableHead>{t("staff.offerings.table.category")}</TableHead>
+          <TableHead>{t("staff.offerings.table.goal")}</TableHead>
+          <TableHead>{t("staff.offerings.table.member")}</TableHead>
+          <TableHead className="text-right">{t("staff.offerings.table.amount")}</TableHead>
+          <TableHead className="w-24 text-right">{t("staff.offerings.table.actions")}</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -73,7 +75,7 @@ async function OfferingsTable({
                 : "—"}
             </TableCell>
             <TableCell className="text-muted-foreground">
-              {offering.memberName ?? "Anonymous"}
+              {offering.memberName ?? t("staff.offerings.anonymous")}
             </TableCell>
             <TableCell className="text-right font-medium">
               {formatMoney(offering.amountCents, offering.currency)}
@@ -83,7 +85,7 @@ async function OfferingsTable({
                 href={`/${churchId}/dashboard/offerings/${offering.id}/edit`}
                 className="text-blue-600 hover:underline"
               >
-                Edit
+                {t("staff.offerings.edit")}
               </Link>
             </TableCell>
           </TableRow>
@@ -95,6 +97,7 @@ async function OfferingsTable({
 
 export default async function OfferingsPage({ params, searchParams }: PageProps) {
   await ensurePermission("manage:offerings")
+  const t = await getTranslator()
   const { churchId } = await params
   const filters = await searchParams
   const [categories, goals] = await Promise.all([
@@ -107,18 +110,18 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Offerings</h2>
-          <p className="text-muted-foreground">Record and review giving for your church.</p>
+          <h2 className="text-2xl font-bold tracking-tight">{t("staff.offerings.title")}</h2>
+          <p className="text-muted-foreground">{t("staff.offerings.description")}</p>
         </div>
         <div className="flex items-center gap-4">
           <Link href={`/${churchId}/dashboard/offerings/categories`}>
-            <Button variant="outline">Categories</Button>
+            <Button variant="outline">{t("staff.offerings.categories")}</Button>
           </Link>
           <Link href={`/${churchId}/dashboard/offerings/reports`}>
-            <Button variant="outline">Reports</Button>
+            <Button variant="outline">{t("staff.offerings.reports")}</Button>
           </Link>
           <Link href={`/${churchId}/dashboard/offerings/add`}>
-            <Button>Record Offering</Button>
+            <Button>{t("staff.offerings.record")}</Button>
           </Link>
         </div>
       </div>
@@ -127,7 +130,7 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
       <form className="flex flex-wrap items-end gap-3" method="get">
         <div className="flex flex-col gap-1">
           <label htmlFor="categoryId" className="text-xs text-muted-foreground">
-            Category
+            {t("staff.offerings.filter.category")}
           </label>
           <select
             id="categoryId"
@@ -135,7 +138,7 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
             defaultValue={filters.categoryId || ""}
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
           >
-            <option value="">All categories</option>
+            <option value="">{t("staff.offerings.filter.allCategories")}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -145,7 +148,7 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="goalId" className="text-xs text-muted-foreground">
-            Goal
+            {t("staff.offerings.filter.goal")}
           </label>
           <select
             id="goalId"
@@ -153,7 +156,7 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
             defaultValue={filters.goalId || ""}
             className="h-9 rounded-md border border-input bg-background px-3 text-sm"
           >
-            <option value="">All goals</option>
+            <option value="">{t("staff.offerings.filter.allGoals")}</option>
             {goals.map((goal) => (
               <option key={goal.id} value={goal.id}>
                 {goal.name}
@@ -163,7 +166,7 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="from" className="text-xs text-muted-foreground">
-            From
+            {t("staff.offerings.filter.from")}
           </label>
           <input
             id="from"
@@ -175,7 +178,7 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
         </div>
         <div className="flex flex-col gap-1">
           <label htmlFor="to" className="text-xs text-muted-foreground">
-            To
+            {t("staff.offerings.filter.to")}
           </label>
           <input
             id="to"
@@ -186,11 +189,11 @@ export default async function OfferingsPage({ params, searchParams }: PageProps)
           />
         </div>
         <Button type="submit" variant="secondary">
-          Filter
+          {t("staff.offerings.filter.submit")}
         </Button>
         <Link href={`/${churchId}/dashboard/offerings`}>
           <Button type="button" variant="ghost">
-            Clear
+            {t("staff.offerings.filter.clear")}
           </Button>
         </Link>
       </form>

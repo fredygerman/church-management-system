@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
 import { createOfferingCategory, updateOfferingCategory } from "@/actions/offering"
 import { toast } from "sonner"
@@ -20,13 +20,18 @@ import {
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
+import type { Translate } from "@church/config"
+import { useT } from "@/components/i18n/locale-provider"
 
-const offeringCategoryFormSchema = z.object({
-  name: z.string().min(2, "Category name must be at least 2 characters"),
-  description: z.string().optional(),
-})
+// Validation messages are translated, so the schema is built per locale.
+function buildOfferingCategoryFormSchema(t: Translate) {
+  return z.object({
+    name: z.string().min(2, t("sweep.a.category.nameMin")),
+    description: z.string().optional(),
+  })
+}
 
-type OfferingCategoryFormData = z.infer<typeof offeringCategoryFormSchema>
+type OfferingCategoryFormData = z.infer<ReturnType<typeof buildOfferingCategoryFormSchema>>
 
 interface OfferingCategoryFormProps {
   churchId: string
@@ -35,6 +40,8 @@ interface OfferingCategoryFormProps {
 }
 
 export function OfferingCategoryForm({ churchId, initialData, isEditMode = false }: OfferingCategoryFormProps) {
+  const { t } = useT()
+  const offeringCategoryFormSchema = useMemo(() => buildOfferingCategoryFormSchema(t), [t])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
 
@@ -51,14 +58,14 @@ export function OfferingCategoryForm({ churchId, initialData, isEditMode = false
     try {
       if (isEditMode && initialData?.id) {
         await updateOfferingCategory(initialData.id, data, churchId)
-        toast.success("Category updated successfully!")
+        toast.success(t("sweep.a.category.updated"))
       } else {
         await createOfferingCategory({ churchId, ...data })
-        toast.success("Category created successfully!")
+        toast.success(t("sweep.a.category.created"))
       }
       router.push(`/${churchId}/dashboard/offerings/categories`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "An error occurred")
+      toast.error(error instanceof Error ? error.message : t("sweep.a.form.genericError"))
     } finally {
       setIsSubmitting(false)
     }
@@ -73,9 +80,9 @@ export function OfferingCategoryForm({ churchId, initialData, isEditMode = false
             name="name"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Category Name</FormLabel>
+                <FormLabel>{t("sweep.a.category.nameLabel")}</FormLabel>
                 <FormControl>
-                  <Input placeholder="e.g., Tithe, Building Fund, Missions" {...field} />
+                  <Input placeholder={t("sweep.a.category.namePlaceholder")} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -87,15 +94,15 @@ export function OfferingCategoryForm({ churchId, initialData, isEditMode = false
             name="description"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Description</FormLabel>
+                <FormLabel>{t("sweep.a.form.description")}</FormLabel>
                 <FormControl>
                   <Textarea
-                    placeholder="Enter category description"
+                    placeholder={t("sweep.a.category.descriptionPlaceholder")}
                     className="min-h-32"
                     {...field}
                   />
                 </FormControl>
-                <FormDescription>Optional description for the category</FormDescription>
+                <FormDescription>{t("sweep.a.category.descriptionHelp")}</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -103,10 +110,14 @@ export function OfferingCategoryForm({ churchId, initialData, isEditMode = false
 
           <div className="flex gap-4">
             <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Saving..." : isEditMode ? "Update Category" : "Create Category"}
+              {isSubmitting
+                ? t("sweep.a.form.saving")
+                : isEditMode
+                ? t("sweep.a.category.update")
+                : t("sweep.a.category.create")}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.back()} className="flex-1">
-              Cancel
+              {t("sweep.a.form.cancel")}
             </Button>
           </div>
         </form>
