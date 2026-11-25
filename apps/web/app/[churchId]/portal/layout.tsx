@@ -7,6 +7,8 @@ import { getSession } from "@/auth"
 import { ChurchSwitcher } from "@/components/layout/church-switcher"
 import { Button } from "@/components/ui/button"
 import { hasPermission, type PermissionAction } from "@/lib/permissions"
+import { getTranslator } from "@/lib/i18n/server"
+import type { MessageKey } from "@church/config"
 
 interface PageProps {
   params: Promise<{
@@ -14,16 +16,16 @@ interface PageProps {
   }>
 }
 
-const portalLinks: { href: string; label: string; icon: typeof UserRound; permission?: PermissionAction }[] = [
-  { href: "profile", label: "Profile", icon: UserRound },
-  { href: "family", label: "Family", icon: UsersRound },
-  { href: "attendance", label: "Attendance", icon: CalendarCheck },
-  { href: "prayer", label: "Prayer", icon: HeartHandshake },
-  { href: "announcements", label: "Announcements", icon: Bell },
-  { href: "departments", label: "Departments", icon: Building2, permission: "read:department" },
-  { href: "offerings", label: "My Giving", icon: HandCoins, permission: "read:own-giving-history" },
-  { href: "giving-goals", label: "Giving Goals", icon: Target, permission: "view:giving-goals" },
-  { href: "events", label: "Events", icon: CalendarDays, permission: "view:events" },
+const portalLinks: { href: string; label: MessageKey; icon: typeof UserRound; permission?: PermissionAction }[] = [
+  { href: "profile", label: "portal.nav.profile", icon: UserRound },
+  { href: "family", label: "portal.nav.family", icon: UsersRound },
+  { href: "attendance", label: "portal.nav.attendance", icon: CalendarCheck },
+  { href: "prayer", label: "portal.nav.prayer", icon: HeartHandshake },
+  { href: "announcements", label: "portal.nav.announcements", icon: Bell },
+  { href: "departments", label: "portal.nav.departments", icon: Building2, permission: "read:department" },
+  { href: "offerings", label: "portal.nav.giving", icon: HandCoins, permission: "read:own-giving-history" },
+  { href: "giving-goals", label: "portal.nav.givingGoals", icon: Target, permission: "view:giving-goals" },
+  { href: "events", label: "portal.nav.events", icon: CalendarDays, permission: "view:events" },
 ]
 
 export default async function PortalLayout({
@@ -31,6 +33,7 @@ export default async function PortalLayout({
   children,
 }: PageProps & { children: React.ReactNode }) {
   const { churchId } = await params
+  const t = await getTranslator()
   const session = await getSession()
 
   if (!session?.user) {
@@ -71,7 +74,7 @@ export default async function PortalLayout({
               <Button key={item.href} asChild variant="ghost" className="justify-start">
                 <Link href={`/${churchId}/portal/${item.href}`}>
                   <Icon className="mr-2 size-4" />
-                  {item.label}
+                  {t(item.label)}
                 </Link>
               </Button>
             )

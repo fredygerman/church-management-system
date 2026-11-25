@@ -2,9 +2,11 @@ import { useState } from "react"
 import { Button, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native"
 import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
+import { useT } from "../../lib/locale"
 
 export default function SignInScreen() {
   const { signIn } = useSession()
+  const { t } = useT()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [error, setError] = useState("")
@@ -18,8 +20,8 @@ export default function SignInScreen() {
       // The session gate sends the user to the member or staff area for their role.
       await signIn(response)
     } catch (caught) {
-      const apiError = caught instanceof ApiError ? caught : new ApiError("Unable to sign in. Try again.", "network")
-      setError(apiError.kind === "not-configured" ? apiError.message : apiError.status === 401 ? "Invalid email or password." : apiError.kind === "network" ? apiError.message : apiError.message)
+      const apiError = caught instanceof ApiError ? caught : null
+      setError(!apiError ? t("mobile.member.signIn.genericError") : apiError.kind === "not-configured" ? apiError.message : apiError.status === 401 ? t("mobile.member.signIn.invalid") : apiError.kind === "network" ? t("mobile.member.signIn.networkError") : apiError.message)
     } finally {
       setLoading(false)
     }
@@ -28,12 +30,11 @@ export default function SignInScreen() {
   return <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
     <View style={styles.form}>
       <Text style={styles.title}>Mito Ya Baraka Church</Text>
-      <Text style={styles.message}>Sign in to your church account.</Text>
-      <TextInput accessibilityLabel="Email" autoCapitalize="none" autoComplete="email" keyboardType="email-address" onChangeText={setEmail} placeholder="Email" style={styles.input} value={email} />
-      <TextInput accessibilityLabel="Password" autoCapitalize="none" autoComplete="password" onChangeText={setPassword} placeholder="Password" secureTextEntry style={styles.input} value={password} />
+      <Text style={styles.message}>{t("mobile.member.signIn.subtitle")}</Text>
+      <TextInput accessibilityLabel={t("mobile.member.signIn.email")} autoCapitalize="none" autoComplete="email" keyboardType="email-address" onChangeText={setEmail} placeholder={t("mobile.member.signIn.email")} style={styles.input} value={email} />
+      <TextInput accessibilityLabel={t("mobile.member.signIn.password")} autoCapitalize="none" autoComplete="password" onChangeText={setPassword} placeholder={t("mobile.member.signIn.password")} secureTextEntry style={styles.input} value={password} />
       {error ? <Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text> : null}
-      <Button disabled={loading || !email || !password} title={loading ? "Signing in…" : "Sign in"} onPress={submit} />
-      {/* TODO: Have fluent reviewers provide Swahili copy before localization. */}
+      <Button disabled={loading || !email || !password} title={loading ? t("mobile.member.signIn.submitting") : t("mobile.member.signIn.submit")} onPress={submit} />
     </View>
   </KeyboardAvoidingView>
 }

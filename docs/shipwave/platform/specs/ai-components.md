@@ -28,6 +28,13 @@ Names (`name`, column `key`, param names) match `^[a-zA-Z][a-zA-Z0-9_]{0,63}$`. 
 
 The limits above that the spec did not fix (component count, item counts, label lengths) are first-pass choices. Change them in `AI_LIMITS` together with the tests.
 
+## Sources and uncertainty
+
+The answer may carry two fields next to `components` (`AiResponse` in `ai-components.ts`). The API sets both from the read-tool results of that answer; the model cannot set them.
+
+- `sources?: { title: string, href?: string }[]`: the data sources of the read tools that succeeded. `href` is an optional relative in-app path; it is unset when no stable route exists. Unset when no tool ran.
+- `uncertain?: boolean`: `true` when any read tool was denied or failed, so part of the answer may be missing. Unset when no tool ran.
+
 ## Href rule
 
 Every `href` must be a relative in-app path: it starts with `/`, is not `//...`, contains no backslash, and no whitespace or control characters. Absolute URLs, `javascript:`, `data:` and similar schemes are rejected.

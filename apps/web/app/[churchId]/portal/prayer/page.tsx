@@ -2,6 +2,7 @@ import { Suspense } from "react"
 import Link from "next/link"
 
 import { apiGet } from "@/lib/api-helpers"
+import { getTranslator } from "@/lib/i18n/server"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PortalPrayerRequestForm } from "@/components/portal/prayer-request-form"
@@ -22,30 +23,31 @@ function formatDate(value: string | null | undefined): string {
 }
 
 async function PrayerContent({ churchId }: { churchId: string }) {
+  const t = await getTranslator()
   try {
     const response = await apiGet<any[]>("/prayer-requests/me", { churchId })
     const prayerRequests = Array.isArray(response) ? response : []
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">Prayer</h1>
+          <h1 className="text-foreground text-2xl font-semibold">{t("portal.prayer.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            Submit and follow up on prayer requests.
+            {t("portal.prayer.subtitle")}
           </p>
         </div>
         <div className="border-border bg-card rounded-lg border p-5">
           <h2 className="text-foreground mb-3 text-sm font-medium">
-            Submit a prayer request
+            {t("portal.prayer.submitTitle")}
           </h2>
           <PortalPrayerRequestForm churchId={churchId} />
         </div>
         <div className="border-border bg-card rounded-lg border p-5">
           <h2 className="text-foreground mb-3 text-sm font-medium">
-            Your requests
+            {t("portal.prayer.yourRequests")}
           </h2>
           {prayerRequests.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              You have not submitted any prayer requests yet.
+              {t("portal.prayer.empty")}
             </p>
           ) : (
             <ul className="space-y-3">
@@ -60,7 +62,9 @@ async function PrayerContent({ churchId }: { churchId: string }) {
                         request.status === "answered" ? "default" : "secondary"
                       }
                     >
-                      {request.status === "answered" ? "Answered" : "Open"}
+                      {request.status === "answered"
+                        ? t("portal.prayer.status.answered")
+                        : t("portal.prayer.status.open")}
                     </Badge>
                     <span className="text-muted-foreground text-xs">
                       {formatDate(request.createdAt)}
@@ -72,22 +76,21 @@ async function PrayerContent({ churchId }: { churchId: string }) {
             </ul>
           )}
         </div>
-        {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
   } catch (error) {
     if (isForbiddenError(error)) {
-      return <PortalDeniedState title="Prayer" />
+      return <PortalDeniedState title={t("portal.prayer.title")} />
     }
     return (
       <div className="space-y-4">
-        <h1 className="text-foreground text-2xl font-semibold">Prayer</h1>
+        <h1 className="text-foreground text-2xl font-semibold">{t("portal.prayer.title")}</h1>
         <div className="border-destructive/50 bg-card rounded-lg border p-5">
           <p className="text-destructive text-sm">
-            We could not load your prayer requests.
+            {t("portal.prayer.loadError")}
           </p>
           <Button asChild variant="outline" className="mt-4">
-            <Link href={`/${churchId}/portal/prayer`}>Retry</Link>
+            <Link href={`/${churchId}/portal/prayer`}>{t("common.retry")}</Link>
           </Button>
         </div>
       </div>

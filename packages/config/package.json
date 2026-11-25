@@ -34,7 +34,7 @@
     "lint": "eslint \"src/**/*.ts\" --fix",
     "lint:fix": "eslint \"src/**/*.ts\" --fix",
     "type-check": "tsc --noEmit",
-    "test": "tsc && node --test dist/types/ai-components.test.js",
+    "test": "tsc && node --test dist/types/ai-components.test.js dist/i18n/i18n.test.js",
     "clean": "rimraf dist"
   },
   "dependencies": {

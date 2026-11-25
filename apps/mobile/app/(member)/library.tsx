@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { ActivityIndicator, FlatList, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
 import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
+import { useT } from "../../lib/locale"
+import type { Translate } from "@church/config"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
 
 type LibraryDocument = {
@@ -16,8 +18,8 @@ type LibraryDocument = {
 
 type LibraryResponse = LibraryDocument[] | { documents?: LibraryDocument[] }
 
-function formatFileSize(bytes: number) {
-  if (!Number.isFinite(bytes) || bytes < 0) return "Unknown size"
+function formatFileSize(bytes: number, t: Translate) {
+  if (!Number.isFinite(bytes) || bytes < 0) return t("mobile.member.library.unknownSize")
   if (bytes < 1024) return `${bytes} B`
   const units = ["KB", "MB", "GB"]
   let value = bytes / 1024
@@ -29,15 +31,16 @@ function formatFileSize(bytes: number) {
   return `${value >= 10 ? value.toFixed(0) : value.toFixed(1)} ${units[unitIndex]}`
 }
 
-function fileType(document: LibraryDocument) {
+function fileType(document: LibraryDocument, t: Translate) {
   const contentType = document.content_type.split("/")[1]?.toUpperCase()
   if (contentType) return contentType
   const extension = document.original_file_name.split(".").pop()?.toUpperCase()
-  return extension || "FILE"
+  return extension || t("mobile.member.library.fileFallback")
 }
 
 export default function LibraryScreen() {
   const { user } = useSession()
+  const { t } = useT()
   const churchId = typeof user?.churchId === "string" ? user.churchId : null
   const [documents, setDocuments] = useState<LibraryDocument[]>([])
   const [error, setError] = useState("")
@@ -48,7 +51,7 @@ export default function LibraryScreen() {
 
   const load = useCallback(async () => {
     if (!churchId) {
-      setError("Your account does not include a church.")
+      setError(t("mobile.member.library.noChurch"))
       setLoading(false)
       return
     }
@@ -59,11 +62,11 @@ export default function LibraryScreen() {
       setDocuments(Array.isArray(nextDocuments) ? nextDocuments : [])
       setError("")
     } catch (caught) {
-      setError(caught instanceof ApiError ? caught.message : "Unable to load shared documents.")
+      setError(caught instanceof ApiError ? caught.message : t("mobile.member.library.loadError"))
     } finally {
       setLoading(false)
     }
-  }, [churchId])
+  }, [churchId, t])
 
   useEffect(() => { void load() }, [load])
 
@@ -76,13 +79,13 @@ export default function LibraryScreen() {
       await Linking.openURL(result.url)
     } catch (caught) {
       const message = caught instanceof ApiError && caught.status === 404
-        ? "This document is no longer available."
-        : "Unable to open this document. Please try again."
+        ? t("mobile.member.library.unavailable")
+        : t("mobile.member.library.openError")
       setRowErrors((current) => ({ ...current, [document.id]: message }))
     } finally {
       setDownloadingId(null)
     }
-  }, [churchId, downloadingId])
+  }, [churchId, downloadingId, t])
 
   // Client-side filter over the loaded list; no search endpoint exists.
   const visibleDocuments = useMemo(() => {
@@ -96,14 +99,14 @@ export default function LibraryScreen() {
 
   if (loading) return <LoadingState />
   if (error) return <ErrorState message={error} onRetry={() => void load()} />
-  if (!documents.length) return <EmptyState message="No shared documents have been published yet." />
+  if (!documents.length) return <EmptyState message={t("mobile.member.library.empty")} />
 
   return <FlatList
-    ListEmptyComponent={<EmptyState message="No documents match your search." />}
+    ListEmptyComponent={<EmptyState message={t("mobile.member.library.noMatches")} />}
     ListHeaderComponent={<View>
-      <Text style={styles.formLabel}>Search documents</Text>
+      <Text style={styles.formLabel}>{t("mobile.member.library.search")}</Text>
       <TextInput
-        accessibilityLabel="Search documents"
+        accessibilityLabel={t("mobile.member.library.search")}
         autoCapitalize="none"
         autoCorrect={false}
         onChangeText={setQuery}
@@ -128,10 +131,10 @@ export default function LibraryScreen() {
       >
         <View style={libraryStyles.rowHeader}>
           <Text style={styles.heading}>{item.title}</Text>
-          {busy ? <ActivityIndicator accessibilityLabel="Opening document" /> : null}
+          {busy ? <ActivityIndicator accessibilityLabel={t("mobile.member.library.opening")} /> : null}
         </View>
         {item.description ? <Text style={styles.text}>{item.description}</Text> : null}
-        <Text style={libraryStyles.metadata}>{fileType(item)} · {formatFileSize(item.size_bytes)}</Text>
+        <Text style={libraryStyles.metadata}>{fileType(item, t)} · {formatFileSize(item.size_bytes, t)}</Text>
         {rowError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{rowError}</Text> : null}
       </Pressable>
     }}
@@ -142,5 +145,3 @@ const libraryStyles = StyleSheet.create({
   metadata: { color: "#4b5563", fontSize: 14 },
   rowHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
 })
-
-// TODO: Have fluent reviewers provide Swahili copy before localization.

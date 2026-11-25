@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { useT } from "@/components/i18n/locale-provider"
 
 export function StaffDocumentDeleteButton({
   churchId,
@@ -23,6 +24,7 @@ export function StaffDocumentDeleteButton({
   documentId: string
   title: string
 }) {
+  const { t } = useT()
   const [open, setOpen] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
 
@@ -30,10 +32,10 @@ export function StaffDocumentDeleteButton({
     setIsDeleting(true)
     try {
       await deleteStaffDocument(churchId, documentId)
-      toast.success("Document deleted.")
+      toast.success(t("staff.content.delete.success"))
       setOpen(false)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The document could not be deleted.")
+      toast.error(error instanceof Error ? error.message : t("staff.content.delete.error"))
     } finally {
       setIsDeleting(false)
     }
@@ -45,25 +47,25 @@ export function StaffDocumentDeleteButton({
         type="button"
         variant="outline"
         size="sm"
-        aria-label={`Delete ${title}`}
+        aria-label={t("staff.content.delete.ariaLabel", { title })}
         onClick={() => setOpen(true)}
       >
-        Delete
+        {t("staff.content.delete.button")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete {title}?</DialogTitle>
+            <DialogTitle>{t("staff.content.delete.heading", { title })}</DialogTitle>
             <DialogDescription>
-              Members will no longer see or download this document in the library.
+              {t("staff.content.delete.description")}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={isDeleting}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button type="button" variant="destructive" onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? "Deleting…" : "Delete document"}
+              {isDeleting ? t("staff.content.delete.deleting") : t("staff.content.delete.confirm")}
             </Button>
           </DialogFooter>
         </DialogContent>

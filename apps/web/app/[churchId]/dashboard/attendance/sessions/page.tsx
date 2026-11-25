@@ -10,6 +10,7 @@ import {
 } from "@/actions/attendance"
 
 import { Button } from "@/components/ui/button"
+import { getTranslator } from "@/lib/i18n/server"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -25,6 +26,7 @@ function SessionsLoading() {
 }
 
 async function SessionsContent({ churchId }: { churchId: string }) {
+  const t = await getTranslator()
   const [serviceTypesResult, sessionsResult] = await Promise.allSettled([
     getServiceTypes(churchId),
     getServiceSessions(churchId),
@@ -43,6 +45,11 @@ async function SessionsContent({ churchId }: { churchId: string }) {
     sessionsResult.status === "rejected" ? sessionsResult.reason : null
   const getMessage = (error: unknown, fallback: string) =>
     error instanceof Error ? error.message : fallback
+  const statusLabels: Record<string, string> = {
+    draft: t("staff.sessions.status.draft"),
+    open: t("staff.sessions.status.open"),
+    closed: t("staff.sessions.status.closed"),
+  }
 
   for (const error of [serviceTypesError, sessionsError]) {
     if (error instanceof Error && error.message.includes("NEXT_REDIRECT"))
@@ -89,9 +96,9 @@ async function SessionsContent({ churchId }: { churchId: string }) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold">Service Sessions</h1>
+        <h1 className="text-2xl font-semibold">{t("staff.sessions.title")}</h1>
         <p className="text-muted-foreground text-sm">
-          Create sessions and switch between draft/open/closed status.
+          {t("staff.sessions.description")}
         </p>
       </div>
       {serviceTypesError ? (
@@ -100,11 +107,11 @@ async function SessionsContent({ churchId }: { churchId: string }) {
           role="alert"
         >
           <p className="text-destructive text-sm">
-            {getMessage(serviceTypesError, "Service types are unavailable.")}
+            {getMessage(serviceTypesError, t("staff.sessions.typeUnavailable"))}
           </p>
           <Button asChild variant="outline" className="mt-4">
             <Link href={`/${churchId}/dashboard/attendance/sessions`}>
-              Retry
+              {t("staff.common.retry")}
             </Link>
           </Button>
         </div>
@@ -118,7 +125,7 @@ async function SessionsContent({ churchId }: { churchId: string }) {
             className="rounded-md border px-3 py-2 text-sm"
             required
           >
-            <option value="">Select service type</option>
+            <option value="">{t("staff.sessions.selectType")}</option>
             {serviceTypes?.map((type) => (
               <option key={type.id} value={type.id}>
                 {type.name}
@@ -127,7 +134,7 @@ async function SessionsContent({ churchId }: { churchId: string }) {
           </select>
           <input
             name="title"
-            placeholder="Session title (optional)"
+            placeholder={t("staff.sessions.titlePlaceholder")}
             className="rounded-md border px-3 py-2 text-sm"
           />
           <input
@@ -140,7 +147,7 @@ async function SessionsContent({ churchId }: { churchId: string }) {
             type="submit"
             className="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm"
           >
-            Create Session
+            {t("staff.sessions.create")}
           </button>
         </form>
       )}
@@ -151,11 +158,11 @@ async function SessionsContent({ churchId }: { churchId: string }) {
             role="alert"
           >
             <p className="text-destructive text-sm">
-              {getMessage(sessionsError, "Service sessions are unavailable.")}
+              {getMessage(sessionsError, t("staff.sessions.unavailable"))}
             </p>
             <Button asChild variant="outline" className="mt-4">
               <Link href={`/${churchId}/dashboard/attendance/sessions`}>
-                Retry
+                {t("staff.common.retry")}
               </Link>
             </Button>
           </div>
@@ -167,11 +174,14 @@ async function SessionsContent({ churchId }: { churchId: string }) {
                   <p className="font-medium">
                     {session.title ||
                       session.serviceType?.name ||
-                      "Service Session"}
+                      t("staff.sessions.fallbackName")}
                   </p>
                   <p className="text-muted-foreground text-xs">
-                    {session.sessionDate} • Status: {session.status} • QR:{" "}
-                    {session.qrToken}
+                    {t("staff.sessions.meta", {
+                      date: session.sessionDate,
+                      status: statusLabels[session.status] ?? session.status,
+                      qr: session.qrToken,
+                    })}
                   </p>
                 </div>
                 <form action={statusAction} className="flex items-center gap-2">
@@ -181,15 +191,15 @@ async function SessionsContent({ churchId }: { churchId: string }) {
                     defaultValue={session.status}
                     className="rounded-md border px-2 py-1 text-sm"
                   >
-                    <option value="draft">Draft</option>
-                    <option value="open">Open</option>
-                    <option value="closed">Closed</option>
+                    <option value="draft">{t("staff.sessions.status.draft")}</option>
+                    <option value="open">{t("staff.sessions.status.open")}</option>
+                    <option value="closed">{t("staff.sessions.status.closed")}</option>
                   </select>
                   <button
                     className="rounded-md border px-3 py-1 text-sm"
                     type="submit"
                   >
-                    Update
+                    {t("staff.sessions.update")}
                   </button>
                 </form>
               </div>
@@ -202,35 +212,35 @@ async function SessionsContent({ churchId }: { churchId: string }) {
                   name="menCount"
                   type="number"
                   min={0}
-                  placeholder="Men"
+                  placeholder={t("staff.sessions.men")}
                   className="rounded-md border px-2 py-1 text-sm"
                 />
                 <input
                   name="womenCount"
                   type="number"
                   min={0}
-                  placeholder="Women"
+                  placeholder={t("staff.sessions.women")}
                   className="rounded-md border px-2 py-1 text-sm"
                 />
                 <input
                   name="childrenCount"
                   type="number"
                   min={0}
-                  placeholder="Children"
+                  placeholder={t("staff.sessions.children")}
                   className="rounded-md border px-2 py-1 text-sm"
                 />
                 <input
                   name="visitorsCount"
                   type="number"
                   min={0}
-                  placeholder="Visitors"
+                  placeholder={t("staff.sessions.visitors")}
                   className="rounded-md border px-2 py-1 text-sm"
                 />
                 <button
                   type="submit"
                   className="rounded-md border px-3 py-1 text-sm"
                 >
-                  Save Headcount
+                  {t("staff.sessions.saveHeadcount")}
                 </button>
               </form>
             </div>
@@ -238,11 +248,10 @@ async function SessionsContent({ churchId }: { churchId: string }) {
         )}
         {!sessionsError && sessions?.length === 0 && (
           <p className="text-muted-foreground text-sm">
-            No service sessions are available yet.
+            {t("staff.sessions.empty")}
           </p>
         )}
       </div>
-      {/* TODO: Add reviewed Swahili copy for this staff page. */}
     </div>
   )
 }

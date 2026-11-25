@@ -1,8 +1,9 @@
 import { Button, StyleSheet, Text, View } from "react-native"
+import { useT } from "../lib/locale"
 
-export function LoadingState() { return <View style={styles.center}><Text>Loading…</Text></View> }
+export function LoadingState() { const { t } = useT(); return <View style={styles.center}><Text>{t("common.loading")}</Text></View> }
 export function EmptyState({ message }: { message: string }) { return <View style={styles.center}><Text>{message}</Text></View> }
-export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) { return <View style={styles.center}><Text style={styles.error}>{message}</Text><Button title="Try again" onPress={onRetry} /></View> }
+export function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) { const { t } = useT(); return <View style={styles.center}><Text style={styles.error}>{message}</Text><Button title={t("common.retry")} onPress={onRetry} /></View> }
 export const styles = StyleSheet.create({
   center: { alignItems: "center", flex: 1, gap: 14, justifyContent: "center", padding: 24 },
   error: { color: "#a21c1c", textAlign: "center" },

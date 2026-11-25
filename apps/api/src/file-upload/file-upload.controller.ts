@@ -28,6 +28,7 @@ import { ChurchContextGuard } from '../auth/guards/church-context.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { RequirePermission } from '../auth/decorators/require-permission.decorator';
 import { AuthenticatedRequest } from '../auth/dto/auth-request.dto';
+import { UpdateDocumentDto } from './dtos/update-document.dto';
 import { ExceptionConstants } from '../core/exceptions/exceptions.constants';
 
 // Define Express Multer File type locally
@@ -467,8 +468,7 @@ export class FileUploadController {
   @ApiBearerAuth('access-token')
   async updateDocument(
     @Param('id') id: string,
-    @Body('title') title?: string,
-    @Body('description') description?: string,
+    @Body() body: UpdateDocumentDto,
     @Req() req?: AuthenticatedRequest
   ) {
     this.logger.log(`Updating document ${id}`);
@@ -493,7 +493,11 @@ export class FileUploadController {
       id,
       req.user.id,
       req.user.role,
-      { title, description },
+      {
+        title: body?.title,
+        description: body?.description,
+        visibleToMembers: body?.visibleToMembers,
+      },
     );
   }
 

@@ -6,12 +6,11 @@ import { NotConnectedState } from "../components/not-connected-state"
 import { styles } from "../components/screen-state"
 import { ApiError, api } from "../lib/api"
 import { useSession } from "../lib/session"
+import { useT } from "../lib/locale"
 
 type Entry = { role: "user"; text: string } | { role: "assistant"; components: AiComponent[] | null; sources: AiSource[]; uncertain: boolean }
-type Status = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message: string } | { kind: "unavailable"; message: string } | { kind: "not-connected" }
-
-const UNAVAILABLE = "AI is not available right now"
-const INVALID_ANSWER = "This answer could not be shown safely. Try asking again."
+// Error messages are chosen at render time so they follow the current language. A server message is kept as sent.
+type Status = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message?: string } | { kind: "invalid" } | { kind: "unavailable" } | { kind: "not-connected" }
 
 // validateAiResponse only checks components, so sources and uncertain are read here, as plain titles.
 function readSources(value: unknown): AiSource[] {
@@ -21,6 +20,7 @@ function readSources(value: unknown): AiSource[] {
 
 export default function AiScreen() {
   const { user } = useSession()
+  const { t } = useT()
   const churchId = typeof user?.churchId === "string" ? user.churchId : undefined
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [entries, setEntries] = useState<Entry[]>([])
@@ -41,11 +41,11 @@ export default function AiScreen() {
       setConversationId(result.conversationId)
       setEntries((current) => [...current, { role: "user", text }, { role: "assistant", components: checked.ok ? checked.value.components : null, sources, uncertain }])
       setMessage((current) => (current === text ? "" : current))
-      setStatus(checked.ok ? { kind: "idle" } : { kind: "error", message: INVALID_ANSWER })
+      setStatus(checked.ok ? { kind: "idle" } : { kind: "invalid" })
     } catch (caught) {
       if (caught instanceof ApiError && caught.kind === "not-configured") setStatus({ kind: "not-connected" })
-      else if (caught instanceof ApiError && caught.status === 503) setStatus({ kind: "unavailable", message: UNAVAILABLE })
-      else setStatus({ kind: "error", message: caught instanceof ApiError ? caught.message : "Unable to reach the assistant. Try again." })
+      else if (caught instanceof ApiError && caught.status === 503) setStatus({ kind: "unavailable" })
+      else setStatus({ kind: "error", message: caught instanceof ApiError ? caught.message : undefined })
     }
   }
 
@@ -56,51 +56,58 @@ export default function AiScreen() {
     setStatus({ kind: "idle" })
   }
 
-  if (status.kind === "not-connected") return <NotConnectedState area="Assistant" />
+  if (status.kind === "not-connected") return <NotConnectedState area={t("mobile.member.ai.title")} />
 
   const trimmed = message.trim()
   const busy = status.kind === "loading"
+  const statusMessage = status.kind === "unavailable"
+    ? t("mobile.member.ai.unavailable")
+    : status.kind === "invalid"
+      ? t("mobile.member.ai.invalidAnswer")
+      : status.kind === "error"
+        ? status.message ?? t("mobile.member.ai.unreachable")
+        : ""
 
   return (
     <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-      <Text style={styles.title}>Assistant</Text>
-      <Text style={styles.text}>Answers use only the information your account can already see.</Text>
+      <Text style={styles.title}>{t("mobile.member.ai.title")}</Text>
+      <Text style={styles.text}>{t("mobile.member.ai.intro")}</Text>
 
       {entries.map((entry, index) =>
         entry.role === "user" ? (
-          <Text key={index} style={styles.heading}>You: {entry.text}</Text>
+          <Text key={index} style={styles.heading}>{t("mobile.member.ai.you", { text: entry.text })}</Text>
         ) : (
           <View key={index} style={{ marginBottom: 18 }}>
-            {entry.components ? <AiResponseView components={entry.components} /> : <Text style={styles.error}>{INVALID_ANSWER}</Text>}
-            {entry.components && entry.sources.length > 0 ? <Text style={styles.text}>Sources: {entry.sources.map((source) => source.title).join(", ")}</Text> : null}
-            {entry.components && entry.uncertain ? <Text style={styles.text}>Uncertain: part of this answer could not be checked.</Text> : null}
+            {entry.components ? <AiResponseView components={entry.components} /> : <Text style={styles.error}>{t("mobile.member.ai.invalidAnswer")}</Text>}
+            {entry.components && entry.sources.length > 0 ? <Text style={styles.text}>{t("mobile.member.ai.sources", { sources: entry.sources.map((source) => source.title).join(", ") })}</Text> : null}
+            {entry.components && entry.uncertain ? <Text style={styles.text}>{t("mobile.member.ai.uncertain")}</Text> : null}
           </View>
         ),
       )}
 
-      {status.kind === "loading" ? <Text style={styles.text}>Thinking…</Text> : null}
-      {status.kind === "unavailable" || status.kind === "error" ? (
+      {status.kind === "loading" ? <Text style={styles.text}>{t("mobile.member.ai.thinking")}</Text> : null}
+      {status.kind === "unavailable" || status.kind === "error" || status.kind === "invalid" ? (
         <View style={{ gap: 10, marginBottom: 14 }}>
-          <Text accessibilityLiveRegion="polite" style={styles.error}>{status.message}</Text>
-          {status.kind === "error" && status.message !== INVALID_ANSWER ? <Button title="Try again" disabled={!trimmed} onPress={() => void send(trimmed)} /> : null}
+          <Text accessibilityLiveRegion="polite" style={styles.error}>{statusMessage}</Text>
+          {status.kind === "error" ? <Button title={t("common.retry")} disabled={!trimmed} onPress={() => void send(trimmed)} /> : null}
         </View>
       ) : null}
 
-      <Text style={styles.formLabel}>Your question</Text>
+      <Text style={styles.formLabel}>{t("mobile.member.ai.question")}</Text>
       <TextInput
-        accessibilityLabel="Your question"
+        accessibilityLabel={t("mobile.member.ai.question")}
         editable={!busy}
         maxLength={1000}
         multiline
         onChangeText={setMessage}
-        placeholder="Ask a question"
+        placeholder={t("mobile.member.ai.placeholder")}
         style={[styles.input, styles.multilineInput]}
         textAlignVertical="top"
         value={message}
       />
-      <Button disabled={busy || !trimmed || status.kind === "unavailable"} title={busy ? "Sending…" : "Send"} onPress={() => void send(trimmed)} />
+      <Button disabled={busy || !trimmed || status.kind === "unavailable"} title={busy ? t("mobile.member.ai.sending") : t("mobile.member.ai.send")} onPress={() => void send(trimmed)} />
       <View style={{ marginTop: 12 }}>
-        <Button disabled={busy} title="New conversation" onPress={newConversation} />
+        <Button disabled={busy} title={t("mobile.member.ai.newConversation")} onPress={newConversation} />
       </View>
     </ScrollView>
   )

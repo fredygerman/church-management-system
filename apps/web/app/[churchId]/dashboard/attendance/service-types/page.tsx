@@ -4,6 +4,7 @@ import Link from "next/link"
 import { createServiceType, getServiceTypes } from "@/actions/attendance"
 
 import { Button } from "@/components/ui/button"
+import { getTranslator } from "@/lib/i18n/server"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -14,6 +15,7 @@ function ServiceTypesLoading() {
 }
 
 async function ServiceTypesContent({ churchId }: { churchId: string }) {
+  const t = await getTranslator()
   try {
     const serviceTypes = (await getServiceTypes(churchId)) as any[]
 
@@ -28,15 +30,15 @@ async function ServiceTypesContent({ churchId }: { churchId: string }) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold">Service Types</h1>
+          <h1 className="text-2xl font-semibold">{t("staff.serviceTypes.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            Create reusable templates like Sunday Worship or Midweek Service.
+            {t("staff.serviceTypes.description")}
           </p>
         </div>
         <form action={createAction} className="flex max-w-xl gap-2">
           <input
             name="name"
-            placeholder="Service type name"
+            placeholder={t("staff.serviceTypes.namePlaceholder")}
             className="flex-1 rounded-md border px-3 py-2 text-sm"
             required
           />
@@ -44,37 +46,36 @@ async function ServiceTypesContent({ churchId }: { churchId: string }) {
             type="submit"
             className="bg-primary text-primary-foreground rounded-md px-4 py-2 text-sm"
           >
-            Add
+            {t("staff.serviceTypes.add")}
           </button>
         </form>
         <div className="rounded-md border">
           <table className="w-full text-sm">
             <thead className="bg-muted/40">
               <tr>
-                <th className="px-3 py-2 text-left">Name</th>
-                <th className="px-3 py-2 text-left">Active</th>
-                <th className="px-3 py-2 text-left">Created</th>
+                <th className="px-3 py-2 text-left">{t("staff.common.name")}</th>
+                <th className="px-3 py-2 text-left">{t("staff.serviceTypes.active")}</th>
+                <th className="px-3 py-2 text-left">{t("staff.serviceTypes.created")}</th>
               </tr>
             </thead>
             <tbody>
               {serviceTypes.map((type) => (
                 <tr key={type.id} className="border-t">
                   <td className="px-3 py-2">{type.name}</td>
-                  <td className="px-3 py-2">{type.isActive ? "Yes" : "No"}</td>
+                  <td className="px-3 py-2">{type.isActive ? t("staff.common.yes") : t("staff.common.no")}</td>
                   <td className="px-3 py-2">{type.createdAt || "-"}</td>
                 </tr>
               ))}
               {serviceTypes.length === 0 && (
                 <tr>
                   <td colSpan={3} className="text-muted-foreground px-3 py-4">
-                    No service types are available yet.
+                    {t("staff.serviceTypes.empty")}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-        {/* TODO: Add reviewed Swahili copy for this staff page. */}
       </div>
     )
   } catch (error) {
@@ -83,13 +84,13 @@ async function ServiceTypesContent({ churchId }: { churchId: string }) {
     const message =
       error instanceof Error
         ? error.message
-        : "The service types could not be loaded."
+        : t("staff.serviceTypes.loadError")
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold">Service Types</h1>
+          <h1 className="text-2xl font-semibold">{t("staff.serviceTypes.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            Create reusable templates like Sunday Worship or Midweek Service.
+            {t("staff.serviceTypes.description")}
           </p>
         </div>
         <div
@@ -99,11 +100,10 @@ async function ServiceTypesContent({ churchId }: { churchId: string }) {
           <p className="text-destructive text-sm">{message}</p>
           <Button asChild variant="outline" className="mt-4">
             <Link href={`/${churchId}/dashboard/attendance/service-types`}>
-              Retry
+              {t("staff.common.retry")}
             </Link>
           </Button>
         </div>
-        {/* TODO: Add reviewed Swahili copy for this staff page. */}
       </div>
     )
   }

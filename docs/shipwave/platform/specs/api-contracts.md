@@ -18,7 +18,7 @@ Status: verified 2026-11-24 on branch `design/mito-ya-baraka-concepts`. Read-onl
 | Global `ValidationPipe` with `whitelist` and `forbidNonWhitelisted`. It only validates bodies typed as classes; inline `type` bodies are not validated. | `apps/api/src/main.ts:62-66`. Class body DTOs in the client paths: `visitors/dtos/*` only. |
 | `ChurchContextGuard` (global) takes `churchId` from params, query, body or the user's church, and writes it into every object body. A class DTO that does not declare `churchId` therefore rejects every body that goes through it. | `apps/api/src/auth/guards/church-context.guard.ts` (body write at line 116); registered in `apps/api/src/app.module.ts`. |
 | Response casing: camelCase from Drizzle rows everywhere, except the library endpoints, which map explicitly to snake_case. | `file-upload.service.ts:134-147` (camelCase document metadata), `:349-367` (snake_case library rows). |
-| Permission coverage for member-facing calls. Every portal and mobile member call is granted to the `member` role. Note: `member`, `zone_leader` and `department_leader` all hold `read:member`, so `GET /dashboard/stats` and `GET /members` are readable by those roles across the whole church. | `packages/config/src/permissions.ts:160,174,187-200`. |
+| Permission coverage for member-facing calls. Every portal and mobile member call is granted to the `member` role. Note: `member`, `zone_leader` and `department_leader` all hold `read:member`. The handlers scope the rows they return (see Members and Dashboard). | `packages/config/src/permissions.ts:160,174,187-200`. |
 
 ## Mismatch list
 
@@ -69,6 +69,8 @@ Checked and matching (no mismatch): all `/api/files/*` paths; library snake_case
 | GET | `/members/me` | read:self | `members/members.controller.ts:101` | `web/actions/portal.ts:11`<br>`web/app/[churchId]/portal/profile/page.tsx:20`<br>`mobile/app/(member)/index.tsx:17` | Own member row (`members.controller.ts:101`). | OK |
 | GET | `/members/search` | read:member | `members/members.controller.ts:66` | `web/actions/member.ts:209` | Query `q` matches (`members.controller.ts:70`). | OK |
 
+Scope (current behaviour, `getLeaderScope` in `members.service.ts`): members see only their own record on `GET /members` and `GET /members/:id`. `GET /members/search` and `GET /members/zone/:zoneId` return 403 to members. Zone and department leaders see only members they lead on `GET /members`, `GET /members/:id`, `/members/search` and `/members/zone/:zoneId`. `PUT /members/:id` and `DELETE /members/:id` apply the same rule and return 403 `This member is outside your scope` for a member outside it. Staff roles without a scope are unchanged.
+
 ## Attendance
 
 | Method | Path | Permission | API handler | Client call(s) | Fields and response | Status |
@@ -83,7 +85,7 @@ Checked and matching (no mismatch): all `/api/files/*` paths; library snake_case
 | GET | `/attendance/service-types` | view:attendance | `attendance/attendance.controller.ts:51` | `web/actions/attendance.ts:6`<br>`mobile/app/(staff)/services.tsx:8` | Rows camelCase: `name`, `isActive` (`packages/db/tables/attendance.ts:32-33`; `attendance.service.ts:54-59`). Mobile `services.tsx` reads `name`, `isActive`: match. | OK |
 | POST | `/attendance/service-types` | manage:services | `attendance/attendance.controller.ts:41` | `web/actions/attendance.ts:10` | Body `name`, `isActive?` (`attendance.controller.ts:42-44`). | OK |
 | PATCH | `/attendance/service-types/:id` | manage:services | `attendance/attendance.controller.ts:57` | `web/actions/attendance.ts:14` | Body `name?`, `isActive?` (`attendance.controller.ts:58`). | OK |
-| GET | `/attendance/sessions` | view:attendance | `attendance/attendance.controller.ts:72` | `web/actions/attendance.ts:18`<br>`mobile/app/(staff)/services.tsx:8` | Query `from`, `to` optional (`attendance.controller.ts:72-74`). Rows camelCase `title`, `sessionDate`, `status`, plus `serviceType` relation (`attendance.service.ts:99-108`). Mobile `services.tsx` reads these: match. | OK |
+| GET | `/attendance/sessions` | view:attendance | `attendance/attendance.controller.ts:72` | `web/actions/attendance.ts:18`<br>`mobile/app/(staff)/services.tsx:8` | Query `from`, `to` optional (`attendance.controller.ts:72-74`). Rows camelCase `title`, `sessionDate`, `status`, plus `serviceType` relation (`attendance.service.ts:99-108`). Mobile `services.tsx` reads these: match. Member role gets `listUpcomingSessionsForMember` (`attendance.controller.ts:78`, `attendance.service.ts:115`): non-draft sessions that are open or dated today or later, with `id`, `title`, `sessionDate`, `status`, `serviceType` (`{id, name}`). | OK |
 | POST | `/attendance/sessions` | manage:services | `attendance/attendance.controller.ts:63` | `web/actions/attendance.ts:22` | Body `serviceTypeId`, `title?`, `sessionDate` (`attendance.controller.ts:63-70`). | OK |
 | POST | `/attendance/sessions/:id/checkins/manual` | manage:attendance | `attendance/attendance.controller.ts:100` | `web/actions/attendance.ts:34` | Body `memberId` (`attendance.controller.ts:102-103`). Extra `churchId`/`sessionId` from client are ignored. | OK |
 | POST | `/attendance/sessions/:id/checkins/manual/batch` | manage:attendance | `attendance/attendance.controller.ts:162` | `web/actions/attendance.ts:62` | Body `memberIds` (`attendance.controller.ts:164`). | OK |
@@ -133,6 +135,7 @@ Checked and matching (no mismatch): all `/api/files/*` paths; library snake_case
 | GET | `/api/files/library` | read:self | `file-upload/file-upload.controller.ts:429` | `web/actions/library.ts:41`<br>`mobile/app/(member)/library.tsx:57` | Response array of snake_case rows: `id`, `title`, `description`, `original_file_name`, `content_type`, `size_bytes`, `created_at` (`file-upload.service.ts:349-367`, type `:61-69`). Web `library.ts:5-13` and mobile `library.tsx:7-14` use the same snake_case names: match. Web also accepts `{documents}`; API never returns that wrapper (harmless). | OK |
 | GET | `/api/files/library/:id/download-url` | read:self | `file-upload/file-upload.controller.ts:445` | `web/actions/library.ts:85`<br>`mobile/app/(member)/library.tsx:75` | Response `{url, expiresAt}` (`file-upload.service.ts:395-400`). Clients read `url`: match. | OK |
 | GET | `/api/files/user` | manage:files | `file-upload/file-upload.controller.ts:400` | `web/app/[churchId]/dashboard/content/staff-documents.ts:36`<br>`mobile/app/(staff)/content.tsx:7` | Response camelCase `DocumentMetadata` (`file-upload.service.ts:134-147`): `originalFileName`, `visibleToMembers`, `title`, `contentType`, `sizeBytes`, `createdAt`. Web `staff-documents.ts:3-12` and mobile `content.tsx` read these: match. Includes non-visible docs (staff only). | OK |
+| PATCH | `/api/files/:id` | manage:files | `file-upload/file-upload.controller.ts:464` | not checked | Body `UpdateDocumentDto` (`file-upload/dtos/update-document.dto.ts`): `title?` (string), `description?` (string), `visibleToMembers?` (boolean). `visibleToMembers` is the same flag the upload sets from metadata (`file-upload.service.ts:311-312`), so `true` makes the document visible in `/api/files/library`. At least one field is required; the update is limited to the caller's church. | Not checked (client) |
 
 ## Prayer
 
@@ -145,7 +148,7 @@ Checked and matching (no mismatch): all `/api/files/*` paths; library snake_case
 
 | Method | Path | Permission | API handler | Client call(s) | Fields and response | Status |
 |---|---|---|---|---|---|---|
-| GET | `/dashboard/stats` | read:member | `dashboard/dashboard.controller.ts:15` | `web/actions/dashboard.ts:26`<br>`web/app/[churchId]/dashboard/home/page.tsx:9` | Response `{totalMembers, activeZones}` only (`dashboard.service.ts`). `apps/web/app/[churchId]/dashboard/home/page.tsx:114` reads `stats.recentActivities.length` and `:89` reads `stats.pendingVisitors`; both are omitted under DEC-01, so the page throws on render. | MISMATCH |
+| GET | `/dashboard/stats` | read:member | `dashboard/dashboard.controller.ts:15` | `web/actions/dashboard.ts:26`<br>`web/app/[churchId]/dashboard/home/page.tsx:9` | Response `{totalMembers, activeZones}` only (`dashboard.service.ts`). Scoped for leaders: the controller passes `getLeaderScope` (`dashboard.controller.ts:26`), so `totalMembers` counts only members in scope and `activeZones` is the number of zones a zone leader leads (`dashboard.service.ts:26-27`). A member gets a count of their own record. `apps/web/app/[churchId]/dashboard/home/page.tsx:114` reads `stats.recentActivities.length` and `:89` reads `stats.pendingVisitors`; both are omitted under DEC-01, so the page throws on render. | MISMATCH |
 
 ## Churches
 

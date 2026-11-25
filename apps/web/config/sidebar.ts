@@ -22,6 +22,7 @@ import {
 } from "lucide-react"
 import type { PermissionAction } from "@church/config"
 
+// `title` holds a shared message key (common.ts `nav.*`), not English text.
 interface SidebarItem {
   title: string
   href: string
@@ -38,61 +39,61 @@ interface SidebarSection {
 
 export const sidebarConfig: SidebarSection[] = [
   {
-    title: "Dashboard",
+    title: "nav.section.dashboard",
     items: [
       {
-        title: "Home",
+        title: "nav.home",
         href: "/dashboard/home",
         icon: Home,
       },
       {
-        title: "Assistant",
+        title: "nav.assistant",
         href: "/dashboard/ai",
         icon: Sparkles,
       },
     ],
   },
   {
-    title: "Reporting",
+    title: "nav.section.reporting",
     items: [
       {
-        title: "Reports",
+        title: "nav.reports",
         href: "/dashboard/analytics",
         icon: BarChart2,
         permissions: ["manage:attendance-analytics"],
       },
       {
-        title: "Attendance",
+        title: "nav.attendance",
         href: "/dashboard/attendance",
         icon: ClipboardCheck,
         permissions: ["view:attendance", "manage:attendance"],
       },
       {
-        title: "Communications",
+        title: "nav.communications",
         href: "/dashboard/communications",
         icon: Megaphone,
         permissions: ["view:communications", "manage:communications"],
       },
       {
-        title: "Content",
+        title: "nav.content",
         href: "/dashboard/content",
         icon: Library,
         permissions: ["manage:files"],
       },
       {
-        title: "Data Quality",
+        title: "nav.dataQuality",
         href: "/dashboard/data-quality",
         icon: Database,
         permissions: ["view:data-quality", "manage:data-quality"],
       },
       {
-        title: "Family Lifecycle",
+        title: "nav.familyLifecycle",
         href: "/dashboard/family-lifecycle",
         icon: HeartHandshake,
         permissions: ["view:lifecycle-dashboard", "manage:lifecycle-rules"],
       },
       {
-        title: "Attendance V2",
+        title: "nav.attendanceV2",
         href: "/dashboard/attendance/v2",
         icon: ClipboardCheck,
         permissions: ["manage:attendance-analytics"],
@@ -100,46 +101,46 @@ export const sidebarConfig: SidebarSection[] = [
     ],
   },
   {
-    title: "Members",
+    title: "nav.section.members",
     items: [
       {
-        title: "Members",
+        title: "nav.members",
         href: "/dashboard/members",
         icon: Users,
         permissions: ["read:member"],
       },
       {
-        title: "Zones",
+        title: "nav.zones",
         href: "/dashboard/zones",
         icon: MapPin,
         permissions: ["manage:zones"],
       },
       {
-        title: "Departments",
+        title: "nav.departments",
         href: "/dashboard/departments",
         icon: Building2,
         permissions: ["read:department"],
       },
       {
-        title: "Families",
+        title: "nav.families",
         href: "/dashboard/families",
         icon: Users2,
         permissions: ["view:families", "manage:families"],
       },
       {
-        title: "Visitors",
+        title: "nav.visitors",
         href: "/dashboard/visitors",
         icon: Users2,
         permissions: ["view:visitors"],
       },
       {
-        title: "Offerings",
+        title: "nav.offerings",
         href: "/dashboard/offerings",
         icon: HandCoins,
         permissions: ["manage:offerings", "view:giving-reports", "manage:giving-goals"],
       },
       {
-        title: "Events",
+        title: "nav.events",
         href: "/dashboard/events",
         icon: CalendarDays,
         permissions: ["view:events"],
@@ -147,30 +148,30 @@ export const sidebarConfig: SidebarSection[] = [
     ],
   },
   {
-    title: "Member Portal",
+    title: "nav.section.memberPortal",
     items: [
       {
-        title: "Church",
+        title: "nav.church",
         href: "/portal/church",
         icon: Building2,
       },
       {
-        title: "Library",
+        title: "nav.library",
         href: "/portal/library",
         icon: Library,
       },
       {
-        title: "Assistant",
+        title: "nav.assistant",
         href: "/portal/ai",
         icon: Sparkles,
       },
     ],
   },
   {
-    title: "Settings",
+    title: "nav.section.settings",
     items: [
       {
-        title: "Permissions",
+        title: "nav.permissions",
         href: "/dashboard/permissions",
         icon: Shield,
         permissions: ["manage:users"],
@@ -178,31 +179,31 @@ export const sidebarConfig: SidebarSection[] = [
     ],
   },
   {
-    title: "Account",
+    title: "nav.section.account",
     items: [
       {
-        title: "My Profile",
+        title: "nav.myProfile",
         href: "/dashboard/profile",
         icon: UserCircle,
       },
       {
-        title: "More",
+        title: "nav.more",
         href: "/dashboard/more",
         icon: MoreHorizontal,
       },
     ],
   },
   {
-    title: "Support",
+    title: "nav.section.support",
     items: [
       {
-        title: "Documentation",
+        title: "nav.documentation",
         href: "/docs",
         icon: MessageSquare,
         target: "_blank",
       },
       {
-        title: "Contact Us",
+        title: "nav.contactUs",
         href: "/support",
         icon: HelpCircle,
         target: "_blank",

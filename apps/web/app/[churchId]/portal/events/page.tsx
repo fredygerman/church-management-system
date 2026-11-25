@@ -3,6 +3,7 @@ import Link from "next/link"
 import { format } from "date-fns"
 
 import { apiGet } from "@/lib/api-helpers"
+import { getTranslator } from "@/lib/i18n/server"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EventRsvp } from "@/components/portal/event-rsvp"
@@ -12,8 +13,8 @@ interface PageProps {
   params: Promise<{ churchId: string }>
 }
 
-function formatDateTime(value: string | null | undefined): string {
-  if (!value) return "Date not set"
+function formatDateTime(value: string | null | undefined, dateNotSet: string): string {
+  if (!value) return dateNotSet
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
   return date.toLocaleString()
@@ -26,6 +27,7 @@ function EventsLoading() {
 }
 
 async function EventsContent({ churchId }: { churchId: string }) {
+  const t = await getTranslator()
   try {
     const today = format(new Date(), "yyyy-MM-dd")
     const [events, myRsvps] = await Promise.all([
@@ -41,22 +43,21 @@ async function EventsContent({ churchId }: { churchId: string }) {
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">Events</h1>
+          <h1 className="text-foreground text-2xl font-semibold">{t("portal.events.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            Upcoming camp meetings, seminars and socials — including
-            network-wide events.
+            {t("portal.events.subtitle")}
           </p>
         </div>
         {eventList.length === 0 ? (
           <div className="border-border bg-card rounded-lg border p-5">
             <p className="text-muted-foreground text-sm">
-              No upcoming events right now.
+              {t("portal.events.empty")}
             </p>
           </div>
         ) : (
           <ul className="space-y-3">
             {eventList.map((event: any) => {
-              const eventName = event.title || "Untitled event"
+              const eventName = event.title || t("portal.events.untitled")
               const isClosed =
                 event.status === "full" || event.status === "closed"
               return (
@@ -70,9 +71,9 @@ async function EventsContent({ churchId }: { churchId: string }) {
                         {eventName}
                       </h2>
                       <p className="text-muted-foreground text-xs">
-                        {formatDateTime(event.startsAt)}
+                        {formatDateTime(event.startsAt, t("portal.events.dateNotSet"))}
                         {event.endsAt
-                          ? ` – ${formatDateTime(event.endsAt)}`
+                          ? ` – ${formatDateTime(event.endsAt, t("portal.events.dateNotSet"))}`
                           : ""}
                       </p>
                       {event.location && (
@@ -83,15 +84,17 @@ async function EventsContent({ churchId }: { churchId: string }) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       {event.status === "cancelled" && (
-                        <Badge variant="destructive">Cancelled</Badge>
+                        <Badge variant="destructive">{t("portal.events.status.cancelled")}</Badge>
                       )}
                       {isClosed && (
                         <Badge variant="secondary">
-                          {event.status === "full" ? "Full" : "Closed"}
+                          {event.status === "full"
+                            ? t("portal.events.status.full")
+                            : t("portal.events.status.closed")}
                         </Badge>
                       )}
                       {event.scope === "network" && (
-                        <Badge variant="outline">Network</Badge>
+                        <Badge variant="outline">{t("portal.events.scope.network")}</Badge>
                       )}
                     </div>
                   </div>
@@ -121,25 +124,24 @@ async function EventsContent({ churchId }: { churchId: string }) {
             })}
           </ul>
         )}
-        {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
   } catch (error) {
     if (isForbiddenError(error)) {
-      return <PortalDeniedState title="Events" />
+      return <PortalDeniedState title={t("portal.events.title")} />
     }
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">Events</h1>
+          <h1 className="text-foreground text-2xl font-semibold">{t("portal.events.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            We could not load your events.
+            {t("portal.events.loadError")}
           </p>
         </div>
         <div className="border-destructive/50 bg-card rounded-lg border p-5">
-          <p className="text-destructive text-sm">Please try again.</p>
+          <p className="text-destructive text-sm">{t("portal.events.tryAgain")}</p>
           <Button asChild variant="outline" className="mt-4">
-            <Link href={`/${churchId}/portal/events`}>Retry</Link>
+            <Link href={`/${churchId}/portal/events`}>{t("common.retry")}</Link>
           </Button>
         </div>
       </div>

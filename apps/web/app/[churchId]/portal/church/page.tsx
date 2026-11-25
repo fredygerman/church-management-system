@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { getChurchById } from "@/actions/church"
+import { getTranslator } from "@/lib/i18n/server"
 
 import { Button } from "@/components/ui/button"
 import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
@@ -16,16 +17,17 @@ function ChurchLoading() {
 }
 
 async function ChurchContent({ churchId }: { churchId: string }) {
+  const t = await getTranslator()
   try {
     const church = await getChurchById(churchId)
 
     if (!church) {
       return (
         <div className="space-y-4">
-          <h1 className="text-foreground text-2xl font-semibold">Church</h1>
+          <h1 className="text-foreground text-2xl font-semibold">{t("portal.church.title")}</h1>
           <div className="border-border bg-card rounded-lg border p-5">
             <p className="text-muted-foreground text-sm">
-              Public information for this church branch is not available.
+              {t("portal.church.unavailable")}
             </p>
           </div>
         </div>
@@ -33,27 +35,27 @@ async function ChurchContent({ churchId }: { churchId: string }) {
     }
 
     const fields = [
-      ["Name", church.name],
-      ["Location", church.location],
-      ["Lead pastor", church.leadPastorName],
-      ["Phone", church.phone],
-      ["Email", church.email],
-      ["About", church.description],
+      [t("portal.church.field.name"), church.name],
+      [t("portal.church.field.location"), church.location],
+      [t("portal.church.field.leadPastor"), church.leadPastorName],
+      [t("portal.church.field.phone"), church.phone],
+      [t("portal.church.field.email"), church.email],
+      [t("portal.church.field.about"), church.description],
     ].filter(([, value]) => value)
 
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">Church</h1>
+          <h1 className="text-foreground text-2xl font-semibold">{t("portal.church.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            Public information for your selected church branch.
+            {t("portal.church.subtitle")}
           </p>
         </div>
 
         {fields.length === 0 ? (
           <div className="border-border bg-card rounded-lg border p-5">
             <p className="text-muted-foreground text-sm">
-              Public information for this church branch is not available.
+              {t("portal.church.unavailable")}
             </p>
           </div>
         ) : (
@@ -74,24 +76,23 @@ async function ChurchContent({ churchId }: { churchId: string }) {
         )}
 
         <p className="text-muted-foreground text-sm">
-          Viewing a church does not change your active membership.
+          {t("portal.church.membershipNote")}
         </p>
-        {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
   } catch (error) {
     if (isForbiddenError(error)) {
-      return <PortalDeniedState title="Church" />
+      return <PortalDeniedState title={t("portal.church.title")} />
     }
     return (
       <div className="space-y-4">
-        <h1 className="text-foreground text-2xl font-semibold">Church</h1>
+        <h1 className="text-foreground text-2xl font-semibold">{t("portal.church.title")}</h1>
         <div className="border-destructive/50 bg-card rounded-lg border p-5">
           <p className="text-destructive text-sm">
-            We could not load this church branch.
+            {t("portal.church.loadError")}
           </p>
           <Button asChild variant="outline" className="mt-4">
-            <Link href={`/${churchId}/portal/church`}>Retry</Link>
+            <Link href={`/${churchId}/portal/church`}>{t("common.retry")}</Link>
           </Button>
         </div>
       </div>

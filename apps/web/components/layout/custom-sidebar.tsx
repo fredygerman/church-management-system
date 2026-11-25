@@ -9,6 +9,8 @@ import { sidebarConfig } from "@/config/sidebar"
 import { ChurchSwitcher } from "@/components/layout/church-switcher"
 import { useSession } from "next-auth/react"
 import { hasAnyPermission } from "@/lib/permissions"
+import { useT } from "@/components/i18n/locale-provider"
+import type { MessageKey } from "@church/config"
 
 interface Church {
   id: string
@@ -33,6 +35,7 @@ export function CustomSidebar({
   const { churchId } = useParams()
   const pathname = usePathname()
   const { data: session } = useSession()
+  const { t } = useT()
   const userRole = session?.user?.role
   const [expandedSections, setExpandedSections] = React.useState<Set<string>>(
     new Set(sidebarConfig.map((section) => section.title))
@@ -77,11 +80,11 @@ export function CustomSidebar({
       >
         {/* Header */}
         <div className="flex h-16 shrink-0 items-center justify-between border-b border-border px-6 bg-muted/50">
-          <h2 className="text-lg font-bold text-foreground">Church Manager</h2>
+          <h2 className="text-lg font-bold text-foreground">{t("sidebar.title")}</h2>
           <button
             onClick={onToggle}
             className="lg:hidden text-muted-foreground hover:text-foreground transition-colors"
-            aria-label="Close sidebar"
+            aria-label={t("sidebar.close")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -110,7 +113,7 @@ export function CustomSidebar({
                     onClick={() => toggleSection(section.title)}
                     className="flex w-full items-center justify-between px-3 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
                   >
-                    {section.title}
+                    {t(section.title as MessageKey)}
                     <ChevronDown
                       className={cn(
                         "h-4 w-4 transition-transform",
@@ -145,7 +148,7 @@ export function CustomSidebar({
                             )}
                           >
                             <Icon className="h-4 w-4" />
-                            <span>{item.title}</span>
+                            <span>{t(item.title as MessageKey)}</span>
                           </Link>
                         )
                       })}
@@ -159,7 +162,7 @@ export function CustomSidebar({
 
         {/* Footer */}
         <div className="border-t border-border px-4 py-4 text-xs text-muted-foreground bg-muted/30">
-          <p className="font-semibold text-foreground">Church Management System</p>
+          <p className="font-semibold text-foreground">{t("sidebar.footer.appName")}</p>
           <p className="mt-1">v0.0.1</p>
           <p className="mt-2">© 2024 Mito Ya Baraka Church</p>
         </div>
@@ -172,7 +175,7 @@ export function CustomSidebar({
           onClick={onToggle}
           role="button"
           tabIndex={0}
-          aria-label="Close sidebar"
+          aria-label={t("sidebar.close")}
           onKeyDown={(e) => e.key === "Escape" && onToggle()}
         />
       )}

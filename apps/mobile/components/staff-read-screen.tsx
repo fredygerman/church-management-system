@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react"
 import { ScrollView, Text, View } from "react-native"
 import { ApiError } from "../lib/api"
+import { useT } from "../lib/locale"
 import { NotConnectedState } from "./not-connected-state"
 import { EmptyState, ErrorState, LoadingState, styles } from "./screen-state"
 
@@ -33,6 +34,7 @@ type StaffReadScreenProps<T> = {
 // Read-only: loads one or more GET endpoints and renders loading, not-connected,
 // denied (server 403 for a missing permission key), error-with-retry, and empty states.
 export function StaffReadScreen<T>({ area, emptyMessage, isEmpty, load, children }: StaffReadScreenProps<T>) {
+  const { t } = useT()
   const [state, setState] = useState<ScreenState<T>>({ status: "loading" })
 
   const run = useCallback(async () => {
@@ -42,9 +44,9 @@ export function StaffReadScreen<T>({ area, emptyMessage, isEmpty, load, children
     } catch (caught) {
       if (caught instanceof ApiError && caught.kind === "not-configured") setState({ status: "not-connected" })
       else if (caught instanceof ApiError && caught.status === 403) setState({ status: "denied" })
-      else setState({ status: "error", message: caught instanceof ApiError ? caught.message : `Unable to load ${area.toLowerCase()}.` })
+      else setState({ status: "error", message: caught instanceof ApiError ? caught.message : t("mobile.staff.readScreen.loadError", { area: area.toLowerCase() }) })
     }
-  }, [area, load])
+  }, [area, load, t])
 
   useEffect(() => { void run() }, [run])
 
@@ -53,8 +55,8 @@ export function StaffReadScreen<T>({ area, emptyMessage, isEmpty, load, children
   if (state.status === "denied") {
     return (
       <View style={styles.center}>
-        <Text style={styles.heading}>{area} is not available</Text>
-        <Text style={styles.text}>Your account does not have permission to view this area.</Text>
+        <Text style={styles.heading}>{t("mobile.staff.readScreen.unavailable", { area })}</Text>
+        <Text style={styles.text}>{t("mobile.staff.readScreen.noPermission")}</Text>
       </View>
     )
   }

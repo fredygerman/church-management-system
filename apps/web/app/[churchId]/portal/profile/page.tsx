@@ -2,7 +2,9 @@ import { Suspense } from "react"
 import Link from "next/link"
 
 import { apiGet } from "@/lib/api-helpers"
+import { getTranslator } from "@/lib/i18n/server"
 import { Button } from "@/components/ui/button"
+import { LanguageSwitch } from "@/components/i18n/language-switch"
 import { ProfileEditForm } from "@/components/portal/profile-edit-form"
 import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
 
@@ -16,21 +18,27 @@ function ProfileLoading() {
 }
 
 async function ProfileContent({ churchId }: { churchId: string }) {
+  const t = await getTranslator()
   try {
     const member = await apiGet<any | null>("/members/me", { churchId })
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">My Profile</h1>
+          <h1 className="text-foreground text-2xl font-semibold">{t("portal.profile.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            Review and update your church profile.
+            {t("portal.profile.subtitle")}
           </p>
         </div>
+        <section className="border-border bg-card rounded-lg border p-5">
+          <h2 className="text-foreground text-base font-semibold">{t("portal.profile.languageTitle")}</h2>
+          <div className="mt-3">
+            <LanguageSwitch />
+          </div>
+        </section>
         {!member ? (
           <div className="border-border bg-card rounded-lg border p-5">
             <p className="text-muted-foreground text-sm">
-              Your account is not linked to a member profile in this church yet.
-              Contact your church admin to have your member record connected.
+              {t("portal.profile.notLinked")}
             </p>
           </div>
         ) : (
@@ -38,22 +46,21 @@ async function ProfileContent({ churchId }: { churchId: string }) {
             <ProfileEditForm churchId={churchId} member={member} />
           </div>
         )}{" "}
-        {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
   } catch (error) {
     if (isForbiddenError(error)) {
-      return <PortalDeniedState title="My Profile" />
+      return <PortalDeniedState title={t("portal.profile.title")} />
     }
     return (
       <div className="space-y-4">
-        <h1 className="text-foreground text-2xl font-semibold">My Profile</h1>
+        <h1 className="text-foreground text-2xl font-semibold">{t("portal.profile.title")}</h1>
         <div className="border-destructive/50 bg-card rounded-lg border p-5">
           <p className="text-destructive text-sm">
-            We could not load your profile.
+            {t("portal.profile.loadError")}
           </p>
           <Button asChild variant="outline" className="mt-4">
-            <Link href={`/${churchId}/portal/profile`}>Retry</Link>
+            <Link href={`/${churchId}/portal/profile`}>{t("common.retry")}</Link>
           </Button>
         </div>
       </div>

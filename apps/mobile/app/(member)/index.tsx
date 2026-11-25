@@ -3,6 +3,7 @@ import { Button, Text, View } from "react-native"
 import { router } from "expo-router"
 import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
+import { useT } from "../../lib/locale"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
 
 type ServiceSession = {
@@ -22,6 +23,7 @@ function formatServiceDate(sessionDate: string) {
 
 export default function HomeScreen() {
   const { user } = useSession()
+  const { t } = useT()
   const [member, setMember] = useState<Record<string, unknown> | null>(null)
   const [announcements, setAnnouncements] = useState<Record<string, unknown>[]>([])
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading")
@@ -33,8 +35,8 @@ export default function HomeScreen() {
       setMember(memberData)
       setAnnouncements(Array.isArray(announcementData) ? announcementData : [])
       setStatus("ready")
-    } catch (caught) { setError(caught instanceof ApiError ? caught.message : "Unable to load home."); setStatus("error") }
-  }, [])
+    } catch (caught) { setError(caught instanceof ApiError ? caught.message : t("mobile.member.home.loadError")); setStatus("error") }
+  }, [t])
   // Separate from load(): a services failure should not hide the announcements.
   const [services, setServices] = useState<ServiceSession[]>([])
   const [servicesStatus, setServicesStatus] = useState<"loading" | "ready" | "error">("loading")
@@ -50,8 +52,6 @@ export default function HomeScreen() {
   useEffect(() => { void loadServices() }, [loadServices])
   if (status === "loading") return <LoadingState />
   if (status === "error") return <ErrorState message={error} onRetry={() => void load()} />
-  const name = typeof user?.name === "string" ? user.name : typeof member?.name === "string" ? member.name : "there"
-  return <View style={styles.content}><Text style={styles.title}>Welcome, {name}</Text><Text style={styles.text}>Here are the latest updates from your church.</Text><Button title="Send a prayer request" onPress={() => router.push("/(member)/prayer")} /><Text style={styles.heading}>Next services</Text>{servicesStatus === "loading" ? <LoadingState /> : servicesStatus === "error" ? <ErrorState message="Next services could not be loaded." onRetry={() => void loadServices()} /> : services.length ? services.map((service) => <View key={service.id} style={styles.card}><Text style={styles.heading}>{service.title || service.serviceType?.name || "Service"}</Text><Text style={styles.text}>{formatServiceDate(service.sessionDate)}</Text></View>) : <EmptyState message="No services scheduled" />}<Text style={styles.heading}>Recent announcements</Text>{announcements.length ? announcements.map((item, index) => <View key={String(item.id ?? index)}><Text style={styles.heading}>{typeof item.title === "string" ? item.title : "Announcement"}</Text>{typeof item.content === "string" ? <Text style={styles.text}>{item.content}</Text> : null}</View>) : <EmptyState message="There are no recent announcements." />}</View>
+  const name = typeof user?.name === "string" ? user.name : typeof member?.name === "string" ? member.name : t("mobile.member.home.guestName")
+  return <View style={styles.content}><Text style={styles.title}>{t("mobile.member.home.welcome", { name })}</Text><Text style={styles.text}>{t("mobile.member.home.intro")}</Text><Button title={t("mobile.member.home.prayerButton")} onPress={() => router.push("/(member)/prayer")} /><Text style={styles.heading}>{t("mobile.member.home.servicesHeading")}</Text>{servicesStatus === "loading" ? <LoadingState /> : servicesStatus === "error" ? <ErrorState message={t("mobile.member.home.servicesError")} onRetry={() => void loadServices()} /> : services.length ? services.map((service) => <View key={service.id} style={styles.card}><Text style={styles.heading}>{service.title || service.serviceType?.name || t("mobile.member.home.serviceFallback")}</Text><Text style={styles.text}>{formatServiceDate(service.sessionDate)}</Text></View>) : <EmptyState message={t("mobile.member.home.noServices")} />}<Text style={styles.heading}>{t("mobile.member.home.announcementsHeading")}</Text>{announcements.length ? announcements.map((item, index) => <View key={String(item.id ?? index)}><Text style={styles.heading}>{typeof item.title === "string" ? item.title : t("mobile.member.home.announcementFallback")}</Text>{typeof item.content === "string" ? <Text style={styles.text}>{item.content}</Text> : null}</View>) : <EmptyState message={t("mobile.member.home.noAnnouncements")} />}</View>
 }
-
-// TODO: Have fluent reviewers provide Swahili copy before localization.

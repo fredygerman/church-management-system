@@ -8,6 +8,7 @@ import { signIn } from "next-auth/react"
 
 import { switchChurch } from "@/actions/church"
 import { cn } from "@/lib/utils"
+import { useT } from "@/components/i18n/locale-provider"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -43,6 +44,7 @@ export function ChurchSwitcher({
   churches: Church[]
   currentChurch: Church | null
 }) {
+  const { t } = useT()
   const router = useRouter()
   const [switchingChurchId, setSwitchingChurchId] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -66,14 +68,14 @@ export function ChurchSwitcher({
       })
 
       if (result?.error) {
-        throw new Error("Could not update your session")
+        throw new Error(t("staff.church.sessionError"))
       }
 
       const isStaff = church.membershipRole && church.membershipRole !== "member"
       router.push(`/${church.id}/${isStaff ? "dashboard" : "portal"}`)
       router.refresh()
     } catch (caughtError) {
-      setError(caughtError instanceof Error ? caughtError.message : "Could not switch churches")
+      setError(caughtError instanceof Error ? caughtError.message : t("staff.church.error"))
     } finally {
       setSwitchingChurchId(null)
     }
@@ -99,10 +101,10 @@ export function ChurchSwitcher({
           </Avatar>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-foreground truncate">
-              {currentChurch?.name || "Select Church"}
+              {currentChurch?.name || t("staff.church.select")}
             </p>
             <p className="text-xs text-muted-foreground truncate">
-              {currentChurch?.location || "Church"}
+              {currentChurch?.location || t("staff.church.fallback")}
             </p>
           </div>
           <ChevronsUpDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -112,7 +114,7 @@ export function ChurchSwitcher({
         className="w-56 rounded-lg"
         align="start"
       >
-        <DropdownMenuLabel>Church context</DropdownMenuLabel>
+        <DropdownMenuLabel>{t("staff.church.context")}</DropdownMenuLabel>
         {churches.map((church) => (
           <DropdownMenuItem
             key={church.id}
@@ -143,7 +145,7 @@ export function ChurchSwitcher({
                 {church.name}
               </p>
               <p className="text-xs leading-none text-muted-foreground truncate">
-                {church.membershipRole?.replace("_", " ") || church.location || "Church"}
+                {church.membershipRole?.replace("_", " ") || church.location || t("staff.church.fallback")}
               </p>
             </div>
             {switchingChurchId === church.id ? (
@@ -162,7 +164,7 @@ export function ChurchSwitcher({
             <HomeIcon className="size-4" />
           </div>
           <Link href="/" className="flex-1 text-sm">
-            All Churches
+            {t("staff.church.allChurches")}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -170,15 +172,14 @@ export function ChurchSwitcher({
     <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Switch to {pendingChurch?.name}?</DialogTitle>
+          <DialogTitle>{t("staff.church.switchTitle", { name: pendingChurch?.name ?? "" })}</DialogTitle>
           <DialogDescription>
-            Your account stays the same. You will open this church&apos;s space.
+            {t("staff.church.switchDescription")}
           </DialogDescription>
         </DialogHeader>
-        {/* TODO: Add reviewed Swahili copy for this church switch confirmation. */}
         <DialogFooter>
           <Button variant="outline" onClick={() => setConfirmOpen(false)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             onClick={() => {
@@ -188,7 +189,7 @@ export function ChurchSwitcher({
               }
             }}
           >
-            Switch
+            {t("staff.church.switch")}
           </Button>
         </DialogFooter>
       </DialogContent>

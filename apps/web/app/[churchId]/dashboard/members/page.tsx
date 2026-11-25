@@ -4,6 +4,7 @@ import { getMembers } from "@/actions/member"
 
 import { checkPermission, ensurePermission } from "@/lib/permissions-server"
 import { membersSearchParamsCache } from "@/lib/validators"
+import { getTranslator } from "@/lib/i18n/server"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { DataTableSkeleton } from "@/components/data-table/data-table-skeleton"
@@ -25,6 +26,7 @@ export default async function MembersPage(props: PageProps) {
   await ensurePermission("read:member")
   const { churchId } = await props.params
   const searchParams = await props.searchParams
+  const t = await getTranslator()
   const queryParams = membersSearchParamsCache.parse(searchParams)
   const memberPromise = getMembers(queryParams, churchId)
   const canCreateMember = await checkPermission("create:member")
@@ -33,15 +35,15 @@ export default async function MembersPage(props: PageProps) {
     <div className="flex flex-col space-y-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Members</h2>
+          <h2 className="text-2xl font-bold tracking-tight">{t("staff.members.title")}</h2>
           <p className="text-muted-foreground">
-            Manage and monitor your church members.
+            {t("staff.members.description")}
           </p>
         </div>
         {canCreateMember && (
           <div className="flex items-center gap-4">
             <Link href={`/${churchId}/dashboard/members/add`}>
-              <Button>Add Member</Button>
+              <Button>{t("staff.members.add")}</Button>
             </Link>
           </div>
         )}
@@ -63,11 +65,10 @@ export default async function MembersPage(props: PageProps) {
           <MemberTable
             memberPromise={memberPromise}
             churchId={churchId}
-            emptyMessage="No members match the current filters."
+            emptyMessage={t("staff.members.empty")}
           />
         </React.Suspense>
       </MembersTableProvider>
-      {/* TODO: Add reviewed Swahili copy for this staff page. */}
     </div>
   )
 }

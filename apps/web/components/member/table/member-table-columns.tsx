@@ -13,13 +13,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { members } from "@church/db"
+import type { Translate } from "@church/config"
 
-export function getColumns(churchId: string): ColumnDef<typeof members.$inferSelect>[] {
+export function getColumns(churchId: string, t: Translate): ColumnDef<typeof members.$inferSelect>[] {
   return [
     {
       accessorKey: "firstName",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="First Name" />
+        <DataTableColumnHeader column={column} title={t("component.memberTable.firstName")} />
       ),
       cell: ({ row }) => <div>{row.original.firstName}</div>,
       enableSorting: true,
@@ -27,7 +28,7 @@ export function getColumns(churchId: string): ColumnDef<typeof members.$inferSel
     {
       accessorKey: "lastName",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Last Name" />
+        <DataTableColumnHeader column={column} title={t("component.memberTable.lastName")} />
       ),
       cell: ({ row }) => (
         <Link 
@@ -42,7 +43,7 @@ export function getColumns(churchId: string): ColumnDef<typeof members.$inferSel
     {
       accessorKey: "dateOfBirth",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Date of Birth" />
+        <DataTableColumnHeader column={column} title={t("component.memberTable.dateOfBirth")} />
       ),
       cell: ({ row }) => <div>{row.original.dateOfBirth}</div>,
       enableSorting: true,
@@ -50,7 +51,7 @@ export function getColumns(churchId: string): ColumnDef<typeof members.$inferSel
     {
       accessorKey: "phone",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Phone" />
+        <DataTableColumnHeader column={column} title={t("component.memberTable.phone")} />
       ),
       cell: ({ row }) => <div>{row.original.phone || "-"}</div>,
       enableSorting: true,
@@ -58,7 +59,7 @@ export function getColumns(churchId: string): ColumnDef<typeof members.$inferSel
     {
       accessorKey: "gender",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Gender" />
+        <DataTableColumnHeader column={column} title={t("component.memberTable.gender")} />
       ),
       cell: ({ row }) => <div className="capitalize">{row.original.gender}</div>,
       enableSorting: true,
@@ -66,19 +67,19 @@ export function getColumns(churchId: string): ColumnDef<typeof members.$inferSel
     {
       accessorKey: "maritalStatus",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Marital Status" />
+        <DataTableColumnHeader column={column} title={t("component.memberTable.maritalStatus")} />
       ),
       cell: ({ row }) => <div className="capitalize">{row.original.maritalStatus}</div>,
       enableSorting: true,
     },
     {
       id: "actions",
-      header: "Actions",
+      header: t("component.memberTable.actions"),
       cell: ({ row }) => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">{t("component.memberTable.openMenu")}</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -86,7 +87,7 @@ export function getColumns(churchId: string): ColumnDef<typeof members.$inferSel
             <DropdownMenuItem asChild>
               <Link href={`/${churchId}/dashboard/members/${row.original.id}`} className="flex items-center gap-2 cursor-pointer">
                 <Eye className="h-4 w-4" />
-                View
+                {t("component.memberTable.view")}
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

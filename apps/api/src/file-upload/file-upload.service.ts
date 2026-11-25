@@ -405,17 +405,23 @@ export class FileUploadService {
     id: string,
     userId: string,
     userRole: string,
-    updates: Pick<Partial<DocumentMetadata>, 'title' | 'description'>,
+    updates: Pick<Partial<DocumentMetadata>, 'title' | 'description' | 'visibleToMembers'>,
   ): Promise<DocumentMetadata> {
     this.logger.log(`Updating document: ${id}`);
 
-    const set: { title?: string; description?: string | null; updatedAt: Date } = {
+    const set: {
+      title?: string;
+      description?: string | null;
+      visibleToMembers?: boolean;
+      updatedAt: Date;
+    } = {
       updatedAt: new Date(),
     };
     if (updates.title !== undefined) set.title = updates.title;
     if (updates.description !== undefined) set.description = updates.description;
-    if (set.title === undefined && set.description === undefined) {
-      throw new BadRequestException('At least one of title or description is required');
+    if (updates.visibleToMembers !== undefined) set.visibleToMembers = updates.visibleToMembers;
+    if (set.title === undefined && set.description === undefined && set.visibleToMembers === undefined) {
+      throw new BadRequestException('At least one of title, description or visibleToMembers is required');
     }
 
     const canManageFiles = roleHasPermission(userRole as any, 'manage:files');

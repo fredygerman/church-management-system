@@ -26,6 +26,8 @@ import { ModeToggle } from "@/components/layout/mode-toggle"
 import Link from "next/link"
 import { sidebarConfig } from "@/config/sidebar"
 import { generateCombinedTitle, isUUID } from "@/lib/utils"
+import { useT } from "@/components/i18n/locale-provider"
+import type { MessageKey } from "@church/config"
 
 interface Church {
   id: string
@@ -49,12 +51,13 @@ export function DashboardLayout({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const pathname = usePathname()
   const { data: session, status } = useSession()
+  const { t } = useT()
 
   const pageTitle = useState(() => {
     for (const section of sidebarConfig) {
       const item = section.items.find((item) => item.href === pathname)
       if (item) {
-        return item.title
+        return t(item.title as MessageKey)
       }
     }
     const pathParts = pathname.split("/")
@@ -133,7 +136,7 @@ export function DashboardLayout({
                 <Link href={`/${pathname.split('/')[1]}/dashboard/profile`} passHref>
                   <DropdownMenuItem className="cursor-pointer">
                     <User className="mr-2 size-4" />
-                    <span>My Profile</span>
+                    <span>{t("nav.myProfile")}</span>
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuSeparator />
@@ -142,7 +145,7 @@ export function DashboardLayout({
                   className="cursor-pointer bg-destructive text-destructive-foreground"
                 >
                   <LogOut className="mr-2 size-4" />
-                  <span>Log out</span>
+                  <span>{t("nav.logout.menu")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -159,18 +162,18 @@ export function DashboardLayout({
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Are you sure you want to log out?</DialogTitle>
+            <DialogTitle>{t("nav.logout.title")}</DialogTitle>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Link href="/auth/signout" passHref>
               <Button
                 variant="destructive"
                 className="cursor-pointer bg-destructive text-destructive-foreground"
               >
-                Yes
+                {t("nav.logout.yes")}
               </Button>
             </Link>
           </DialogFooter>

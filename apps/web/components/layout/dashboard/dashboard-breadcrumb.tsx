@@ -5,6 +5,8 @@ import { ChevronRight } from "lucide-react"
 import { usePathname } from "next/navigation"
 import { sidebarConfig } from "@/config/sidebar"
 import { isUUID } from "@/lib/utils"
+import { useT } from "@/components/i18n/locale-provider"
+import type { MessageKey } from "@church/config"
 
 interface BreadcrumbItem {
   label: string
@@ -13,6 +15,7 @@ interface BreadcrumbItem {
 
 export function DashboardBreadcrumb() {
   const pathname = usePathname()
+  const { t } = useT()
   const pathParts = pathname.split("/").filter(Boolean)
   const breadcrumbs: BreadcrumbItem[] = []
 
@@ -36,7 +39,7 @@ export function DashboardBreadcrumb() {
     for (const section of sidebarConfig) {
       const item = section.items.find((item) => item.href.endsWith(part))
       if (item) {
-        label = item.title
+        label = t(item.title as MessageKey)
         break
       }
     }
@@ -49,7 +52,7 @@ export function DashboardBreadcrumb() {
 
   // Always add home at the beginning
   const allBreadcrumbs = [
-    { label: "Dashboard", href: `/${pathParts[0]}/dashboard` },
+    { label: t("nav.section.dashboard"), href: `/${pathParts[0]}/dashboard` },
     ...breadcrumbs,
   ]
 

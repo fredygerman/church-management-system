@@ -16,6 +16,7 @@ export * from './types/notifications'
 export * from './types/visitor'
 export * from './types/ai-components'
 export * from './permissions'
+export * from './i18n'
 
 // Shared utilities - Client-safe
 export * from './utils'

@@ -6,6 +6,7 @@ import { type Table } from "@tanstack/react-table"
 
 import { exportTableToCSV } from "@/lib/export"
 import { Button } from "@/components/ui/button"
+import { useT } from "@/components/i18n/locale-provider"
 import { members } from "@church/db"
 
 interface MemberTableToolbarActionsProps {
@@ -15,6 +16,7 @@ interface MemberTableToolbarActionsProps {
 export function MemberTableToolbarActions({
   table,
 }: MemberTableToolbarActionsProps) {
+  const { t } = useT()
   return (
     <div className="flex items-center gap-2">
       <Button
@@ -28,7 +30,7 @@ export function MemberTableToolbarActions({
         }
       >
         <DownloadIcon className="mr-2 size-4" aria-hidden="true" />
-        Export
+        {t("component.members.export")}
       </Button>
     </div>
   )

@@ -6,6 +6,7 @@ import { updateMember } from "@/actions/member"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useT } from "@/components/i18n/locale-provider"
 
 interface ProfileMember {
   id: string
@@ -42,6 +43,7 @@ function asMaritalStatus(
 }
 
 export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
+  const { t } = useT()
   const [values, setValues] = useState<ProfileValues>({
     firstName: member.firstName ?? "",
     lastName: member.lastName ?? "",
@@ -69,7 +71,7 @@ export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
     if (!values.firstName.trim() || !values.lastName.trim()) {
       setFeedback({
         kind: "error",
-        message: "First name and last name are required.",
+        message: t("component.profile.required"),
       })
       return
     }
@@ -81,14 +83,14 @@ export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
         firstName: values.firstName.trim(),
         lastName: values.lastName.trim(),
       })
-      setFeedback({ kind: "success", message: "Your profile was saved." })
+      setFeedback({ kind: "success", message: t("component.profile.saved") })
     } catch (error) {
       setFeedback({
         kind: "error",
         message:
           error instanceof Error
             ? error.message
-            : "We could not save your profile.",
+            : t("component.profile.fallback"),
       })
     } finally {
       setPending(false)
@@ -99,7 +101,7 @@ export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
     <form onSubmit={submit} className="space-y-5" noValidate>
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="profile-first-name">First name</Label>
+          <Label htmlFor="profile-first-name">{t("component.profile.firstName")}</Label>
           <Input
             id="profile-first-name"
             value={values.firstName}
@@ -107,7 +109,7 @@ export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="profile-last-name">Last name</Label>
+          <Label htmlFor="profile-last-name">{t("component.profile.lastName")}</Label>
           <Input
             id="profile-last-name"
             value={values.lastName}
@@ -118,7 +120,7 @@ export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="profile-date-of-birth">Date of birth</Label>
+          <Label htmlFor="profile-date-of-birth">{t("component.profile.dateOfBirth")}</Label>
           <Input
             id="profile-date-of-birth"
             type="date"
@@ -127,7 +129,7 @@ export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="profile-gender">Gender</Label>
+          <Label htmlFor="profile-gender">{t("component.profile.gender")}</Label>
           <select
             id="profile-gender"
             className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
@@ -139,15 +141,15 @@ export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
               )
             }
           >
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="others">Others</option>
+            <option value="male">{t("component.profile.genderMale")}</option>
+            <option value="female">{t("component.profile.genderFemale")}</option>
+            <option value="others">{t("component.profile.genderOthers")}</option>
           </select>
         </div>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="profile-marital-status">Marital status</Label>
+        <Label htmlFor="profile-marital-status">{t("component.profile.maritalStatus")}</Label>
         <select
           id="profile-marital-status"
           className="border-input bg-background h-10 w-full rounded-md border px-3 text-sm"
@@ -159,10 +161,10 @@ export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
             )
           }
         >
-          <option value="single">Single</option>
-          <option value="married">Married</option>
-          <option value="divorced">Divorced</option>
-          <option value="widowed">Widowed</option>
+          <option value="single">{t("component.profile.maritalSingle")}</option>
+          <option value="married">{t("component.profile.maritalMarried")}</option>
+          <option value="divorced">{t("component.profile.maritalDivorced")}</option>
+          <option value="widowed">{t("component.profile.maritalWidowed")}</option>
         </select>
       </div>
 
@@ -180,7 +182,7 @@ export function ProfileEditForm({ churchId, member }: ProfileEditFormProps) {
         </p>
       )}
       <Button type="submit" disabled={pending}>
-        {pending ? "Saving..." : "Save changes"}
+        {pending ? t("common.saving") : t("component.profile.submit")}
       </Button>
     </form>
   )

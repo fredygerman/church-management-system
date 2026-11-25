@@ -114,7 +114,7 @@ export async function getLibraryDownloadUrl(
 }
 
 // Staff upload: POST /api/files/upload (multipart, requires manage:files).
-// Visibility is set at upload time through the metadata JSON; PATCH /api/files/:id cannot change it.
+// Visibility is set at upload time through the metadata JSON; setStaffDocumentVisibility changes it later.
 export async function uploadStaffDocument(churchId: string, formData: FormData): Promise<void> {
   const file = formData.get("file")
   const title = String(formData.get("title") ?? "").trim()
@@ -167,6 +167,28 @@ export async function deleteStaffDocument(churchId: string, documentId: string):
 
   if (!response.success) {
     throw new Error(response.message || "The document could not be deleted.")
+  }
+
+  revalidatePath(`/${churchId}/dashboard/content`)
+}
+
+// Staff visibility: PATCH /api/files/:id with { visibleToMembers } (requires manage:files).
+export async function setStaffDocumentVisibility(
+  churchId: string,
+  documentId: string,
+  visibleToMembers: boolean
+): Promise<void> {
+  const response = await apiRequest<unknown>({
+    requestConfig: {
+      method: "PATCH",
+      url: `/api/files/${encodeURIComponent(documentId)}`,
+      params: { churchId },
+      data: { visibleToMembers },
+    },
+  })
+
+  if (!response.success) {
+    throw new Error(response.message || "The document visibility could not be updated.")
   }
 
   revalidatePath(`/${churchId}/dashboard/content`)

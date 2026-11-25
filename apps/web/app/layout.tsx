@@ -2,6 +2,8 @@ import type { Metadata } from "next"
 import { cn } from "@/lib/utils"
 import Providers from "@/components/providers/providers"
 import { getSession } from "@/auth"
+import { getLocale } from "@/lib/i18n/server"
+import { LocaleProvider } from "@/components/i18n/locale-provider"
 import "./globals.css"
 import { Red_Hat_Display } from "next/font/google"
 
@@ -14,9 +16,10 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   const session = await getSession()
+  const locale = await getLocale()
 
   return (
-    <html lang="en" suppressHydrationWarning className="h-full">
+    <html lang={locale} suppressHydrationWarning className="h-full">
       <head />
       <body
         suppressHydrationWarning
@@ -32,7 +35,7 @@ export default async function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
+          <LocaleProvider locale={locale}>{children}</LocaleProvider>
         </Providers>
       </body>
     </html>

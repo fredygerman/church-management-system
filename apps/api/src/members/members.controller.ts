@@ -150,7 +150,12 @@ export class MembersController {
     @Param('id') id: string,
     @Body() input: UpdateMemberInput,
   ) {
-    return this.membersService.updateMember(request['churchId'] as string, id, input)
+    const churchId = request['churchId'] as string
+    const scope = await this.membersService.getLeaderScope(churchId, request.user['id'] as string, request.user['role'] as string)
+    if (!(await this.membersService.isMemberInScope(churchId, id, scope?.memberFilter))) {
+      throw new ForbiddenException('This member is outside your scope')
+    }
+    return this.membersService.updateMember(churchId, id, input)
   }
 
   /**
@@ -159,7 +164,12 @@ export class MembersController {
   @Delete(':id')
   @RequirePermission('delete:member')
   async delete(@Req() request: Request, @Param('id') id: string) {
-    await this.membersService.deleteMember(request['churchId'] as string, id)
+    const churchId = request['churchId'] as string
+    const scope = await this.membersService.getLeaderScope(churchId, request.user['id'] as string, request.user['role'] as string)
+    if (!(await this.membersService.isMemberInScope(churchId, id, scope?.memberFilter))) {
+      throw new ForbiddenException('This member is outside your scope')
+    }
+    await this.membersService.deleteMember(churchId, id)
     return { message: 'Member deleted successfully' }
   }
 

@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { apiGet } from "@/lib/api-helpers"
+import { getTranslator } from "@/lib/i18n/server"
 
 import { Button } from "@/components/ui/button"
 import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
@@ -32,21 +33,22 @@ function formatServiceDate(sessionDate: string): string {
 
 // Open or upcoming sessions for members (GET /attendance/sessions, sorted by date).
 async function NextServices({ churchId }: { churchId: string }) {
+  const t = await getTranslator()
   try {
     const sessionData = await apiGet<ServiceSession[]>("/attendance/sessions", { churchId })
     const services = Array.isArray(sessionData) ? sessionData.slice(0, 3) : []
 
     return (
       <section className="border-border bg-card rounded-lg border p-5">
-        <h2 className="text-foreground text-base font-semibold">Next services</h2>
+        <h2 className="text-foreground text-base font-semibold">{t("portal.home.servicesTitle")}</h2>
         {services.length === 0 ? (
-          <p className="text-muted-foreground mt-2 text-sm">No services scheduled</p>
+          <p className="text-muted-foreground mt-2 text-sm">{t("portal.home.servicesEmpty")}</p>
         ) : (
           <ul className="mt-3 space-y-3">
             {services.map((service) => (
               <li key={service.id} className="border-border border-t pt-3 first:border-t-0 first:pt-0">
                 <p className="text-foreground text-sm font-medium">
-                  {service.title || service.serviceType?.name || "Service"}
+                  {service.title || service.serviceType?.name || t("portal.home.servicesFallback")}
                 </p>
                 <p className="text-muted-foreground mt-1 text-sm">
                   {formatServiceDate(service.sessionDate)}
@@ -60,10 +62,10 @@ async function NextServices({ churchId }: { churchId: string }) {
   } catch {
     return (
       <section className="border-destructive/50 bg-card rounded-lg border p-5" role="alert">
-        <h2 className="text-foreground text-base font-semibold">Next services</h2>
-        <p className="text-destructive mt-2 text-sm">Next services could not be loaded. Please try again.</p>
+        <h2 className="text-foreground text-base font-semibold">{t("portal.home.servicesTitle")}</h2>
+        <p className="text-destructive mt-2 text-sm">{t("portal.home.servicesError")}</p>
         <Button asChild variant="outline" className="mt-4">
-          <Link href={`/${churchId}/portal`}>Retry</Link>
+          <Link href={`/${churchId}/portal`}>{t("common.retry")}</Link>
         </Button>
       </section>
     )
@@ -71,6 +73,7 @@ async function NextServices({ churchId }: { churchId: string }) {
 }
 
 async function HomeContent({ churchId }: { churchId: string }) {
+  const t = await getTranslator()
   try {
     const announcementData = await apiGet<any[]>("/communications/announcements", { churchId })
     const announcements = Array.isArray(announcementData) ? announcementData : []
@@ -78,19 +81,19 @@ async function HomeContent({ churchId }: { churchId: string }) {
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">Home</h1>
+          <h1 className="text-foreground text-2xl font-semibold">{t("portal.home.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            Updates from your selected church branch.
+            {t("portal.home.subtitle")}
           </p>
         </div>
 
         <section className="border-border bg-card rounded-lg border p-5">
           <h2 className="text-foreground text-base font-semibold">
-            Announcements
+            {t("portal.home.announcementsTitle")}
           </h2>
           {announcements.length === 0 ? (
             <p className="text-muted-foreground mt-2 text-sm">
-              No announcements have been published to members yet.
+              {t("portal.home.announcementsEmpty")}
             </p>
           ) : (
             <ul className="mt-3 space-y-3">
@@ -114,25 +117,24 @@ async function HomeContent({ churchId }: { churchId: string }) {
         <Suspense fallback={<HomeLoading />}>
           <NextServices churchId={churchId} />
         </Suspense>
-        {/* TODO: Add reviewed Swahili copy alongside the English member experience. */}
       </div>
     )
   } catch (error) {
     if (isForbiddenError(error)) {
-      return <PortalDeniedState title="Home" />
+      return <PortalDeniedState title={t("portal.home.title")} />
     }
     return (
       <div className="space-y-4">
         <div>
-          <h1 className="text-foreground text-2xl font-semibold">Home</h1>
+          <h1 className="text-foreground text-2xl font-semibold">{t("portal.home.title")}</h1>
           <p className="text-muted-foreground text-sm">
-            We could not load your church updates.
+            {t("portal.home.loadError")}
           </p>
         </div>
         <div className="border-destructive/50 bg-card rounded-lg border p-5">
-          <p className="text-destructive text-sm">Please try again.</p>
+          <p className="text-destructive text-sm">{t("portal.home.tryAgain")}</p>
           <Button asChild variant="outline" className="mt-4">
-            <Link href={`/${churchId}/portal`}>Retry</Link>
+            <Link href={`/${churchId}/portal`}>{t("common.retry")}</Link>
           </Button>
         </div>
       </div>

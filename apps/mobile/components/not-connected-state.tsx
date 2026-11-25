@@ -1,16 +1,18 @@
 import { StyleSheet, Text, View } from "react-native"
+import { useT } from "../lib/locale"
 
 type NotConnectedStateProps = {
   area: string
 }
 
 export function NotConnectedState({ area }: NotConnectedStateProps) {
+  const { t } = useT()
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{area}</Text>
-      <Text style={styles.message}>This screen is not yet connected.</Text>
+      <Text style={styles.message}>{t("mobile.shared.notConnected.message")}</Text>
       <Text style={styles.detail}>
-        No church data or metrics are available in this M0 preview.
+        {t("mobile.shared.notConnected.detail")}
       </Text>
     </View>
   )

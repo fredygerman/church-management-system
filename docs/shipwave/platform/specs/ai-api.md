@@ -8,7 +8,7 @@ Status: implemented in `apps/api/src/ai` (DEC-08). Read-only. The server never e
 
 - Guards: JwtAuthGuard and ChurchContextGuard (global), permission `read:self` (any signed-in member). Rate limit: 20 requests per minute per user (`AiUserThrottlerGuard`, plus the global IP throttle).
 - Body: `{ "churchId"?: uuid, "message": string (1 to 1000 chars, not blank), "conversationId"?: uuid }`. `churchId` is injected by ChurchContextGuard.
-- Response (normal envelope): `data = { "conversationId": uuid, "components": AiComponent[] }`. Components follow `packages/config/src/types/ai-components.ts` (see `ai-components.md`), always after `validateAiResponse`.
+- Response (normal envelope): `data = { "conversationId": uuid, "components": AiComponent[] }`. Components follow `packages/config/src/types/ai-components.ts` (see `ai-components.md`), always after `validateAiResponse`. Optional `sources` (`{ title, href? }[]`) and `uncertain` (boolean) come from the read tools of this answer: `sources` lists the tools that succeeded, `uncertain` is `true` when a tool was denied or failed (`ai.service.ts`, `toolProvenance`). Both are unset when no tool ran.
 - Errors: 400 blank or invalid body; 404 conversation not found or not owned by the caller; 502 provider call failed; 503 AI settings missing or invalid (no call is made; the log names the variable, the response does not).
 
 ## Provider
@@ -69,3 +69,10 @@ No tool exists for prayer requests, families, giving, visitors, or any write.
 - Expired conversations are removed by the daily `RetentionService` job (03:00) and lazily on chat calls.
 - No endpoint to list or read a conversation.
 - No action registry entries.
+
+## Deferred until AI is in scope
+
+- AI configuration (provider settings and keys) is deferred.
+- AI testing is deferred.
+- The AI feedback route (`POST /ai/feedback`) is deferred because it needs a new table. It is not implemented.
+- The AI action registry (`AI_ACTION_REGISTRY`) stays empty this release.

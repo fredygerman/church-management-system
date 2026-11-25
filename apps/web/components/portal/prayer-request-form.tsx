@@ -6,8 +6,10 @@ import { createPrayerRequest } from "@/actions/prayer"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useT } from "@/components/i18n/locale-provider"
 
 export function PortalPrayerRequestForm({ churchId }: { churchId: string }) {
+  const { t } = useT()
   const [content, setContent] = useState("")
   const [pending, setPending] = useState(false)
   const [feedback, setFeedback] = useState<{
@@ -21,7 +23,7 @@ export function PortalPrayerRequestForm({ churchId }: { churchId: string }) {
     setFeedback(null)
 
     if (!trimmedContent) {
-      setFeedback({ kind: "error", message: "Prayer request is required." })
+      setFeedback({ kind: "error", message: t("component.prayer.required") })
       return
     }
 
@@ -31,7 +33,7 @@ export function PortalPrayerRequestForm({ churchId }: { churchId: string }) {
       setContent("")
       setFeedback({
         kind: "success",
-        message: "Your prayer request was submitted.",
+        message: t("component.prayer.success"),
       })
     } catch (error) {
       setFeedback({
@@ -39,7 +41,7 @@ export function PortalPrayerRequestForm({ churchId }: { churchId: string }) {
         message:
           error instanceof Error
             ? error.message
-            : "We could not submit your prayer request.",
+            : t("component.prayer.fallback"),
       })
     } finally {
       setPending(false)
@@ -49,19 +51,19 @@ export function PortalPrayerRequestForm({ churchId }: { churchId: string }) {
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="space-y-2">
-        <Label htmlFor="portal-prayer-request">Prayer request</Label>
+        <Label htmlFor="portal-prayer-request">{t("component.prayer.label")}</Label>
         <Textarea
           id="portal-prayer-request"
           value={content}
           onChange={(event) => setContent(event.target.value)}
-          placeholder="Share what you would like the church to pray for..."
+          placeholder={t("component.prayer.placeholder")}
           rows={4}
           disabled={pending}
           aria-describedby="portal-prayer-privacy"
         />
       </div>
       <p id="portal-prayer-privacy" className="text-muted-foreground text-xs">
-        Your request follows the church&apos;s existing privacy rules.
+        {t("component.prayer.privacy")}
       </p>
       {feedback && (
         <p
@@ -77,7 +79,7 @@ export function PortalPrayerRequestForm({ churchId }: { churchId: string }) {
         </p>
       )}
       <Button type="submit" disabled={pending}>
-        {pending ? "Submitting..." : "Submit prayer request"}
+        {pending ? t("component.prayer.submitting") : t("component.prayer.submit")}
       </Button>
     </form>
   )
