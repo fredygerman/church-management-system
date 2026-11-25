@@ -1,5 +1,5 @@
 import { Button, ScrollView, Text } from "react-native"
-import { dictionaries, type MessageKey, type Translate } from "@church/config"
+import { dictionaries, type MessageKey, type Translate } from "@church/config/i18n"
 import { LanguagePicker } from "../../components/language-picker"
 import { SpacesSection } from "../../components/spaces-section"
 import { styles } from "../../components/screen-state"

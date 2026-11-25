@@ -1,5 +1,5 @@
 import { Button, Text, View } from "react-native"
-import { LOCALES, type Locale } from "@church/config"
+import { LOCALES, type Locale } from "@church/config/i18n"
 import { useT } from "../lib/locale"
 import { styles } from "./screen-state"
 

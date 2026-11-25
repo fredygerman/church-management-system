@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react"
 import { Alert, Button, Text, View } from "react-native"
-import { dictionaries, type MessageKey } from "@church/config"
+import { dictionaries, type MessageKey } from "@church/config/i18n"
 import { ApiError, api } from "../lib/api"
 import { useT } from "../lib/locale"
 import { useSession } from "../lib/session"

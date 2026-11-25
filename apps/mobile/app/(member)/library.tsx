@@ -3,7 +3,7 @@ import { ActivityIndicator, FlatList, Linking, Pressable, StyleSheet, Text, Text
 import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
 import { useT } from "../../lib/locale"
-import type { Translate } from "@church/config"
+import type { Translate } from "@church/config/i18n"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
 
 type LibraryDocument = {

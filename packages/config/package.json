@@ -25,6 +25,10 @@
       "react-native": "./src/types/ai-components.ts",
       "types": "./dist/types/ai-components.d.ts",
       "default": "./dist/types/ai-components.js"
+    },
+    "./i18n": {
+      "types": "./dist/i18n/index.d.ts",
+      "default": "./dist/i18n/index.js"
     }
   },
   "scripts": {

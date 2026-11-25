@@ -1,6 +1,6 @@
 import * as SecureStore from "expo-secure-store"
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
-import { DEFAULT_LOCALE, parseLocale, translatorFor, type Locale, type Translate } from "@church/config"
+import { DEFAULT_LOCALE, parseLocale, translatorFor, type Locale, type Translate } from "@church/config/i18n"
 
 const LOCALE_KEY = "church.locale"
 
