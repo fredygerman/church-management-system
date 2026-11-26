@@ -9,11 +9,15 @@ import * as express from 'express';
 import helmet from 'helmet';
 import { IncomingMessage, ServerResponse } from 'http';
 import { getServiceStatus } from './helpers/util';
+import { assertProductionSecrets } from './security/production-secrets';
 
 const { appUrl, port, frontendUrl, nodeEnv } = config;
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+
+  // Refuse to start in production on unset or committed-default signing secrets (RM-005).
+  assertProductionSecrets();
 
   logger.log('🚀 Starting Church API Service...');
 
