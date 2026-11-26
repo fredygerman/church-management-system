@@ -20,6 +20,13 @@ services:
       API_BASE_URL: ${API_BASE_URL}
       FRONTEND_URL: ${FRONTEND_URL}
       CORS_ORIGINS: ${CORS_ORIGINS}
+      # S3-compatible object storage (Garage). Empty defaults keep environments without storage booting.
+      S3_ENDPOINT: ${S3_ENDPOINT:-}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:-}
+      S3_PUBLIC_URL: ${S3_PUBLIC_URL:-}
+      S3_REGION: ${S3_REGION:-auto}
     networks:
       - coolify
     healthcheck:
