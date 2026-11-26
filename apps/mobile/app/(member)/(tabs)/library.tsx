@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { FlatList, Linking, StyleSheet, View } from "react-native"
-import { ApiError, api } from "../../lib/api"
-import { useSession } from "../../lib/session"
-import { useT } from "../../lib/locale"
+import { ApiError, api } from "../../../lib/api"
+import { useSession } from "../../../lib/session"
+import { useT } from "../../../lib/locale"
 import type { Translate } from "@church/config/i18n"
-import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
-import { TextField } from "../../components/ui"
-import { LibraryMediaRow, mediaKindForContentType } from "../../components/library-media"
-import { spacing } from "../../theme"
+import { EmptyState, ErrorState, LoadingState, styles } from "../../../components/screen-state"
+import { TextField } from "../../../components/ui"
+import { LibraryMediaRow, mediaKindForContentType } from "../../../components/library-media"
+import { spacing } from "../../../theme"
 
 type LibraryDocument = {
   id: string

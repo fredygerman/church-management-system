@@ -1,9 +1,9 @@
 import { Text } from "react-native"
-import { Card } from "../../components/ui"
-import { api } from "../../lib/api"
-import { useT } from "../../lib/locale"
-import { StaffReadScreen, asRows, field, type StaffRow } from "../../components/staff-read-screen"
-import { styles } from "../../components/screen-state"
+import { Card } from "../../../components/ui"
+import { api } from "../../../lib/api"
+import { useT } from "../../../lib/locale"
+import { StaffReadScreen, asRows, field, type StaffRow } from "../../../components/staff-read-screen"
+import { styles } from "../../../components/screen-state"
 
 // Permission: manage:files (GET /api/files/user). Same documents list as the web Content page.
 const loadDocuments = () => api.get<unknown>("/api/files/user").then(asRows)

@@ -1,8 +1,8 @@
 import { ScrollView, Text } from "react-native"
 import { router } from "expo-router"
-import { useT } from "../../lib/locale"
-import { Card, ListRow } from "../../components/ui"
-import { colors, spacing, type } from "../../theme"
+import { useT } from "../../../lib/locale"
+import { Card, ListRow } from "../../../components/ui"
+import { colors, spacing, type } from "../../../theme"
 
 // Hub for destinations that are not primary tabs: events, resources, inbox and prayer.
 // Every row points at a screen that exists; the header already names this page.

@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from "react"
 import { Pressable, ScrollView, Text, View } from "react-native"
-import { ApiError, api } from "../../lib/api"
-import { useSession } from "../../lib/session"
-import { useT } from "../../lib/locale"
-import { ErrorState, LoadingState, styles } from "../../components/screen-state"
-import { LanguagePicker } from "../../components/language-picker"
-import { SpacesSection } from "../../components/spaces-section"
-import { Button, Card, ListRow, TextField } from "../../components/ui"
-import { colors, radii, spacing, type } from "../../theme"
+import { ApiError, api } from "../../../lib/api"
+import { useSession } from "../../../lib/session"
+import { useT } from "../../../lib/locale"
+import { ErrorState, LoadingState, styles } from "../../../components/screen-state"
+import { LanguagePicker } from "../../../components/language-picker"
+import { SpacesSection } from "../../../components/spaces-section"
+import { Button, Card, ListRow, TextField } from "../../../components/ui"
+import { colors, radii, spacing, type } from "../../../theme"
 
 // The header already names the screen, so there is no page title here.
 export default function ProfileScreen() {

@@ -1,12 +1,12 @@
 import { Text, View } from "react-native"
-import { Button, Card, ListRow, Pill, SectionHeader } from "../../components/ui"
+import { Button, Card, ListRow, Pill, SectionHeader } from "../../../components/ui"
 import { router } from "expo-router"
-import { api } from "../../lib/api"
-import { roleHasTabPermission } from "../../lib/claims"
-import { useT } from "../../lib/locale"
-import { useSession } from "../../lib/session"
-import { StaffReadScreen, asRows, field, type StaffRow } from "../../components/staff-read-screen"
-import { styles } from "../../components/screen-state"
+import { api } from "../../../lib/api"
+import { roleHasTabPermission } from "../../../lib/claims"
+import { useT } from "../../../lib/locale"
+import { useSession } from "../../../lib/session"
+import { StaffReadScreen, asRows, field, type StaffRow } from "../../../components/staff-read-screen"
+import { styles } from "../../../components/screen-state"
 
 // Permission: view:attendance (GET /attendance/service-types, GET /attendance/sessions)
 const loadServices = async () => {

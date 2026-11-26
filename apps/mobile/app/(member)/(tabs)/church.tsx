@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from "react"
 import { ScrollView, Text, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
-import { Card, ListRow, SectionHeader } from "../../components/ui"
-import { colors, spacing, type } from "../../theme"
+import { Card, ListRow, SectionHeader } from "../../../components/ui"
+import { colors, spacing, type } from "../../../theme"
 import type { MessageKey } from "@church/config/i18n"
-import { ApiError, api } from "../../lib/api"
-import { useT } from "../../lib/locale"
-import { createRequestGate } from "../../lib/request-gate"
-import { useSession } from "../../lib/session"
-import { ErrorState, LoadingState, styles } from "../../components/screen-state"
+import { ApiError, api } from "../../../lib/api"
+import { useT } from "../../../lib/locale"
+import { createRequestGate } from "../../../lib/request-gate"
+import { useSession } from "../../../lib/session"
+import { ErrorState, LoadingState, styles } from "../../../components/screen-state"
 
 // Server messages are shown as the server sent them; our own messages are translated at render time.
 type Failure = { text: string } | { key: MessageKey }

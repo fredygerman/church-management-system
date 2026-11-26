@@ -1,11 +1,11 @@
 import { ScrollView, Text, View } from "react-native"
-import { Button, Card, SectionHeader } from "../../components/ui"
+import { Button, Card, SectionHeader } from "../../../components/ui"
 import { dictionaries, type MessageKey, type Translate } from "@church/config/i18n"
-import { LanguagePicker } from "../../components/language-picker"
-import { SpacesSection } from "../../components/spaces-section"
-import { styles } from "../../components/screen-state"
-import { useT } from "../../lib/locale"
-import { useSession } from "../../lib/session"
+import { LanguagePicker } from "../../../components/language-picker"
+import { SpacesSection } from "../../../components/spaces-section"
+import { styles } from "../../../components/screen-state"
+import { useT } from "../../../lib/locale"
+import { useSession } from "../../../lib/session"
 
 // Role values are stored as enum keys (zone_leader); show them as words.
 function roleLabel(role: string, t: Translate) {
