@@ -23,6 +23,7 @@ import { Public, GetUser } from './decorators';
 import { RequirePermission } from './decorators/require-permission.decorator';
 import { GoogleIdentityVerifier } from './google-identity-verifier';
 import { randomBytes } from 'crypto';
+import { sameOriginCallbackPath } from '../security/callback-url';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -385,8 +386,10 @@ export class AuthController {
       redirectUrl.searchParams.set('success', 'true');
 
       // Include the original callback URL if provided
-      if (callbackUrl) {
-        redirectUrl.searchParams.set('callbackUrl', callbackUrl);
+      // Only same-origin paths survive (RM-012); anything else is dropped.
+      const safeCallbackPath = sameOriginCallbackPath(callbackUrl, frontendUrl);
+      if (safeCallbackPath) {
+        redirectUrl.searchParams.set('callbackUrl', safeCallbackPath);
       }
 
       this.logger.log(`Google OAuth successful for user: ${user.id}`);
