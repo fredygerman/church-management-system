@@ -188,7 +188,6 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
 
   [UserRole.MEMBER]: [
     'read:member', // Own profile only
-    'view:visitors', 'create:visitor',
     'view:attendance',
     'view:communications',
     'view:lifecycle-dashboard',
