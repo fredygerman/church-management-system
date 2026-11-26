@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
-import { eq, and, or, isNull, gte, lte, inArray } from 'drizzle-orm'
+import { eq, and, or, isNull, gte, lte, inArray, asc } from 'drizzle-orm'
 import { db, events, eventRsvps, members, type Event, type EventRsvp } from '@church/db'
 import { NotificationsService } from '../notifications/notifications.service'
 
@@ -94,7 +94,7 @@ export class EventsService {
     limit?: number,
     offset?: number,
   ): Promise<Event[]> {
-    const effectiveLimit = limit ?? 200
+    const effectiveLimit = limit ?? 50
     const effectiveOffset = offset ?? 0
     return db.query.events.findMany({
       where: and(
@@ -106,6 +106,7 @@ export class EventsService {
         filters.from ? gte(events.startsAt, filters.from as any) : undefined,
         filters.to ? lte(events.startsAt, filters.to + 'T23:59:59.999Z' as any) : undefined,
       ),
+      orderBy: [asc(events.startsAt)],
       limit: effectiveLimit,
       offset: effectiveOffset,
     })

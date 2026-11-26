@@ -28,7 +28,8 @@ import {
 import { MembersService } from '../members/members.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
-import { roleHasPermission } from '../auth/types/permission.types'
+import { roleHasPermission, type UserRole } from '../auth/types/permission.types'
+import { effectiveRole } from '../auth/platform-admin'
 
 @Controller('events')
 @UseGuards(ChurchContextGuard)
@@ -95,8 +96,16 @@ export class EventsController {
   ) {
     const churchId = request['churchId'] as string
     const { limit, offset } = parsePagination(limitStr, offsetStr)
+    // Callers without manage:events see published events only; the status filter cannot widen that.
+    const publishedOnly = this.isPublishedOnlyCaller(request)
 
-    return this.eventsService.getEventsByChurch(churchId, { from, to, status, scope }, false, limit, offset)
+    return this.eventsService.getEventsByChurch(
+      churchId,
+      { from, to, status: publishedOnly ? undefined : status, scope },
+      publishedOnly,
+      limit,
+      offset,
+    )
   }
 
   /**
@@ -106,11 +115,18 @@ export class EventsController {
   @Get(':id')
   @RequirePermission('view:events')
   async getOne(@Req() request: Request, @Param('id') id: string) {
-    const event = await this.eventsService.getEventByIdInChurch(request['churchId'] as string, id)
+    const publishedOnly = this.isPublishedOnlyCaller(request)
+    const event = await this.eventsService.getEventByIdInChurch(request['churchId'] as string, id, publishedOnly)
     if (!event) {
       throw new NotFoundException(`Event with ID ${id} not found`)
     }
     return event
+  }
+
+  /** Drafts are visible only to callers who can manage events (RM-004). */
+  private isPublishedOnlyCaller(request: Request): boolean {
+    const role = effectiveRole(request.user as any, request.user?.['role'] as string) as UserRole
+    return !roleHasPermission(role, 'manage:events')
   }
 
   /**

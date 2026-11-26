@@ -15,6 +15,7 @@ jest.mock('drizzle-orm', () => ({
   gte: (column: string, value: any) => (row: any) => row[column] >= value,
   lte: (column: string, value: any) => (row: any) => row[column] <= value,
   inArray: (column: string, values: any[]) => (row: any) => values.includes(row[column]),
+  asc: (column: string) => ({ __orderAsc: column }),
 }))
 
 jest.mock('@church/db', () => {
@@ -64,6 +65,11 @@ jest.mock('@church/db', () => {
 
   const findMany = (table: any) => async (opts: any) => {
     let rows = opts?.where ? tableArr(table).filter(opts.where) : tableArr(table).slice()
+    const order = Array.isArray(opts?.orderBy) ? opts.orderBy[0] : undefined
+    if (order?.__orderAsc) {
+      const col = order.__orderAsc
+      rows = rows.slice().sort((a: any, b: any) => (a[col] < b[col] ? -1 : a[col] > b[col] ? 1 : 0))
+    }
     if (opts?.limit) rows = rows.slice(0, opts.limit)
     return rows.map((r: any) => ({ ...r }))
   }
@@ -305,6 +311,23 @@ describe('EventsService', () => {
 
     expect(await service.getEventByIdInChurch(CHURCH_A, draft.id, true)).toBeUndefined()
     expect(await service.getEventByIdInChurch(CHURCH_A, published.id, true)).toBeDefined()
+  })
+
+  it('lists published events ordered by startsAt ascending, capped at 50 by default', async () => {
+    for (let i = 0; i < 55; i++) {
+      const day = String(1 + (54 - i) % 28).padStart(2, '0')
+      await service.createEvent({
+        churchId: CHURCH_A,
+        title: `Event ${i}`,
+        startsAt: `2026-06-${day}T09:00:00`,
+        status: 'published',
+      })
+    }
+
+    const list = await service.getEventsByChurch(CHURCH_A, {}, true)
+    expect(list).toHaveLength(50)
+    const starts = list.map((e) => new Date(e.startsAt as any).getTime())
+    expect([...starts].sort((a, b) => a - b)).toEqual(starts)
   })
 
   // ---- (d) RSVP behavior ----
