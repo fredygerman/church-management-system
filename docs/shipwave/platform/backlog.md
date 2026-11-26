@@ -88,6 +88,31 @@ Done:
 Open, code (deferred by decision, DEC-14):
 - AI configuration, AI testing and the AI feedback route (needs a table). The AI answer sources and uncertainty fields are implemented and displayed.
 
+## Status 2026-11-26 (sixth pass, finish code work)
+
+Verified for this pass: `@church/db` build, `@church/config` build and copy tests (38), API type-check and jest (19 suites, 146 tests; three new feedback tests, no provider calls), web type-check, web tests (13) and `next build` with placeholder build-only env values, mobile type-check, mobile tests (12) and Android export. Migration 0013 generated; it applies on dev after the deploy of this push (DEC-12).
+
+Done:
+- AI feedback: `POST /ai/feedback` with table `ai_feedback` (migration 0013). Web and mobile show Helpful and Not helpful under each answer. Owner-only, ratings only, answer text kept with the rating. Feedback is accepted while the answer is in the stored history (the last 12 messages).
+- Dashboard: `pendingVisitors` (non-deleted visitors with no linked member and no follow-up marked converted or dropped), sent only to roles with `view:visitors`. Shown on web and mobile staff dashboards.
+- Mobile staff tabs read `PERMISSION_MAP` through `@church/config/permissions` (done in the previous commit, verified again here).
+
+Closed without code, by decision (DEC-15):
+- Mobile in-app reader: the device browser stays. No WebView dependency added.
+- AI action registry: stays empty this release.
+- Mail and SMS DTO `churchId`: unchanged, sending work is off (DEC-05).
+- `recentActivities`: no verified source, not sent.
+- Logout revocation: already implemented.
+- Reports (DEC-04): the two reports with a verified source are built.
+
+Still open, human only (after all code work):
+- Q-02 device and accessibility checks, including a mobile device run.
+- D-01 design review.
+- Native-speaker review of every `sw` string in `packages/config/src/i18n/messages/`.
+- Visibility toggle check: a staff toggle changes what members see in the Library.
+- Production migrations need Fredy's approval (dev only so far).
+- AI configuration and AI testing stay deferred (DEC-14).
+
 ## Status 2026-11-26 (fifth pass, code cleanup)
 
 Done:

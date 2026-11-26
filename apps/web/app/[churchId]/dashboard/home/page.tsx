@@ -54,6 +54,16 @@ export default async function DashboardHome({ params }: DashboardHomeProps) {
           </div>
         </div>
 
+        {/* Pending Visitors Card: only roles that can view visitors receive the count */}
+        {stats.pendingVisitors !== undefined && (
+          <div className="rounded-lg border bg-card p-4">
+            <p className="text-sm font-medium text-muted-foreground">
+              {t('staff.home.pendingVisitors')}
+            </p>
+            <p className="text-2xl font-bold">{stats.pendingVisitors}</p>
+          </div>
+        )}
+
         {/* Active Zones Card */}
         <div className="rounded-lg border bg-card p-4">
           <div className="flex items-center justify-between">

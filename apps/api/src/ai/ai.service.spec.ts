@@ -21,6 +21,11 @@ const TEXT = (text: string) => ({ type: 'text', text })
 
 class FakeStore {
   rows: any[] = []
+  feedback: any[] = []
+  async saveFeedback(row: any) {
+    const same = (f: any) => f.userId === row.userId && f.conversationId === row.conversationId && f.answerId === row.answerId
+    this.feedback = [...this.feedback.filter((f) => !same(f)), row]
+  }
   async purgeExpired(now: Date) {
     const before = this.rows.length
     this.rows = this.rows.filter((r) => !(r.expiresAt < now))
@@ -276,5 +281,54 @@ describe('AiService.chat', () => {
     const names = (service as any).tools.definitions().map((d: any) => d.name)
     expect(names).toEqual(['member_count', 'upcoming_events', 'library_documents', 'service_types'])
     expect(names.join(' ')).not.toMatch(/prayer|famil|giv|offer|visitor|create|update|delete|write/i)
+  })
+})
+
+describe('AiService.feedback', () => {
+  const CONV = '66666666-6666-4666-8666-666666666666'
+  const ANSWER = '[{"type":"text","text":"Hello"}]'
+
+  function withAnswer() {
+    const ctx = setup()
+    ctx.store.rows.push({
+      id: CONV,
+      userId: OWNER,
+      churchId: CHURCH,
+      messages: [
+        { role: 'user', content: 'hi' },
+        { role: 'assistant', content: ANSWER, id: 'answer-1' },
+      ],
+    })
+    return ctx
+  }
+
+  it('stores the rating with the answer text for the conversation owner', async () => {
+    const { service, store } = withAnswer()
+
+    await expect(
+      service.feedback(admin, { conversationId: CONV, answerId: 'answer-1', rating: 'helpful' }),
+    ).resolves.toEqual({ saved: true })
+    expect(store.feedback).toEqual([
+      { churchId: CHURCH, userId: OWNER, conversationId: CONV, answerId: 'answer-1', rating: 'helpful', answerContent: ANSWER },
+    ])
+  })
+
+  it('returns 404 for another user and stores nothing', async () => {
+    const { service, store } = withAnswer()
+    const other: AiCaller = { userId: OTHER, role: 'admin', churchId: CHURCH }
+
+    await expect(
+      service.feedback(other, { conversationId: CONV, answerId: 'answer-1', rating: 'not_helpful' }),
+    ).rejects.toBeInstanceOf(NotFoundException)
+    expect(store.feedback).toEqual([])
+  })
+
+  it('returns 404 for an answer id that is not in the conversation', async () => {
+    const { service, store } = withAnswer()
+
+    await expect(
+      service.feedback(admin, { conversationId: CONV, answerId: 'missing', rating: 'helpful' }),
+    ).rejects.toBeInstanceOf(NotFoundException)
+    expect(store.feedback).toEqual([])
   })
 })

@@ -8,7 +8,8 @@ import { ApiError, api } from "../lib/api"
 import { useSession } from "../lib/session"
 import { useT } from "../lib/locale"
 
-type Entry = { role: "user"; text: string } | { role: "assistant"; components: AiComponent[] | null; sources: AiSource[]; uncertain: boolean }
+type Entry = { role: "user"; text: string } | { role: "assistant"; answerId: string; components: AiComponent[] | null; sources: AiSource[]; uncertain: boolean }
+type FeedbackState = "helpful" | "not_helpful" | "failed"
 // Error messages are chosen at render time so they follow the current language. A server message is kept as sent.
 type Status = { kind: "idle" } | { kind: "loading" } | { kind: "error"; message?: string } | { kind: "invalid" } | { kind: "unavailable" } | { kind: "not-connected" }
 
@@ -26,11 +27,23 @@ export default function AiScreen() {
   const [entries, setEntries] = useState<Entry[]>([])
   const [message, setMessage] = useState("")
   const [status, setStatus] = useState<Status>({ kind: "idle" })
+  // Feedback per answer id, kept in component state only.
+  const [feedback, setFeedback] = useState<Record<string, FeedbackState>>({})
+
+  async function rate(answerId: string, rating: "helpful" | "not_helpful") {
+    if (!conversationId || !answerId) return
+    try {
+      await api.post("/ai/feedback", { churchId, conversationId, answerId, rating })
+      setFeedback((current) => ({ ...current, [answerId]: rating }))
+    } catch {
+      setFeedback((current) => ({ ...current, [answerId]: "failed" }))
+    }
+  }
 
   async function send(text: string) {
     setStatus({ kind: "loading" })
     try {
-      const result = await api.post<{ conversationId: string; components: unknown; sources?: unknown; uncertain?: unknown }>("/ai/chat", {
+      const result = await api.post<{ conversationId: string; answerId?: unknown; components: unknown; sources?: unknown; uncertain?: unknown }>("/ai/chat", {
         churchId,
         message: text,
         conversationId: conversationId ?? undefined,
@@ -38,8 +51,9 @@ export default function AiScreen() {
       const checked = validateAiResponse({ components: result.components })
       const sources = readSources(result.sources)
       const uncertain = result.uncertain === true
+      const answerId = typeof result.answerId === "string" ? result.answerId : ""
       setConversationId(result.conversationId)
-      setEntries((current) => [...current, { role: "user", text }, { role: "assistant", components: checked.ok ? checked.value.components : null, sources, uncertain }])
+      setEntries((current) => [...current, { role: "user", text }, { role: "assistant", answerId, components: checked.ok ? checked.value.components : null, sources, uncertain }])
       setMessage((current) => (current === text ? "" : current))
       setStatus(checked.ok ? { kind: "idle" } : { kind: "invalid" })
     } catch (caught) {
@@ -81,6 +95,18 @@ export default function AiScreen() {
             {entry.components ? <AiResponseView components={entry.components} /> : <Text style={styles.error}>{t("mobile.member.ai.invalidAnswer")}</Text>}
             {entry.components && entry.sources.length > 0 ? <Text style={styles.text}>{t("mobile.member.ai.sources", { sources: entry.sources.map((source) => source.title).join(", ") })}</Text> : null}
             {entry.components && entry.uncertain ? <Text style={styles.text}>{t("mobile.member.ai.uncertain")}</Text> : null}
+            {entry.components && entry.answerId ? (
+              feedback[entry.answerId] === "helpful" || feedback[entry.answerId] === "not_helpful" ? (
+                <Text accessibilityLiveRegion="polite" style={styles.text}>{t("component.ai.feedback.thanks")}</Text>
+              ) : (
+                <View style={{ gap: 8 }}>
+                  <Text style={styles.text}>{t("component.ai.feedback.label")}</Text>
+                  <Button title={t("component.ai.feedback.helpful")} onPress={() => void rate(entry.answerId, "helpful")} />
+                  <Button title={t("component.ai.feedback.notHelpful")} onPress={() => void rate(entry.answerId, "not_helpful")} />
+                </View>
+              )
+            ) : null}
+            {feedback[entry.answerId] === "failed" ? <Text accessibilityLiveRegion="polite" style={styles.error}>{t("component.ai.feedback.failed")}</Text> : null}
           </View>
         ),
       )}

@@ -114,6 +114,7 @@ import { events, eventScopeEnum, eventStatusEnum, type Event, type NewEvent } fr
 import { eventRsvps, eventRsvpStatusEnum, type EventRsvp, type NewEventRsvp } from "./tables/eventRsvps"
 import { documents, type Document, type NewDocument } from "./tables/documents"
 import { aiConversations, type AiConversation, type NewAiConversation, type AiStoredMessage } from "./tables/aiConversations"
+import { aiFeedback, aiFeedbackRatingEnum, type AiFeedback, type NewAiFeedback } from "./tables/aiFeedback"
 
 // Import all relations
 import {
@@ -218,6 +219,8 @@ export {
   eventRsvps,
   documents,
   aiConversations,
+  aiFeedback,
+  aiFeedbackRatingEnum,
   // Export relations for Drizzle ORM
   churchesRelations,
   zonesRelations,
@@ -322,4 +325,6 @@ export {
   type AiConversation,
   type NewAiConversation,
   type AiStoredMessage,
+  type AiFeedback,
+  type NewAiFeedback,
 }

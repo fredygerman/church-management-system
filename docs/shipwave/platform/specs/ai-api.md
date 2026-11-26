@@ -64,6 +64,10 @@ No tool exists for prayer requests, families, giving, visitors, or any write.
 - Components per response: 20 (`AI_LIMITS`). Tool results: 20 library documents, 10 events, 50-row table cap in the contract.
 - Rate limit: 20 per minute per user on this route.
 
+## Feedback
+
+`POST /ai/feedback` (`read:self`, 60 per minute per user) rates one answer as `helpful` or `not_helpful`. Each assistant answer carries an `answerId` in the chat response. The route needs the conversation owner, the answer to be in the stored history, and stores a row in `ai_feedback` (migration 0013) with the answer text. There is no free text. A second rating for the same answer replaces the first. Ratings are deleted with their conversation after 30 days.
+
 ## Not done
 
 - Expired conversations are removed by the daily `RetentionService` job (03:00) and lazily on chat calls.
@@ -74,5 +78,4 @@ No tool exists for prayer requests, families, giving, visitors, or any write.
 
 - AI configuration (provider settings and keys) is deferred.
 - AI testing is deferred.
-- The AI feedback route (`POST /ai/feedback`) is deferred because it needs a new table. It is not implemented.
 - The AI action registry (`AI_ACTION_REGISTRY`) stays empty this release.

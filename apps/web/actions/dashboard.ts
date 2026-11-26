@@ -5,6 +5,8 @@ import { apiGet } from '@/lib/api-helpers'
 export interface DashboardStats {
   totalMembers: number
   activeZones: number
+  /** Present only for roles that can view visitors (DEC-01). */
+  pendingVisitors?: number
 }
 
 export type DashboardStatsResult =

@@ -8,7 +8,8 @@ import { users } from "./user"
 // `messages` holds at most the stored turns: { role, content } where assistant
 // content is the JSON of the components returned. Rows expire 30 days after
 // creation and are purged lazily by the API.
-export type AiStoredMessage = { role: "user" | "assistant"; content: string }
+// `id` is set on assistant turns only: the answer's stable id, used by feedback (ai_feedback).
+export type AiStoredMessage = { role: "user" | "assistant"; content: string; id?: string }
 
 export const aiConversations = pgTable(
   "ai_conversations",

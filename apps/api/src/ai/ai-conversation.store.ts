@@ -1,9 +1,28 @@
 import { Injectable } from '@nestjs/common'
 import { and, eq, lt } from 'drizzle-orm'
-import { db, aiConversations, type AiConversation, type AiStoredMessage } from '@church/db'
+import { db, aiConversations, aiFeedback, type AiConversation, type AiStoredMessage } from '@church/db'
 
 @Injectable()
 export class AiConversationStore {
+  /** Saves a rating; a second rating from the same user for the same answer replaces the first. */
+  async saveFeedback(row: {
+    churchId: string
+    userId: string
+    conversationId: string
+    answerId: string
+    rating: 'helpful' | 'not_helpful'
+    answerContent: string
+  }): Promise<void> {
+    const now = new Date()
+    await db
+      .insert(aiFeedback)
+      .values({ ...row, updatedAt: now })
+      .onConflictDoUpdate({
+        target: [aiFeedback.userId, aiFeedback.conversationId, aiFeedback.answerId],
+        set: { rating: row.rating, answerContent: row.answerContent, updatedAt: now },
+      })
+  }
+
   /** Deletes every conversation whose expires_at is before `now`. Returns the number removed. */
   async purgeExpired(now: Date): Promise<number> {
     const removed = await db

@@ -3,7 +3,7 @@
 import { useId, useState, type FormEvent } from "react"
 import type { AiComponent, AiSource } from "@church/config"
 
-import { sendAiMessage } from "@/actions/ai"
+import { sendAiFeedback, sendAiMessage } from "@/actions/ai"
 import { AiComponents } from "@/components/ai/ai-components"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,9 +13,11 @@ import { useT } from "@/components/i18n/locale-provider"
 
 type Turn =
   | { role: "user"; text: string }
-  | { role: "assistant"; components: AiComponent[]; sources: AiSource[]; uncertain: boolean }
+  | { role: "assistant"; answerId: string; components: AiComponent[]; sources: AiSource[]; uncertain: boolean }
 
 type Status = "idle" | "loading" | "error" | "unavailable"
+
+type FeedbackState = "helpful" | "not_helpful" | "failed"
 
 interface AiChatPanelProps {
   churchId: string
@@ -30,6 +32,14 @@ export function AiChatPanel({ churchId }: AiChatPanelProps) {
   const [input, setInput] = useState("")
   const [status, setStatus] = useState<Status>("idle")
   const [message, setMessage] = useState("")
+  // Feedback per answer id, kept in component state only.
+  const [feedback, setFeedback] = useState<Record<string, FeedbackState>>({})
+
+  async function rate(answerId: string, rating: "helpful" | "not_helpful") {
+    if (!conversationId || !answerId) return
+    const result = await sendAiFeedback(churchId, conversationId, answerId, rating)
+    setFeedback((prev) => ({ ...prev, [answerId]: result.status === "ok" ? rating : "failed" }))
+  }
 
   async function send(text: string) {
     setStatus("loading")
@@ -41,7 +51,13 @@ export function AiChatPanel({ churchId }: AiChatPanelProps) {
       setTurns((prev) => [
         ...prev,
         { role: "user", text },
-        { role: "assistant", components: result.components, sources: result.sources, uncertain: result.uncertain },
+        {
+          role: "assistant",
+          answerId: result.answerId,
+          components: result.components,
+          sources: result.sources,
+          uncertain: result.uncertain,
+        },
       ])
       setInput("")
       setStatus("idle")
@@ -97,6 +113,26 @@ export function AiChatPanel({ churchId }: AiChatPanelProps) {
                 <p className="text-muted-foreground text-xs">
                   {t("component.ai.uncertain")}
                 </p>
+              )}
+              {turn.answerId && (
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                  {feedback[turn.answerId] === "helpful" || feedback[turn.answerId] === "not_helpful" ? (
+                    <p role="status" className="text-muted-foreground">{t("component.ai.feedback.thanks")}</p>
+                  ) : (
+                    <>
+                      <span className="text-muted-foreground">{t("component.ai.feedback.label")}</span>
+                      <Button type="button" variant="outline" size="sm" onClick={() => void rate(turn.answerId, "helpful")}>
+                        {t("component.ai.feedback.helpful")}
+                      </Button>
+                      <Button type="button" variant="outline" size="sm" onClick={() => void rate(turn.answerId, "not_helpful")}>
+                        {t("component.ai.feedback.notHelpful")}
+                      </Button>
+                    </>
+                  )}
+                  {feedback[turn.answerId] === "failed" && (
+                    <p role="alert" className="text-destructive">{t("component.ai.feedback.failed")}</p>
+                  )}
+                </div>
               )}
             </div>
           ),

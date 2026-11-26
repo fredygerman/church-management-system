@@ -4,6 +4,7 @@ import { DashboardService } from './dashboard.service'
 import { MembersService } from '../members/members.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
+import { roleHasPermission, type UserRole } from '../auth/types/permission.types'
 
 @Controller('dashboard')
 @UseGuards(ChurchContextGuard)
@@ -28,6 +29,9 @@ export class DashboardController {
       request.user['id'] as string,
       request.user['role'] as string,
     )
-    return this.dashboardService.getStats(churchId, scope)
+    // pendingVisitors is personal data about visitors: only roles that can view visitors get it.
+    const role = request.user['role'] as UserRole
+    const includeVisitors = roleHasPermission(role, 'view:visitors')
+    return this.dashboardService.getStats(churchId, scope, includeVisitors)
   }
 }

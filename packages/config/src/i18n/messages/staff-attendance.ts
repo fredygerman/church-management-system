@@ -158,6 +158,7 @@ export const staffAttendanceMessages = {
     // Dashboard home (home)
     'staff.home.totalMembers': 'Total Members',
     'staff.home.activeZones': 'Active Zones',
+    'staff.home.pendingVisitors': 'Pending visitors',
     'staff.home.unavailableTitle': 'Dashboard unavailable',
     'staff.home.unavailableMessage': 'Dashboard statistics are temporarily unavailable. Please try again later.',
 
@@ -351,6 +352,7 @@ export const staffAttendanceMessages = {
     // Dashboard home (home)
     'staff.home.totalMembers': 'Jumla ya Wanachama',
     'staff.home.activeZones': 'Kanda Zinazotumika',
+    'staff.home.pendingVisitors': 'Wageni wanaosubiri',
     'staff.home.unavailableTitle': 'Dashibodi haipatikani',
     'staff.home.unavailableMessage': 'Takwimu za dashibodi hazipatikani kwa sasa. Tafadhali jaribu tena baadaye.',
 

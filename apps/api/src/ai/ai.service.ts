@@ -84,6 +84,14 @@ export interface AiChatInput {
 
 export interface AiChatResult extends AiResponse {
   conversationId: string
+  /** Stable id of this answer; send it with a rating (POST /ai/feedback). */
+  answerId: string
+}
+
+export interface AiFeedbackInput {
+  conversationId: string
+  answerId: string
+  rating: 'helpful' | 'not_helpful'
 }
 
 @Injectable()
@@ -121,13 +129,14 @@ export class AiService {
       { role: 'user', text: message },
     ])
 
+    const answerId = randomUUID()
     const turns: AiStoredMessage[] = [
       { role: 'user', content: message },
-      { role: 'assistant', content: JSON.stringify(components) },
+      { role: 'assistant', content: JSON.stringify(components), id: answerId },
     ]
     if (existing) {
       await this.store.replaceMessages(existing.id, capHistory([...existing.messages, ...turns]))
-      return { conversationId: existing.id, components, ...meta }
+      return { conversationId: existing.id, components, answerId, ...meta }
     }
     const conversationId = randomUUID()
     await this.store.create({
@@ -136,7 +145,32 @@ export class AiService {
       churchId: caller.churchId,
       messages: capHistory(turns),
     })
-    return { conversationId, components, ...meta }
+    return { conversationId, components, answerId, ...meta }
+  }
+
+  /**
+   * Rates one assistant answer the caller received. Only the owner of the conversation can
+   * rate it, and only while the answer is still in the stored history (the last 12 messages).
+   * The answer text is copied with the rating, so it stays readable after the conversation expires.
+   */
+  async feedback(caller: AiCaller, input: AiFeedbackInput): Promise<{ saved: true }> {
+    const row = await this.store.findOwned(input.conversationId, caller.userId, caller.churchId)
+    if (!row) {
+      throw new NotFoundException('Conversation not found')
+    }
+    const answer = (row.messages ?? []).find((m) => m.role === 'assistant' && m.id === input.answerId)
+    if (!answer) {
+      throw new NotFoundException('Answer not found')
+    }
+    await this.store.saveFeedback({
+      churchId: caller.churchId,
+      userId: caller.userId,
+      conversationId: row.id,
+      answerId: input.answerId,
+      rating: input.rating,
+      answerContent: answer.content,
+    })
+    return { saved: true }
   }
 
   /**

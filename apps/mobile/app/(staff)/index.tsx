@@ -5,7 +5,8 @@ import { useT } from "../../lib/locale"
 import { ErrorState, LoadingState, styles } from "../../components/screen-state"
 
 // Permission: read:member (GET /dashboard/stats). Only the fields with a verified source are shown.
-type DashboardStats = { totalMembers: number; activeZones: number }
+// pendingVisitors is sent only to roles that can view visitors (DEC-01).
+type DashboardStats = { totalMembers: number; activeZones: number; pendingVisitors?: number }
 
 export default function DashboardScreen() {
   const { t } = useT()
@@ -41,6 +42,12 @@ export default function DashboardScreen() {
         <Text style={styles.heading}>{stats.activeZones}</Text>
         <Text style={styles.text}>{t("mobile.staff.dashboard.activeZones")}</Text>
       </View>
+      {stats.pendingVisitors !== undefined ? (
+        <View style={styles.card}>
+          <Text style={styles.heading}>{stats.pendingVisitors}</Text>
+          <Text style={styles.text}>{t("mobile.staff.dashboard.pendingVisitors")}</Text>
+        </View>
+      ) : null}
     </ScrollView>
   )
 }
