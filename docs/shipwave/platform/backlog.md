@@ -88,6 +88,16 @@ Done:
 Open, code (deferred by decision, DEC-14):
 - AI configuration, AI testing and the AI feedback route (needs a table). The AI answer sources and uncertainty fields are implemented and displayed.
 
+## Status 2026-11-26 (fifth pass, code cleanup)
+
+Done:
+- Deleted unused web files with no importers: `lib/member.ts`, `components/form/PrayerRequestForm.tsx`, `components/event/rsvp-buttons.tsx`, `components/date-range-picker.tsx`, `components/workspace/church-card.tsx`, `components/ui/sidebar.tsx`. Their English strings are gone with them.
+- Web type-check and web tests (13) pass after the deletions.
+
+Left as is, on purpose:
+- `apps/mobile/lib/api.ts` "API is not configured" message stays in English. It is a developer message for a missing `EXPO_PUBLIC_API_BASE_URL`, which a correct build never shows to a member.
+- The mobile permission copy in `apps/mobile/lib/claims.ts` can drift from `PERMISSION_MAP`. The file's comment names the ceiling. Fix: a shared client-safe export of the grants, when the mobile app can take it.
+
 Open, human, after all code work (DEC-10, DEC-13):
 - Q-02 device and accessibility checks, including a mobile device run.
 - D-01 design review.
