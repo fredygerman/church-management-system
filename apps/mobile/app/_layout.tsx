@@ -8,7 +8,7 @@ export default function RootLayout() {
       <SessionProvider>
         <SessionGate>
           <Stack>
-            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+            <Stack.Screen name="(auth)/sign-in" options={{ headerShown: false }} />
             <Stack.Screen name="(member)" options={{ headerShown: false }} />
             <Stack.Screen name="(staff)" options={{ headerShown: false }} />
           </Stack>
