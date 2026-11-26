@@ -16,6 +16,10 @@ export default function MemberLayout() {
       <Tabs.Screen name="profile" options={{ title: t("mobile.member.tabs.profile") }} />
       <Tabs.Screen name="events/[id]" options={{ href: null, title: t("mobile.member.tabs.event") }} />
       <Tabs.Screen name="prayer" options={{ href: null, title: t("mobile.member.tabs.prayer") }} />
+      {/* Reached from other screens; hidden from the tab bar. */}
+      <Tabs.Screen name="library-catalog" options={{ href: null, title: t("mobile.member.tabs.library") }} />
+      <Tabs.Screen name="library-detail" options={{ href: null, title: t("mobile.member.tabs.library") }} />
+      <Tabs.Screen name="inbox" options={{ href: null, title: t("mobile.member.tabs.home") }} />
     </Tabs>
   )
 }
