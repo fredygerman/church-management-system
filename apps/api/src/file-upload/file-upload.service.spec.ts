@@ -98,6 +98,21 @@ jest.mock('@church/db', () => {
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
   getSignedUrl: jest.fn().mockResolvedValue('https://signed.example/document'),
 }));
+
+// Storage must look configured so presigning reaches the (mocked) presigner;
+// the unconfigured path is covered in file-upload.storage.spec.ts.
+jest.mock('../config', () => {
+  const actual = jest.requireActual('../config').default;
+  return {
+    __esModule: true,
+    default: {
+      ...actual,
+      s3AccessKeyId: 'test-access-key',
+      s3SecretKeyId: 'test-secret-key',
+      s3BucketName: 'test-bucket',
+    },
+  };
+});
 import { FileUploadService } from './file-upload.service';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 

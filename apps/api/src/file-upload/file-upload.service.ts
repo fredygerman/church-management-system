@@ -7,6 +7,7 @@ import {
   Logger,
   BadRequestException,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import {
   S3Client,
@@ -141,6 +142,7 @@ export class FileUploadService {
   private readonly s3Config = {
     bucket: config.s3BucketName,
     endpoint: config.s3StorageEndpoint,
+    region: config.s3Region,
     publicUrl: config.s3PublicUrl,
     accessKeyId: config.s3AccessKeyId,
     secretAccessKey: config.s3SecretKeyId,
@@ -149,9 +151,10 @@ export class FileUploadService {
   constructor(private readonly notificationsService: NotificationsService = new NotificationsService()) {
     this.maxFileSize = config.maxFileSizeMB * 1024 * 1024;
 
-    // Create S3Client configuration
+    // Create S3Client configuration. The presigner signs with this client's
+    // region, so S3_REGION applies to presigned URLs as well.
     const s3ClientConfig: any = {
-      region: 'auto',
+      region: this.s3Config.region,
       endpoint: this.s3Config.endpoint,
       credentials: {
         accessKeyId: this.s3Config.accessKeyId,
@@ -181,6 +184,38 @@ export class FileUploadService {
     }
 
     this.s3Client = new S3Client(s3ClientConfig);
+  }
+
+  /**
+   * Fails fast when S3 settings are missing, before the SDK throws its raw
+   * "Resolved credential object is not valid". Only variable names are logged,
+   * never values. Clients receive a generic 503.
+   */
+  private ensureStorageConfigured(): void {
+    const missing: string[] = [];
+    if (!this.s3Config.bucket) missing.push('S3_BUCKET_NAME');
+    if (!this.s3Config.accessKeyId) missing.push('S3_ACCESS_KEY');
+    if (!this.s3Config.secretAccessKey) missing.push('S3_SECRET_KEY');
+
+    if (missing.length > 0) {
+      this.logger.error(`Storage not configured; missing: ${missing.join(', ')}`);
+      throw new ServiceUnavailableException('Storage is not configured');
+    }
+  }
+
+  /** Presigned GET URL. SDK failures are logged and returned as a generic 503. */
+  private async presignGetUrl(key: string, expiresIn: number): Promise<string> {
+    this.ensureStorageConfigured();
+    try {
+      return await getSignedUrl(
+        this.s3Client as any,
+        new GetObjectCommand({ Bucket: this.s3Config.bucket, Key: key }),
+        { expiresIn },
+      );
+    } catch (error: any) {
+      this.logger.error(`Presigning failed: ${error?.name}: ${error?.message}`);
+      throw new ServiceUnavailableException('Storage is unavailable');
+    }
   }
 
   private toDocumentMetadata(document: any): DocumentMetadata {
@@ -289,6 +324,7 @@ export class FileUploadService {
     allowedMimeTypes?: string[],
     directory: DirectoryType = 'default'
   ): Promise<StoredFileUpload> {
+    this.ensureStorageConfigured();
     try {
       this.logger.log(`Uploading ${file.originalname} (${file.size} bytes)`);
 
@@ -347,8 +383,9 @@ export class FileUploadService {
         throw error;
       }
 
+      // Do not forward SDK/storage messages to clients; the cause is logged above.
       throw new BadRequestException({
-        message: `File upload failed: ${error.message}`,
+        message: 'File upload failed',
         code: ExceptionConstants.BadRequestCodes.FILE_UPLOAD_ERROR,
       });
     }
@@ -368,6 +405,7 @@ export class FileUploadService {
   }
 
   async deleteFromS3(key: string): Promise<void> {
+    this.ensureStorageConfigured();
     try {
       this.logger.log(`Deleting file from S3: ${key}`);
 
@@ -382,7 +420,7 @@ export class FileUploadService {
     } catch (error) {
       this.logger.error(`File deletion failed: ${error.message}`, error.stack);
       throw new BadRequestException({
-        message: `File deletion failed: ${error.message}`,
+        message: 'File deletion failed',
         code: ExceptionConstants.BadRequestCodes.FILE_UPLOAD_ERROR,
       });
     }
@@ -502,13 +540,9 @@ export class FileUploadService {
       throw new NotFoundException('Document not found');
     }
 
-    const url = await getSignedUrl(
-      this.s3Client as any,
-      new GetObjectCommand({
-        Bucket: this.s3Config.bucket,
-        Key: document.storageKey,
-      }),
-      { expiresIn: MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS },
+    const url = await this.presignGetUrl(
+      document.storageKey,
+      MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS,
     );
 
     return {
@@ -593,10 +627,9 @@ export class FileUploadService {
       throw new NotFoundException('Resource not found');
     }
 
-    const url = await getSignedUrl(
-      this.s3Client as any,
-      new GetObjectCommand({ Bucket: this.s3Config.bucket, Key: document.storageKey }),
-      { expiresIn: MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS },
+    const url = await this.presignGetUrl(
+      document.storageKey,
+      MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS,
     );
 
     return {

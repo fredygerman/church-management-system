@@ -2,8 +2,17 @@ import { Logger } from '@nestjs/common';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
-// Load environment variables from root .env
-dotenv.config({ path: path.resolve(__dirname, '../../../../.env') });
+// Environment loading (deterministic, never overrides):
+//   1. apps/api/.env      API-local settings (e.g. S3_* keys)
+//   2. <repo root>/.env   shared fallback for anything not set in step 1
+// dotenv does not overwrite a variable that is already present, so real
+// environment variables (Coolify/Docker, CI, shell exports) always win over
+// both files. Missing files are skipped silently. Production containers that
+// rely on real env vars are unaffected.
+export const API_ENV_FILE = path.resolve(__dirname, '../../.env');
+export const ROOT_ENV_FILE = path.resolve(__dirname, '../../../../.env');
+dotenv.config({ path: API_ENV_FILE, override: false });
+dotenv.config({ path: ROOT_ENV_FILE, override: false });
 
 const nodeEnv = process.env.NODE_ENV || 'development';
 Logger.log(`Environment: ${nodeEnv}`, 'Config');
@@ -96,6 +105,9 @@ export default {
     .split(',')
     .map(t => t.trim()),
   s3StorageEndpoint: process.env.S3_ENDPOINT,
+  // Signing region. 'auto' is the R2 convention and keeps existing deployments
+  // working; Garage uses its configured region (typically 'garage').
+  s3Region: process.env.S3_REGION?.trim() || 'auto',
   s3PublicUrl: process.env.S3_PUBLIC_URL,
   s3BucketName: process.env.S3_BUCKET_NAME,
   s3AccessKeyId: process.env.S3_ACCESS_KEY,
