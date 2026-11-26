@@ -1,20 +1,22 @@
 import { getMyAnnouncements } from "@/actions/portal"
-import { getTranslator } from "@/lib/i18n/server"
+import { getLocale, getTranslator } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
 }
 
-function formatDate(value: string | null | undefined, unknownLabel: string): string {
+function formatDate(value: string | null | undefined, unknownLabel: string, locale: Locale): string {
   if (!value) return unknownLabel
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return unknownLabel
-  return date.toLocaleDateString()
+  return formatLocaleDate(date, locale)
 }
 
 export default async function PortalAnnouncementsPage({ params }: PageProps) {
   const { churchId } = await params
   const t = await getTranslator()
+  const locale = await getLocale()
   const announcements = await getMyAnnouncements(churchId)
 
   return (
@@ -40,7 +42,7 @@ export default async function PortalAnnouncementsPage({ params }: PageProps) {
                 <p className="text-sm font-medium text-foreground">
                   {announcement.subject || announcement.name}
                 </p>
-                <p className="text-xs text-muted-foreground">{formatDate(announcement.sentAt, t("final.portal.unknownDate"))}</p>
+                <p className="text-xs text-muted-foreground">{formatDate(announcement.sentAt, t("final.portal.unknownDate"), locale)}</p>
               </div>
               <p className="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">
                 {announcement.body}

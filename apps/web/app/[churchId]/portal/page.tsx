@@ -1,7 +1,8 @@
 import { Suspense } from "react"
 import Link from "next/link"
 import { apiGet } from "@/lib/api-helpers"
-import { getTranslator } from "@/lib/i18n/server"
+import { getLocale, getTranslator } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 
 import { Button } from "@/components/ui/button"
 import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
@@ -24,16 +25,17 @@ interface ServiceSession {
   serviceType: { id: string; name: string } | null
 }
 
-function formatServiceDate(sessionDate: string): string {
+function formatServiceDate(sessionDate: string, locale: Locale): string {
   // Plain YYYY-MM-DD dates: parse as local midnight so the day does not shift.
   const date = new Date(`${sessionDate}T00:00:00`)
   if (Number.isNaN(date.getTime())) return sessionDate
-  return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })
+  return formatLocaleDate(date, locale, { weekday: "short", month: "short", day: "numeric" })
 }
 
 // Open or upcoming sessions for members (GET /attendance/sessions, sorted by date).
 async function NextServices({ churchId }: { churchId: string }) {
   const t = await getTranslator()
+  const locale = await getLocale()
   try {
     const sessionData = await apiGet<ServiceSession[]>("/attendance/sessions", { churchId })
     const services = Array.isArray(sessionData) ? sessionData.slice(0, 3) : []
@@ -51,7 +53,7 @@ async function NextServices({ churchId }: { churchId: string }) {
                   {service.title || service.serviceType?.name || t("portal.home.servicesFallback")}
                 </p>
                 <p className="text-muted-foreground mt-1 text-sm">
-                  {formatServiceDate(service.sessionDate)}
+                  {formatServiceDate(service.sessionDate, locale)}
                 </p>
               </li>
             ))}
@@ -74,6 +76,7 @@ async function NextServices({ churchId }: { churchId: string }) {
 
 async function HomeContent({ churchId }: { churchId: string }) {
   const t = await getTranslator()
+  const locale = await getLocale()
   try {
     const announcementData = await apiGet<any[]>("/communications/announcements", { churchId })
     const announcements = Array.isArray(announcementData) ? announcementData : []

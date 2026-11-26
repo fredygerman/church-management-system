@@ -2,7 +2,8 @@ import { Suspense } from "react"
 import Link from "next/link"
 
 import { apiGet } from "@/lib/api-helpers"
-import { getTranslator } from "@/lib/i18n/server"
+import { getLocale, getTranslator } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { PortalPrayerRequestForm } from "@/components/portal/prayer-request-form"
@@ -16,14 +17,15 @@ function PrayerLoading() {
     <div className="border-border bg-card h-72 animate-pulse rounded-lg border" />
   )
 }
-function formatDate(value: string | null | undefined): string {
+function formatDate(value: string | null | undefined, locale: Locale): string {
   if (!value) return ""
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? "" : date.toLocaleDateString()
+  return Number.isNaN(date.getTime()) ? "" : formatLocaleDate(date, locale)
 }
 
 async function PrayerContent({ churchId }: { churchId: string }) {
   const t = await getTranslator()
+  const locale = await getLocale()
   try {
     const response = await apiGet<any[]>("/prayer-requests/me", { churchId })
     const prayerRequests = Array.isArray(response) ? response : []
@@ -67,7 +69,7 @@ async function PrayerContent({ churchId }: { churchId: string }) {
                         : t("portal.prayer.status.open")}
                     </Badge>
                     <span className="text-muted-foreground text-xs">
-                      {formatDate(request.createdAt)}
+                      {formatDate(request.createdAt, locale)}
                     </span>
                   </div>
                   <p className="text-foreground text-sm">{request.content}</p>

@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Phone, Mail, Calendar, Edit2 } from 'lucide-react'
 import { getVisitorById } from '@/actions/visitor'
 import { checkPermission } from '@/lib/permissions-server'
-import { getTranslator } from '@/lib/i18n/server'
+import { getLocale, getTranslator } from '@/lib/i18n/server'
+import { formatLocaleDate } from '@church/config'
 import type { Visitor } from '@church/db'
 
 interface VisitorDetailPageProps {
@@ -17,6 +18,7 @@ interface VisitorDetailPageProps {
 export default async function VisitorDetailPage({ params }: VisitorDetailPageProps) {
   const { churchId, visitorId } = await params
   const t = await getTranslator()
+  const locale = await getLocale()
   let visitor: Visitor | null = null
   let error: string | null = null
   let canEdit = false
@@ -67,11 +69,7 @@ export default async function VisitorDetailPage({ params }: VisitorDetailPagePro
   const formatDate = (dateString: string | Date | null | undefined) => {
     if (!dateString) return '-'
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+      return formatLocaleDate(dateString, locale, { year: 'numeric', month: 'long', day: 'numeric' })
     } catch {
       return '-'
     }

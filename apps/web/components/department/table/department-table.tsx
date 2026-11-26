@@ -18,8 +18,8 @@ interface DepartmentTableProps {
 
 export function DepartmentTable({ departmentsPromise, churchId }: DepartmentTableProps) {
   const departments = React.use(departmentsPromise)
-  const { t } = useT()
-  const columns = React.useMemo(() => getDepartmentColumns(churchId, t), [churchId, t])
+  const { t, locale } = useT()
+  const columns = React.useMemo(() => getDepartmentColumns(churchId, t, locale), [churchId, t, locale])
 
   const { table } = useDataTable({
     data: departments,

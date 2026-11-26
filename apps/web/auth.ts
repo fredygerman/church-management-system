@@ -5,7 +5,7 @@ import NextAuth, {
 } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { env } from "./env.mjs"
-import { applyRotatedTokens, getRotatedTokens } from "./lib/auth-refresh"
+import { applyRotatedTokens, getRotatedTokens, RefreshInProgressError } from "./lib/auth-refresh"
 
 declare module "next-auth" {
   interface Session {
@@ -124,6 +124,8 @@ export const authOptions: NextAuthOptions = {
           const rotated = await getRotatedTokens(env.API_BASE_URL, token.refreshToken as string)
           return applyRotatedTokens(token, rotated)
         } catch (error) {
+          // A parallel refresh still holds the newer cookie: keep this session and let the next request use it.
+          if (error instanceof RefreshInProgressError) return token
           console.error("[Auth] Token refresh error:", error)
           // Clear the token if refresh fails
           return {

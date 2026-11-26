@@ -88,6 +88,16 @@ Done:
 Open, code (deferred by decision, DEC-14):
 - AI configuration, AI testing and the AI feedback route (needs a table). The AI answer sources and uncertainty fields are implemented and displayed.
 
+## Status 2026-11-26 (seventh pass, last two code gaps)
+
+Verified for this pass: `@church/config` build and tests (40, including the new formatter tests), API unchanged since the sixth pass, web type-check, web tests (15, including two new refresh tests) and `next build` with placeholder build-only env values, mobile type-check, mobile tests (12) and Android export.
+
+Done:
+- Locale-aware dates and numbers: one formatter in `@church/config` (`formatLocaleDate`, `formatLocaleNumber`). Web and mobile use it everywhere except the currency format, which stays `en-US` on purpose. English uses en-GB day-month-year; Swahili uses sw-TZ (DEC-16).
+- Web session: a parallel refresh (the API's "Refresh already in progress" 401) no longer clears the session or blocks the token. Only a real reuse or expiry rejection does (`lib/auth-refresh.ts`, `auth.ts`).
+
+Residual, documented: a server-rendered request that loses the grace-window race still redirects once to sign-in, because the server cannot write the newer cookie there. The session itself is kept.
+
 ## Status 2026-11-26 (sixth pass, finish code work)
 
 Verified for this pass: `@church/db` build, `@church/config` build and copy tests (38), API type-check and jest (19 suites, 146 tests; three new feedback tests, no provider calls), web type-check, web tests (13) and `next build` with placeholder build-only env values, mobile type-check, mobile tests (12) and Android export. Migration 0013 (`ai_feedback`) applied on dev on 2026-11-26 after the dev deploy of `f91f10f` finished: one-off task on the backend container, status success, task deleted afterwards (DEC-12).

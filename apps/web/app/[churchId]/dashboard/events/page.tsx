@@ -5,7 +5,8 @@ import { format, startOfMonth, endOfMonth } from "date-fns"
 import { getEvents } from "@/actions/event"
 import { getServiceSessions } from "@/actions/attendance"
 import { ensurePermission } from "@/lib/permissions-server"
-import { getTranslator } from "@/lib/i18n/server"
+import { getLocale, getTranslator } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 import type { Translate } from "@church/config"
 
 import { Button } from "@/components/ui/button"
@@ -26,11 +27,11 @@ function eventStatusLabel(t: Translate, status: string): string {
   return status
 }
 
-function formatTime(value: string | null | undefined): string {
+function formatTime(value: string | null | undefined, locale: Locale): string {
   if (!value) return ""
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ""
-  return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+  return formatLocaleDate(date, locale, { hour: "numeric", minute: "2-digit" })
 }
 
 async function DayAgenda({
@@ -45,6 +46,7 @@ async function DayAgenda({
   sessionsPromise: Promise<any[]>
 }) {
   const t = await getTranslator()
+  const locale = await getLocale()
   const [events, sessions] = await Promise.all([eventsPromise, sessionsPromise])
 
   const dayEvents = events.filter((e) => String(e.startsAt).slice(0, 10) === selectedDate)
@@ -67,7 +69,7 @@ async function DayAgenda({
             <div>
               <p className="text-sm font-medium text-foreground">{event.title}</p>
               <p className="text-xs text-muted-foreground">
-                {formatTime(event.startsAt)}
+                {formatTime(event.startsAt, locale)}
                 {event.location ? ` · ${event.location}` : ""}
               </p>
             </div>
@@ -98,6 +100,7 @@ async function DayAgenda({
 export default async function EventsCalendarPage({ params, searchParams }: PageProps) {
   await ensurePermission("view:events")
   const t = await getTranslator()
+  const locale = await getLocale()
   const { churchId } = await params
   const { date, month } = await searchParams
 

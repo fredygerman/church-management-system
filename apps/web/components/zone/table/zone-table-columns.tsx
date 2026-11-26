@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import { zones } from "@church/db"
-import type { Translate } from "@church/config"
+import { formatLocaleDate, type Locale, type Translate } from "@church/config"
 
-export function getColumns(churchId: string, t: Translate): ColumnDef<typeof zones.$inferSelect>[] {
+export function getColumns(churchId: string, t: Translate, locale: Locale): ColumnDef<typeof zones.$inferSelect>[] {
   return [
     {
       accessorKey: "name",
@@ -65,7 +65,7 @@ export function getColumns(churchId: string, t: Translate): ColumnDef<typeof zon
         const createdAt = row.original.createdAt
         if (!createdAt) return <div>-</div>
         const date = new Date(createdAt)
-        return <div>{date.toLocaleDateString()}</div>
+        return <div>{formatLocaleDate(date, locale)}</div>
       },
       enableSorting: true,
     },

@@ -3,7 +3,7 @@
 import Link from "next/link"
 import { type ColumnDef } from "@tanstack/react-table"
 import { Eye, UserCheck, Trash2 } from "lucide-react"
-import type { Translate } from "@church/config"
+import { formatLocaleDate, type Locale, type Translate } from "@church/config"
 
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
 import type { Visitor } from "@church/db"
@@ -16,6 +16,7 @@ type VisitorWithActions = Visitor & {
 export function getVisitorColumns(
   churchId: string,
   t: Translate,
+  locale: Locale,
   handlers?: {
     onConvert?: (visitorId: string) => Promise<void>
     onDelete?: (visitorId: string) => Promise<void>
@@ -69,7 +70,7 @@ export function getVisitorColumns(
       cell: ({ row }) => (
         <div>
           {row.original.visitDate
-            ? new Date(row.original.visitDate).toLocaleDateString()
+            ? formatLocaleDate(row.original.visitDate, locale)
             : "-"
           }
         </div>

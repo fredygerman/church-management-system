@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ensurePermission } from "@/lib/permissions-server"
-import { getTranslator } from "@/lib/i18n/server"
+import { getLocale, getTranslator } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 import type { Translate } from "@church/config"
 import { getEventById, getEventRsvps } from "@/actions/event"
 
@@ -14,11 +15,11 @@ interface PageProps {
   params: Promise<{ churchId: string; id: string }>
 }
 
-function formatDateTime(value: string | null | undefined): string {
+function formatDateTime(value: string | null | undefined, locale: Locale): string {
   if (!value) return "—"
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleString()
+  return formatLocaleDate(date, locale, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
 }
 
 function rosterName(row: any): string {
@@ -41,6 +42,7 @@ function eventStatusLabel(t: Translate, status: string): string {
 export default async function EventDetailPage({ params }: PageProps) {
   await ensurePermission("manage:events")
   const t = await getTranslator()
+  const locale = await getLocale()
   const { churchId, id } = await params
   const rsvpLabel = {
     going: t("component.rsvp.going"),
@@ -79,8 +81,8 @@ export default async function EventDetailPage({ params }: PageProps) {
             {event.scope === "network" && <Badge variant="outline">{t("staff.events.detail.networkBadge")}</Badge>}
           </div>
           <p className="text-muted-foreground mt-1">
-            {formatDateTime(event.startsAt)}
-            {event.endsAt ? ` – ${formatDateTime(event.endsAt)}` : ""}
+            {formatDateTime(event.startsAt, locale)}
+            {event.endsAt ? ` – ${formatDateTime(event.endsAt, locale)}` : ""}
             {event.location ? ` · ${event.location}` : ""}
           </p>
         </div>

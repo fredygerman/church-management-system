@@ -45,3 +45,4 @@ export function translate(locale: Locale, key: MessageKey, vars?: Vars): string 
 export function translatorFor(locale: Locale): Translate {
   return (key, vars) => translate(locale, key, vars)
 }
+export * from './format'

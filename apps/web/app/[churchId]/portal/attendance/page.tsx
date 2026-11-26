@@ -1,20 +1,22 @@
 import { getMyAttendance } from "@/actions/portal"
-import { getTranslator } from "@/lib/i18n/server"
+import { getLocale, getTranslator } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
 }
 
-function formatDate(value: string | null | undefined, unknownLabel: string): string {
+function formatDate(value: string | null | undefined, unknownLabel: string, locale: Locale): string {
   if (!value) return unknownLabel
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return unknownLabel
-  return date.toLocaleDateString()
+  return formatLocaleDate(date, locale)
 }
 
 export default async function PortalAttendancePage({ params }: PageProps) {
   const { churchId } = await params
   const t = await getTranslator()
+  const locale = await getLocale()
   const checkins = await getMyAttendance(churchId)
 
   return (
@@ -45,7 +47,7 @@ export default async function PortalAttendancePage({ params }: PageProps) {
                 </p>
                 <p className="text-xs text-muted-foreground">{checkin.serviceTypeName}</p>
               </div>
-              <p className="text-sm text-muted-foreground">{formatDate(checkin.sessionDate, t("final.portal.unknownDate"))}</p>
+              <p className="text-sm text-muted-foreground">{formatDate(checkin.sessionDate, t("final.portal.unknownDate"), locale)}</p>
             </li>
           ))}
         </ul>

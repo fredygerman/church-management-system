@@ -3,7 +3,8 @@ import Link from "next/link"
 import { format } from "date-fns"
 
 import { apiGet } from "@/lib/api-helpers"
-import { getTranslator } from "@/lib/i18n/server"
+import { getLocale, getTranslator } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { EventRsvp } from "@/components/portal/event-rsvp"
@@ -13,11 +14,11 @@ interface PageProps {
   params: Promise<{ churchId: string }>
 }
 
-function formatDateTime(value: string | null | undefined, dateNotSet: string): string {
+function formatDateTime(value: string | null | undefined, dateNotSet: string, locale: Locale): string {
   if (!value) return dateNotSet
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleString()
+  return formatLocaleDate(date, locale, { year: "numeric", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
 }
 
 function EventsLoading() {
@@ -28,6 +29,7 @@ function EventsLoading() {
 
 async function EventsContent({ churchId }: { churchId: string }) {
   const t = await getTranslator()
+  const locale = await getLocale()
   try {
     const today = format(new Date(), "yyyy-MM-dd")
     const [events, myRsvps] = await Promise.all([
@@ -71,9 +73,9 @@ async function EventsContent({ churchId }: { churchId: string }) {
                         {eventName}
                       </h2>
                       <p className="text-muted-foreground text-xs">
-                        {formatDateTime(event.startsAt, t("portal.events.dateNotSet"))}
+                        {formatDateTime(event.startsAt, t("portal.events.dateNotSet"), locale)}
                         {event.endsAt
-                          ? ` – ${formatDateTime(event.endsAt, t("portal.events.dateNotSet"))}`
+                          ? ` – ${formatDateTime(event.endsAt, t("portal.events.dateNotSet"), locale)}`
                           : ""}
                       </p>
                       {event.location && (

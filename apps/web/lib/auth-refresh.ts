@@ -10,6 +10,18 @@ export type RotatedTokens = {
 
 type RefreshError = Error & { status?: number }
 
+// The API answers 401 with this message when a token was used a moment ago (a parallel refresh).
+// It is not a reuse, so the session must survive it: the newer cookie carries the next request.
+export const REFRESH_IN_PROGRESS = "Refresh already in progress"
+
+export class RefreshInProgressError extends Error {
+  readonly status = 401
+  constructor() {
+    super("Token refresh is already in progress; retry with the newer session")
+    this.name = "RefreshInProgressError"
+  }
+}
+
 // Newest pair known to this process, keyed by the refresh token the session holds.
 const latest = new Map<string, RotatedTokens>()
 // Refresh calls in flight, keyed by the unconsumed refresh token being sent.
@@ -54,6 +66,9 @@ async function rotate(apiBaseUrl: string, refreshToken: string): Promise<Rotated
     cache: "no-store",
   })
   const body = await response.json().catch(() => null)
+  if (response.status === 401 && JSON.stringify(body ?? "").includes(REFRESH_IN_PROGRESS)) {
+    throw new RefreshInProgressError()
+  }
   const data = body?.data ?? body
   if (!response.ok || typeof data?.accessToken !== "string" || typeof data?.refreshToken !== "string") {
     const error = new Error(`Token refresh failed (${response.status})`) as RefreshError
@@ -90,6 +105,8 @@ export function getRotatedTokens(apiBaseUrl: string, sessionRefreshToken: string
         return pair
       })
       .catch((error: RefreshError) => {
+        // A parallel refresh is not a rejection: keep the session token usable.
+        if (error instanceof RefreshInProgressError) throw error
         // A rejected token must not be replayed; a network error may be retried.
         if (error.status === 401 || error.status === 403) {
           rejected.add(sessionRefreshToken)

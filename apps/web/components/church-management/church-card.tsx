@@ -1,5 +1,6 @@
 "use client"
 
+import { formatLocaleNumber } from "@church/config"
 import Image from "next/image"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
@@ -36,7 +37,7 @@ export function ChurchCard({
   totalMembers,
   className,
 }: ChurchCardProps) {
-  const { t } = useT()
+  const { t, locale } = useT()
   const router = useRouter()
   const [isOpening, setIsOpening] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -102,7 +103,7 @@ export function ChurchCard({
             <div className="flex items-center space-x-2">
               <Users className="size-5 text-muted-foreground" />
               <span className="text-sm font-medium">
-                {t("final.church.membersCount", { count: totalMembers.toLocaleString() })}
+                {t("final.church.membersCount", { count: formatLocaleNumber(totalMembers, locale) })}
               </span>
             </div>
             <div className="flex items-center space-x-1 text-sm font-medium text-green-600">

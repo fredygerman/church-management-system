@@ -1,15 +1,17 @@
 import { getMyOfferings } from "@/actions/offering"
 import { formatMoney } from "@/lib/utils"
+import { getLocale } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
 }
 
-function formatDate(value: string | null | undefined): string {
+function formatDate(value: string | null | undefined, locale: Locale): string {
   if (!value) return ""
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ""
-  return date.toLocaleDateString()
+  return formatLocaleDate(date, locale)
 }
 
 function categoryLabel(offering: { categoryName: string | null; categoryId: string }): string {
@@ -18,6 +20,7 @@ function categoryLabel(offering: { categoryName: string | null; categoryId: stri
 
 export default async function PortalOfferingsPage({ params }: PageProps) {
   const { churchId } = await params
+  const locale = await getLocale()
   const offerings = await getMyOfferings(churchId)
 
   return (
@@ -41,7 +44,7 @@ export default async function PortalOfferingsPage({ params }: PageProps) {
               >
                 <div>
                   <p className="text-sm font-medium text-foreground">{categoryLabel(offering)}</p>
-                  <p className="text-xs text-muted-foreground">{formatDate(offering.offeringDate)}</p>
+                  <p className="text-xs text-muted-foreground">{formatDate(offering.offeringDate, locale)}</p>
                 </div>
                 <p className="text-sm font-semibold text-foreground">
                   {formatMoney(offering.amountCents, offering.currency)}

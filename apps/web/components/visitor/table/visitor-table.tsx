@@ -22,7 +22,7 @@ interface VisitorTableProps {
 
 export function VisitorTable({ visitorPromise, churchId, canConvert = false }: VisitorTableProps) {
   const router = useRouter()
-  const { t } = useT()
+  const { t, locale } = useT()
   const [isLoading, setIsLoading] = useState(false)
   
   // The action resolves to an array of visitors
@@ -68,7 +68,7 @@ export function VisitorTable({ visitorPromise, churchId, canConvert = false }: V
     onDelete: handleDelete,
   }), [canConvert, handleConvert, handleDelete])
 
-  const columns = React.useMemo(() => getVisitorColumns(churchId, t, handlers), [churchId, t, handlers])
+  const columns = React.useMemo(() => getVisitorColumns(churchId, t, locale, handlers), [churchId, t, locale, handlers])
 
   const { table } = useDataTable({
     data: visitors,

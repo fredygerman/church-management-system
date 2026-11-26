@@ -18,8 +18,8 @@ interface ZoneTableProps {
 
 export function ZoneTable({ zonePromise, churchId }: ZoneTableProps) {
   const zones = React.use(zonePromise)
-  const { t } = useT()
-  const columns = React.useMemo(() => getColumns(churchId, t), [churchId, t])
+  const { t, locale } = useT()
+  const columns = React.useMemo(() => getColumns(churchId, t, locale), [churchId, t, locale])
 
   const { table } = useDataTable({
     data: zones,

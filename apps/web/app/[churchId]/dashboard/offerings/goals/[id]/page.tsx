@@ -1,7 +1,8 @@
 import Link from "next/link"
 import { getGivingGoalById, getGivingGoalOfferings } from "@/actions/giving-goal"
 import { ensurePermission } from "@/lib/permissions-server"
-import { getTranslator } from "@/lib/i18n/server"
+import { getLocale, getTranslator } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 import { formatMoney } from "@/lib/utils"
 import type { Translate } from "@church/config"
 
@@ -21,11 +22,11 @@ interface PageProps {
   params: Promise<{ churchId: string; id: string }>
 }
 
-function formatDate(value: string | null | undefined): string {
+function formatDate(value: string | null | undefined, locale: Locale): string {
   if (!value) return "—"
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleDateString()
+  return formatLocaleDate(date, locale)
 }
 
 function goalStatusLabel(t: Translate, status: string): string {
@@ -38,6 +39,7 @@ function goalStatusLabel(t: Translate, status: string): string {
 export default async function GivingGoalDetailPage({ params }: PageProps) {
   await ensurePermission("manage:giving-goals")
   const t = await getTranslator()
+  const locale = await getLocale()
   const { churchId, id } = await params
 
   const [goal, offerings] = await Promise.all([
@@ -122,7 +124,7 @@ export default async function GivingGoalDetailPage({ params }: PageProps) {
             <TableBody>
               {offerings.map((offering) => (
                 <TableRow key={offering.id}>
-                  <TableCell>{formatDate(offering.offeringDate)}</TableCell>
+                  <TableCell>{formatDate(offering.offeringDate, locale)}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {offering.memberName ?? t("staff.offerings.anonymous")}
                   </TableCell>

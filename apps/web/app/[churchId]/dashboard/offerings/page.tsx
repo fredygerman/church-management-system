@@ -3,7 +3,8 @@ import Link from "next/link"
 import { getOfferings, getOfferingCategories } from "@/actions/offering"
 import { getGivingGoals } from "@/actions/giving-goal"
 import { ensurePermission } from "@/lib/permissions-server"
-import { getTranslator } from "@/lib/i18n/server"
+import { getLocale, getTranslator } from "@/lib/i18n/server"
+import { formatLocaleDate, type Locale } from "@church/config"
 import { formatMoney } from "@/lib/utils"
 
 import { Button } from "@/components/ui/button"
@@ -23,11 +24,11 @@ interface PageProps {
   searchParams: Promise<{ categoryId?: string; goalId?: string; from?: string; to?: string }>
 }
 
-function formatDate(value: string | null | undefined): string {
+function formatDate(value: string | null | undefined, locale: Locale): string {
   if (!value) return "—"
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return String(value)
-  return date.toLocaleDateString()
+  return formatLocaleDate(date, locale)
 }
 
 async function OfferingsTable({
@@ -42,6 +43,7 @@ async function OfferingsTable({
   churchId: string
 }) {
   const t = await getTranslator()
+  const locale = await getLocale()
   const offerings = await offeringsPromise
   const categoryNameById = new Map(categories.map((category) => [category.id, category.name]))
   const goalNameById = new Map(goals.map((goal) => [goal.id, goal.name]))
@@ -65,7 +67,7 @@ async function OfferingsTable({
       <TableBody>
         {offerings.map((offering) => (
           <TableRow key={offering.id}>
-            <TableCell>{formatDate(offering.offeringDate)}</TableCell>
+            <TableCell>{formatDate(offering.offeringDate, locale)}</TableCell>
             <TableCell>
               {offering.category?.name || categoryNameById.get(offering.categoryId) || offering.categoryId}
             </TableCell>
@@ -98,6 +100,7 @@ async function OfferingsTable({
 export default async function OfferingsPage({ params, searchParams }: PageProps) {
   await ensurePermission("manage:offerings")
   const t = await getTranslator()
+  const locale = await getLocale()
   const { churchId } = await params
   const filters = await searchParams
   const [categories, goals] = await Promise.all([

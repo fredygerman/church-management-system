@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Edit2, Phone, MapPin } from 'lucide-react'
 import { getMemberById, getMemberZones } from '@/actions/member'
 import { getChurchById } from '@/actions/church'
-import { getTranslator } from '@/lib/i18n/server'
+import { getLocale, getTranslator } from '@/lib/i18n/server'
+import { formatLocaleDate } from '@church/config'
 import type { Member } from '@church/db'
 
 interface MemberDetailPageProps {
@@ -17,6 +18,7 @@ interface MemberDetailPageProps {
 export default async function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { churchId, memberId } = await params
   const t = await getTranslator()
+  const locale = await getLocale()
   let member: Member | null = null
   let church: any = null
   let zones: any[] = []
@@ -75,11 +77,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   const formatDate = (dateString: string | Date | null | undefined) => {
     if (!dateString) return '-'
     try {
-      return new Date(dateString).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      })
+      return formatLocaleDate(dateString, locale, { year: 'numeric', month: 'long', day: 'numeric' })
     } catch {
       return '-'
     }
