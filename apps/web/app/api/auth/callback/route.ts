@@ -3,17 +3,15 @@ import { env } from "@/env.mjs"
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { email, name, picture } = body
+    const body = (await request.json().catch(() => null)) ?? {}
+    const { provider, idToken } = body
 
-    if (!email || !name) {
+    if (provider !== "google" || typeof idToken !== "string" || !idToken.trim()) {
       return NextResponse.json(
-        { error: "Missing email or name" },
+        { error: "provider and idToken are required" },
         { status: 400 }
       )
     }
-
-    console.log(`[Auth Callback] Syncing user with backend: ${email}`)
 
     // Call backend OAuth endpoint
     const response = await fetch(`${env.API_BASE_URL}/auth/oauth-login`, {
@@ -21,18 +19,12 @@ export async function POST(request: NextRequest) {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
-        email,
-        name,
-        picture,
-      }),
+      body: JSON.stringify({ provider, idToken }),
     })
 
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({ message: response.statusText }))
-      console.error(`[Auth Callback] Backend error (${response.status}):`, errorData)
       return NextResponse.json(
-        { error: errorData.message || `Backend error: ${response.statusText}` },
+        { error: response.status === 401 ? "OAuth authentication failed" : "Authentication service unavailable" },
         { status: response.status }
       )
     }

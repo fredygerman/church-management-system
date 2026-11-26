@@ -66,7 +66,9 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') implements On
 
     return {
       ...user,
-      role: payload.activeRole ?? payload.role ?? user.role,
+      // Role claims are display hints only. Membership and platform trust are
+      // re-derived by the guards from current server state.
+      role: user.role ?? 'member',
       churchId: payload.activeChurchId ?? payload.churchId ?? user.churchId,
       activeChurchId: payload.activeChurchId ?? payload.churchId ?? user.churchId,
       activeMembershipId: payload.activeMembershipId ?? null,

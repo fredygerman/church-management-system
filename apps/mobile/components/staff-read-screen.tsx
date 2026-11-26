@@ -1,7 +1,9 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react"
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 import { ScrollView, Text, View } from "react-native"
 import { ApiError } from "../lib/api"
+import { createRequestGate } from "../lib/request-gate"
 import { useT } from "../lib/locale"
+import { useSession } from "../lib/session"
 import { NotConnectedState } from "./not-connected-state"
 import { EmptyState, ErrorState, LoadingState, styles } from "./screen-state"
 
@@ -33,22 +35,30 @@ type StaffReadScreenProps<T> = {
 
 // Read-only: loads one or more GET endpoints and renders loading, not-connected,
 // denied (server 403 for a missing permission key), error-with-retry, and empty states.
+// Reloads on every context change (church, role, sign-in); a response from an earlier context is discarded.
 export function StaffReadScreen<T>({ area, emptyMessage, isEmpty, load, children }: StaffReadScreenProps<T>) {
   const { t } = useT()
+  const { contextKey } = useSession()
+  const gate = useRef(createRequestGate()).current
+  const [attempt, setAttempt] = useState(0)
   const [state, setState] = useState<ScreenState<T>>({ status: "loading" })
 
-  const run = useCallback(async () => {
+  useEffect(() => {
+    const isCurrent = gate.start()
     setState({ status: "loading" })
-    try {
-      setState({ status: "ready", data: await load() })
-    } catch (caught) {
-      if (caught instanceof ApiError && caught.kind === "not-configured") setState({ status: "not-connected" })
-      else if (caught instanceof ApiError && caught.status === 403) setState({ status: "denied" })
-      else setState({ status: "error", message: caught instanceof ApiError ? caught.message : t("mobile.staff.readScreen.loadError", { area: area.toLowerCase() }) })
-    }
-  }, [area, load, t])
+    load().then(
+      (data) => { if (isCurrent()) setState({ status: "ready", data }) },
+      (caught: unknown) => {
+        if (!isCurrent()) return
+        if (caught instanceof ApiError && caught.kind === "not-configured") setState({ status: "not-connected" })
+        else if (caught instanceof ApiError && caught.status === 403) setState({ status: "denied" })
+        else setState({ status: "error", message: caught instanceof ApiError ? caught.message : t("mobile.staff.readScreen.loadError", { area: area.toLowerCase() }) })
+      },
+    )
+    return () => gate.invalidate()
+  }, [load, contextKey, attempt, area, t, gate])
 
-  useEffect(() => { void run() }, [run])
+  const retry = useCallback(() => setAttempt((value) => value + 1), [])
 
   if (state.status === "loading") return <LoadingState />
   if (state.status === "not-connected") return <NotConnectedState area={area} />
@@ -60,7 +70,7 @@ export function StaffReadScreen<T>({ area, emptyMessage, isEmpty, load, children
       </View>
     )
   }
-  if (state.status === "error") return <ErrorState message={state.message} onRetry={() => void run()} />
+  if (state.status === "error") return <ErrorState message={state.message} onRetry={retry} />
   if (isEmpty(state.data)) return <EmptyState message={emptyMessage} />
   return <ScrollView contentContainerStyle={styles.content}>{children(state.data)}</ScrollView>
 }

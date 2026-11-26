@@ -34,6 +34,9 @@ import { EventsModule } from './events/events.module'
 import { DashboardModule } from './dashboard/dashboard.module'
 import { AiModule } from './ai/ai.module'
 import { RetentionModule } from './retention/retention.module'
+import { LibraryModule } from './library/library.module'
+import { PublicModule } from './public/public.module'
+import { NotificationsModule } from './notifications/notifications.module'
 import config from './config'
 
 @Module({
@@ -65,6 +68,9 @@ import config from './config'
     DashboardModule,
     AiModule,
     RetentionModule,
+    LibraryModule,
+    PublicModule,
+    NotificationsModule,
   ],
   controllers: [AppController, HealthController],
   providers: [

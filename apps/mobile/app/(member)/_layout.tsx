@@ -1,11 +1,14 @@
 import { Tabs } from "expo-router"
 import { AiHeaderButton } from "../../components/ai/ai-header-button"
 import { useT } from "../../lib/locale"
+import { useSession } from "../../lib/session"
 
 export default function MemberLayout() {
   const { t } = useT()
+  // Keyed by context: a church or role change remounts every tab, so no screen keeps the previous branch's data.
+  const { contextKey } = useSession()
   return (
-    <Tabs screenOptions={{ headerRight: () => <AiHeaderButton /> }}>
+    <Tabs key={contextKey} screenOptions={{ headerRight: () => <AiHeaderButton /> }}>
       <Tabs.Screen name="index" options={{ title: t("mobile.member.tabs.home") }} />
       <Tabs.Screen name="church" options={{ title: t("mobile.member.tabs.church") }} />
       <Tabs.Screen name="events" options={{ title: t("mobile.member.tabs.events") }} />

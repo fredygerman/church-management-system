@@ -187,3 +187,28 @@ export interface NotificationFilterOptions {
   limit?: number;
   offset?: number;
 }
+
+/**
+ * Private in-app inbox contract. Targets are typed descriptors, never arbitrary URLs.
+ */
+export interface InboxNotificationTarget {
+  type: string;
+  params: Record<string, string | number | boolean | null>;
+}
+
+export interface InboxNotificationItem {
+  id: string;
+  churchId: string | null;
+  type: string;
+  templateKey: string;
+  templateData: Record<string, string | number | boolean | null>;
+  target: InboxNotificationTarget | null;
+  createdAt: string;
+  readAt: string | null;
+}
+
+export interface InboxNotificationList {
+  items: InboxNotificationItem[];
+  unreadCount: number;
+  nextCursor: string | null;
+}

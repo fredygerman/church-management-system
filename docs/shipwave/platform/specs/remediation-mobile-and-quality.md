@@ -153,3 +153,20 @@ git diff --check
 The mobile script is `typecheck`, **not** `type-check`. The API/web `lint` scripts currently use `--fix`; they are not read-only audit checks and must not be invoked as such. A web production build is `pnpm --filter web build`; use only the documented safe build environment, never copy credentials into commands or treat placeholder build variables as live configuration evidence. An iOS export can be run with `pnpm --filter @church/mobile exec expo export --platform ios --output-dir /tmp/church-mobile-remediation-ios` when that platform validation is in scope; export success still does not prove simulator/device behavior. Existing `test:e2e` scripts/configuration must be inspected before selection; this specification does not assert a working E2E harness.
 
 For every slice record: baseline/result commit, changed paths, focused test command, full relevant package check result, migration requirement (normally none), observable acceptance evidence, remaining limitations and rollback. Local code rollback is the reviewed slice's revert; do not roll back data or infrastructure under that shorthand. No task is complete solely because a child agent reports completion or the documentation says “code complete.”
+
+## Decisions taken
+
+Recorded by the mobile implementation slice (R-MOB-01, 02, 04, 05 partial, 03 partial, R-QA-01 mobile). Each follows the recommended option unless noted.
+
+- **Rejection contract (R-MOB-01):** only a refresh 401 whose message is not `Refresh already in progress` is a definitive rejection (kind `rejected`). The API's parallel-refresh 401 is temporary; 5xx, network, malformed successful responses and storage failures keep credentials. Basis: `apps/api/src/auth/auth.service.ts` `rotateRefreshToken`.
+- **Unsaved rotation:** if the secure store refuses a rotated pair, the pair is held in memory and used, and retried for saving on the next request. The stored pair is not reverted, because the old refresh token is already spent.
+- **Startup states:** `initializing → signed-in | signed-out | unavailable`. `unavailable` never redirects to sign-in. It offers the existing Retry and Sign out labels.
+- **Session generation:** every credential write or clear bumps a generation. A renewal that finishes after sign-out or after a different sign-in is discarded and does not write credentials.
+- **Context key (R-MOB-02):** `epoch:churchId:role`, bumped on every user change. Screens reload on change and discard responses through a request gate. Member and staff tab navigators are keyed by this value, so a church or role change remounts every tab. The AI screen is outside this keyed boundary and is not yet verified.
+- **Presentation space (R-MOB-03, partial):** in-memory only. Default is `staff` for staff-capable accounts and `member` otherwise. A choice applies to one context and resets on sign-in, church switch or sign-out. Nothing is persisted across launches. R-UX-01 has not recorded an initial or remembered-mode policy, so this default is a provisional choice that needs owner confirmation.
+- **Member/staff controls (R-MOB-03, not done):** the switch buttons need new labels in `packages/config`, which this slice may not edit. Required keys (EN/SW): staff entry on member Home and Profile; return-to-member on staff More.
+- **R-MOB-04:** Church clears its error on success and resets on context change. It is a single-owner change in `church.tsx`.
+- **R-MOB-05 (partial):** read-only people directory search using the existing `GET /members/search?q=` endpoint, reusing an existing label key. Member detail is not built: the display-safe field set under DEC-02 is not verified. No mutation was added; each mutation waits for its API contract.
+- **Staff tab list:** unchanged. It already lists the five tabs with permission gating, which was verified against `roleHasTabPermission`.
+- **Test seam:** the secure store is injected through `setSecureStoreBackend`, and `expo-secure-store` is imported lazily, so node tests never load native code.
+- **Verification:** `cd apps/mobile && npx tsc --noEmit && node --import tsx --test tests/*.test.ts`. No device or simulator run was performed.

@@ -5,6 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { isPlatformAdmin } from '../platform-admin';
 
 @Injectable()
 export class RoleGuard implements CanActivate {
@@ -27,7 +28,9 @@ export class RoleGuard implements CanActivate {
       throw new ForbiddenException('User not authenticated');
     }
 
-    const hasRole = requiredRoles.some((role) => user.role === role);
+    const hasRole = requiredRoles.some(
+      (role) => user.role === role || (role === 'super_admin' && isPlatformAdmin(user)),
+    );
 
     if (!hasRole) {
       throw new ForbiddenException(

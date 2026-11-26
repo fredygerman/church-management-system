@@ -15,6 +15,7 @@ export type CreateEventInput = {
   endsAt?: string | Date
   scope?: EventScope
   status?: EventStatus
+  publicPublishedAt?: string | Date | null
 }
 
 export type UpdateEventInput = Partial<CreateEventInput>

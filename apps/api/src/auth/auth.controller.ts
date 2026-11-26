@@ -10,19 +10,28 @@ import {
   Query,
   Res,
   BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  UnauthorizedException,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards';
 import { Public, GetUser } from './decorators';
 import { RequirePermission } from './decorators/require-permission.decorator';
+import { GoogleIdentityVerifier } from './google-identity-verifier';
+import { randomBytes } from 'crypto';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
   private readonly logger = new Logger(AuthController.name);
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly googleIdentityVerifier: GoogleIdentityVerifier,
+  ) {}
 
   @Public()
   @Post('register')
@@ -114,16 +123,10 @@ export class AuthController {
   @ApiOperation({
     summary: 'OAuth login/signup',
     description:
-      'Login or register user via OAuth (Google, etc). If user does not exist, creates new user with member role.',
+      'Login or register with a verified Google ID token. Profile fields are never accepted as identity proof.',
   })
   @ApiBody({
-    schema: {
-      example: {
-        email: 'user@example.com',
-        name: 'John Doe',
-        picture: 'https://example.com/photo.jpg',
-      },
-    },
+    schema: { example: { provider: 'google', idToken: 'eyJhbGciOiJSUzI1NiIs...' } },
   })
   @ApiResponse({
     status: 200,
@@ -148,12 +151,16 @@ export class AuthController {
   async oauthLogin(
     @Body()
     body: {
-      email: string;
-      name: string;
-      picture?: string;
+      provider?: string;
+      idToken?: string;
     }
   ) {
-    const { user, isNewUser } = await this.authService.oauthLogin(body.email, body.name, body.picture);
+    if (body?.provider !== 'google' || typeof body.idToken !== 'string' || !body.idToken.trim()) {
+      throw new BadRequestException('provider and idToken are required');
+    }
+
+    const identity = await this.googleIdentityVerifier.verify(body.idToken);
+    const { user, isNewUser } = await this.authService.oauthLogin(identity);
     
     if (!user) {
       throw new BadRequestException('Failed to create or update user');
@@ -253,13 +260,21 @@ export class AuthController {
       const clientId = process.env.GOOGLE_CLIENT_ID;
       const redirectUri = `${process.env.API_BASE_URL || 'http://localhost:3001'}/auth/google/callback`;
       const scope = 'openid profile email';
+      const state = randomBytes(32).toString('hex');
       
       if (!clientId) {
         throw new BadRequestException('Google OAuth is not configured (missing GOOGLE_CLIENT_ID)');
       }
 
-      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}`;
+      const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=${encodeURIComponent(scope)}&state=${encodeURIComponent(state)}`;
       
+      res.cookie('__google_oauth_state', state, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 10 * 60 * 1000,
+        path: '/auth/google',
+      });
       this.logger.debug(`Redirecting to Google OAuth URL: ${googleAuthUrl}`);
       return res.redirect(googleAuthUrl);
     } catch (error) {
@@ -278,11 +293,17 @@ export class AuthController {
     @Query('code') code: string,
     @Query('state') state?: string,
     @Query('callbackUrl') callbackUrl?: string,
+    @Req() req?: any,
     @Res() res?: any
   ) {
     try {
       if (!code) {
         throw new BadRequestException('Authorization code is required');
+      }
+
+      const expectedState = this.readCookie(req?.headers?.cookie, '__google_oauth_state');
+      if (!state || !expectedState || state !== expectedState) {
+        throw new UnauthorizedException('Invalid OAuth state');
       }
 
       // Exchange code for tokens with Google
@@ -307,24 +328,13 @@ export class AuthController {
       const tokenData = await tokenResponse.json();
 
       // Get user info from Google
-      const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
-        headers: {
-          Authorization: `Bearer ${tokenData.access_token}`,
-        },
-      });
-
-      if (!userInfoResponse.ok) {
-        throw new BadRequestException('Failed to fetch user info from Google');
+      if (typeof tokenData.id_token !== 'string') {
+        throw new UnauthorizedException('Google identity proof was not returned');
       }
-
-      const userInfo = await userInfoResponse.json();
+      const identity = await this.googleIdentityVerifier.verify(tokenData.id_token);
 
       // Login/create user
-      const { user, isNewUser } = await this.authService.oauthLogin(
-        userInfo.email,
-        userInfo.name || userInfo.email,
-        userInfo.picture
-      );
+      const { user, isNewUser } = await this.authService.oauthLogin(identity);
 
       if (!user) {
         throw new BadRequestException('Failed to create or update user');
@@ -350,6 +360,7 @@ export class AuthController {
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         path: '/',
       });
+      res.clearCookie('__google_oauth_state', { path: '/auth/google' });
 
       // Redirect to frontend callback page without tokens in URL
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -368,14 +379,14 @@ export class AuthController {
       this.logger.error('Google OAuth callback error:', error);
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
       const errorUrl = new URL(`${frontendUrl}/auth/signin`);
-      errorUrl.searchParams.set('error', error instanceof Error ? error.message : 'OAuth failed');
+      errorUrl.searchParams.set('error', 'OAuth failed');
 
       return res.redirect(errorUrl.toString());
     }
   }
 
   /**
-   * Setup endpoint - Creates the initial church and assigns user as super_admin
+   * Setup endpoint - Creates the initial church and assigns a church-scoped admin
    * POST /auth/setup
    * Only accessible to users without an assigned church
    */
@@ -385,7 +396,7 @@ export class AuthController {
   @ApiOperation({
     summary: 'Setup initial church and admin',
     description:
-      'Create the initial church and configure the user as super_admin. Only available for new users without an assigned church.',
+      'Create the initial church and configure the user as a church-scoped admin. Requires server-authorized platform provisioning.',
   })
   @ApiBody({
     schema: {
@@ -416,7 +427,7 @@ export class AuthController {
             id: '550e8400-e29b-41d4-a716-446655440001',
             email: 'user@example.com',
             name: 'User Name',
-            role: 'super_admin',
+            role: 'admin',
             churchId: '550e8400-e29b-41d4-a716-446655440000',
           },
           accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
@@ -426,8 +437,12 @@ export class AuthController {
     },
   })
   @ApiResponse({
-    status: 400,
-    description: 'Invalid input or user already has a church assigned',
+    status: 403,
+    description: 'Caller is not an authorized platform provisioner',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'User already has a church assigned or setup raced with another request',
   })
   @ApiResponse({
     status: 401,
@@ -446,8 +461,12 @@ export class AuthController {
     }
   ) {
     // Ensure user doesn't already have a church assigned
+    if (!this.authService.isPlatformAdmin(user)) {
+      throw new ForbiddenException('Platform provisioning authorization required');
+    }
+
     if (user.churchId) {
-      throw new BadRequestException('User already has a church assigned. Cannot setup again.');
+      throw new ConflictException('User already has a church assigned. Cannot setup again.');
     }
 
     try {
@@ -464,7 +483,7 @@ export class AuthController {
         }
       );
 
-      // Get the updated user (now with churchId and super_admin role)
+      // Get the updated user (now with churchId and church-scoped admin role)
       const updatedUser = await this.authService.getProfile(user.id);
 
       // Generate new tokens with updated user info
@@ -483,5 +502,12 @@ export class AuthController {
       this.logger.error('Church setup error:', error);
       throw error;
     }
+  }
+
+  private readCookie(header: string | undefined, name: string): string | undefined {
+    return header
+      ?.split(';')
+      .map((part) => part.trim().split('='))
+      .find(([key]) => key === name)?.[1];
   }
 }

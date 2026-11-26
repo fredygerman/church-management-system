@@ -7,6 +7,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { useT } from "@/components/i18n/locale-provider"
+import { postSignInPath } from "@/lib/shell/navigation"
 
 export default function SignInPage() {
   const { t } = useT()
@@ -70,7 +71,13 @@ export default function SignInPage() {
         redirect: false,
       })
       if (!signedIn?.ok) throw new Error(t("final.signin.sessionFailed"))
-      window.location.assign(callbackUrl || (result.user.activeChurchId || result.user.churchId ? `/${result.user.activeChurchId || result.user.churchId}/dashboard` : "/setup"))
+      window.location.assign(
+        postSignInPath({
+          callbackUrl,
+          churchId: result.user?.activeChurchId || result.user?.churchId,
+          role: result.user?.role,
+        }),
+      )
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("final.signin.failed"))
     } finally {
@@ -113,9 +120,9 @@ export default function SignInPage() {
           </svg>
         </div>
         <form onSubmit={handleCredentials} className="space-y-3">
-          {isRegistering && <input className="w-full rounded border p-2" name="name" placeholder={t("final.signin.fullName")} required />}
-          <input className="w-full rounded border p-2" name="email" type="email" placeholder={t("final.signin.email")} required />
-          <input className="w-full rounded border p-2" name="password" type="password" minLength={12} placeholder={t("final.signin.password")} required />
+          {isRegistering && <input className="w-full rounded border p-2" name="name" placeholder={t("final.signin.fullName")} aria-label={t("final.signin.fullName")} required />}
+          <input className="w-full rounded border p-2" name="email" type="email" placeholder={t("final.signin.email")} aria-label={t("final.signin.email")} required />
+          <input className="w-full rounded border p-2" name="password" type="password" minLength={12} placeholder={t("final.signin.password")} aria-label={t("final.signin.password")} required />
           <Button className="w-full" disabled={isSubmitting} type="submit">
             {isSubmitting ? t("final.signin.pleaseWait") : isRegistering ? t("final.signin.createAccount") : t("final.signin.withEmail")}
           </Button>

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useParams } from "next/navigation"
 import { Home, LogOut, Menu, User } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -24,6 +25,7 @@ import {
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import { DashboardBreadcrumb } from "./dashboard-breadcrumb"
 import { useT } from "@/components/i18n/locale-provider"
+import { churchPath } from "@/lib/shell/navigation"
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void
@@ -34,6 +36,8 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const { data: session } = useSession()
   const user = session?.user
+  const { churchId } = useParams<{ churchId?: string }>()
+  const profileHref = churchPath(churchId, "dashboard/profile")
 
   return (
     <>
@@ -55,7 +59,7 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
         {/* Header Actions */}
         <div className="flex items-center gap-2 rounded-full bg-muted px-2 py-0.5">
           <Link href="/" passHref>
-            <Button variant="ghost" size="icon">
+            <Button variant="ghost" size="icon" aria-label={t("nav.home")}>
               <Home className="size-5 text-foreground" />
             </Button>
           </Link>
@@ -87,12 +91,14 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <Link href={`/dashboard/profile`} passHref>
-                <DropdownMenuItem className="cursor-pointer">
-                  <User className="mr-2 size-4" />
-                  <span>{t("nav.myProfile")}</span>
-                </DropdownMenuItem>
-              </Link>
+              {profileHref ? (
+                <Link href={profileHref} passHref>
+                  <DropdownMenuItem className="cursor-pointer">
+                    <User className="mr-2 size-4" />
+                    <span>{t("nav.myProfile")}</span>
+                  </DropdownMenuItem>
+                </Link>
+              ) : null}
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => setIsDialogOpen(true)}

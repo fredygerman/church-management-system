@@ -24,6 +24,8 @@ import {
 } from '../database/schema';
 import { Database } from '../database/interfaces/database.interfaces';
 import config from '../config';
+import { isPlatformAdmin } from './platform-admin';
+import type { VerifiedGoogleIdentity } from './google-identity-verifier';
 
 export interface AuthTokens {
   accessToken: string;
@@ -448,14 +450,14 @@ export class AuthService implements OnModuleInit {
   }
 
   /**
-   * OAuth login/signup - Creates or updates user and returns JWT tokens
+   * OAuth login/signup - Creates or updates a user from verified provider identity
    * Used by Google OAuth flow
    */
   async oauthLogin(
-    email: string,
-    name: string,
-    picture?: string,
+    identity: VerifiedGoogleIdentity,
   ): Promise<{ user: Omit<User, 'passwordHash'> | null; isNewUser: boolean }> {
+    const email = identity.email.trim().toLowerCase();
+
     // Check if user exists
     const [existingUser] = await this.db
       .select()
@@ -464,11 +466,22 @@ export class AuthService implements OnModuleInit {
       .limit(1);
 
     if (existingUser) {
+      if (existingUser.deletedAt || !existingUser.isActive) {
+        throw new UnauthorizedException('Invalid Google identity proof');
+      }
+
+      // Password accounts need an explicit account-linking flow. A verified
+      // provider email is sufficient for accounts created as passwordless OAuth
+      // users, but must not silently link a password account.
+      if (existingUser.passwordHash) {
+        throw new UnauthorizedException('OAuth account is not linked');
+      }
+
       // Update existing user with latest picture if provided
-      if (picture && existingUser.picture !== picture) {
+      if (identity.picture && existingUser.picture !== identity.picture) {
         await this.db
           .update(users)
-          .set({ picture })
+          .set({ picture: identity.picture })
           .where(eq(users.id, existingUser.id));
       }
       return { user: this.withoutPassword(existingUser), isNewUser: false };
@@ -476,9 +489,9 @@ export class AuthService implements OnModuleInit {
 
     // Create new user from OAuth info
     const newUser = {
-      name,
+      name: identity.name,
       email,
-      picture: picture || null,
+      picture: identity.picture || null,
       role: 'member' as const,
     };
 
@@ -496,7 +509,7 @@ export class AuthService implements OnModuleInit {
   }
 
   /**
-   * Setup initial church and assign user as super_admin
+   * Setup initial church and assign user as church-scoped admin
    * Used during the first-time setup flow
    */
   async setupInitialChurch(
@@ -511,50 +524,53 @@ export class AuthService implements OnModuleInit {
     }
   ): Promise<Church> {
     try {
-      // Create the church
-      const [church] = await this.db
-        .insert(churches)
-        .values({
-          name,
-          location,
-          leadPastorName,
-          phone: options?.phone || null,
-          email: options?.email || null,
-          description: options?.description || null,
-        })
-        .returning();
+      const church = await this.db.transaction(async (tx) => {
+        const [createdChurch] = await tx
+          .insert(churches)
+          .values({
+            name,
+            location,
+            leadPastorName,
+            phone: options?.phone || null,
+            email: options?.email || null,
+            description: options?.description || null,
+          })
+          .returning();
 
-      if (!church) {
-        throw new BadRequestException('Failed to create church');
-      }
+        if (!createdChurch) {
+          throw new BadRequestException('Failed to create church');
+        }
 
-      // Update the user to assign them to this church as super_admin
-      const [updatedUser] = await this.db
-        .update(users)
-        .set({
-          churchId: church.id,
-          role: 'super_admin' as const,
-        })
-        .where(eq(users.id, userId))
-        .returning();
+        // The setup owner is church-scoped. Platform-wide authority remains
+        // derived from the server-side operator allowlist in isPlatformAdmin.
+        const [updatedUser] = await tx
+          .update(users)
+          .set({
+            churchId: createdChurch.id,
+            role: 'admin' as const,
+          })
+          .where(and(eq(users.id, userId), isNull(users.churchId)))
+          .returning({ id: users.id });
 
-      if (!updatedUser) {
-        throw new BadRequestException('Failed to assign user to church');
-      }
+        if (!updatedUser) {
+          throw new ConflictException('User already has a church assigned');
+        }
 
-      await this.db
-        .insert(userChurchMemberships)
-        .values({
-          userId,
-          churchId: church.id,
-          role: 'super_admin' as const,
-          status: 'active' as const,
-          isDefaultChurch: true,
-        })
-        .onConflictDoNothing();
+        await tx
+          .insert(userChurchMemberships)
+          .values({
+            userId,
+            churchId: createdChurch.id,
+            role: 'admin' as const,
+            status: 'active' as const,
+            isDefaultChurch: true,
+          });
+
+        return createdChurch;
+      });
 
       this.logger.log(
-        `Church setup completed: Church ${church.id} created and user ${userId} assigned as super_admin`
+        `Church setup completed: Church ${church.id} created and user ${userId} assigned as church admin`
       );
 
       return church;
@@ -562,5 +578,9 @@ export class AuthService implements OnModuleInit {
       this.logger.error('Setup initial church error:', error);
       throw error;
     }
+  }
+
+  isPlatformAdmin(user: { id?: string }): boolean {
+    return isPlatformAdmin(user);
   }
 }

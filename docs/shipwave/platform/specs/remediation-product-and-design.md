@@ -1,6 +1,6 @@
 # Product and design remediation specification
 
-Status: implementation specification, not implemented work. Evidence baseline: `81de7d2`, 2026-11-26. This file owns product contracts and web design details for the IDs below; the mobile remediation specification owns native implementation details. The programme leader assigns shared contract/schema changes to one serialized owner before dependent workers start. Related owners: [security and API remediation](remediation-security-and-api.md) owns R-SEC-01/02, R-API-01/02 and R-DEP-01; [mobile and quality remediation](remediation-mobile-and-quality.md) owns R-MOB-01–05 and R-QA-01/02. Product requirements here must be traced to those native/security/test slices rather than duplicating their technical ownership. No statement here authorizes a deployment, production migration, provider purchase, commerce, or a broader privacy policy. Authorization to write this document does not accept proposed implementation policies: network ownership/audience, publication approval transitions, public-field ownership, recovery channel/account-linking, notification sources/retention and any new provider remain explicit decision gates. Existing DEC-01–16 remain authoritative.
+Status: implementation candidate; schema/API slices for R-LIB-01, R-CNT-01, R-PUB-01 and R-NOT-01 are code-complete on the assigned branch, with client wiring and human verification still open. Evidence baseline: `81de7d2`, 2026-11-26. This file owns product contracts and web design details for the IDs below; the mobile remediation specification owns native implementation details. The programme leader assigns shared contract/schema changes to one serialized owner before dependent workers start. Related owners: [security and API remediation](remediation-security-and-api.md) owns R-SEC-01/02, R-API-01/02 and R-DEP-01; [mobile and quality remediation](remediation-mobile-and-quality.md) owns R-MOB-01–05 and R-QA-01/02. Product requirements here must be traced to those native/security/test slices rather than duplicating their technical ownership. No statement here authorizes a deployment, production migration, provider purchase, commerce, or a broader privacy policy. Existing DEC-01–16 remain authoritative.
 
 ## Authority and source material
 
@@ -28,6 +28,15 @@ These boards are illustrative, not approved assets or factual church records. Us
 | Notifications | Announcements and communications infrastructure | Persisted private inbox, read state and safe links | Push/email/SMS delivery and provider changes are separate gates |
 | Design | Generic component system and translated copy | Consistent semantic theme, responsive layouts and accessibility | Native-speaker and human design/device acceptance remain human work |
 | Reader/downloads | Browser opens signed native downloads; web inline PDF/image | Preserve supported behavior; add progress/media only where specified | Embedded native reader and full offline remain deferred; no background offline sync |
+
+## Implementation decisions for the serialized schema/contracts lane
+
+The implementation authorization for R-LIB-01, R-CNT-01, R-PUB-01 and R-NOT-01 accepts the recommended bounded options below. These choices do not authorize deployment, migration application, provider activation or client-shell edits.
+
+- **R-LIB-01:** use an explicit `networks` relation with nullable `churches.networkId` and immutable `documents.networkId` when a resource is promoted. Network access is granted only through an active membership in a church attached to that network; names are never matched. Existing documents remain branch-scoped. The current `manage:files` permission owns metadata and publication transitions until DEC-06 changes that policy.
+- **R-CNT-01:** use `draft → review → published` with explicit `draft` rollback and `archived` unpublish, recording each transition actor/time. New uploads start as branch drafts; legacy rows retain their branch and existing visibility through the compatibility fields. Free metadata, browser-native media access and private per-user progress are included; commerce, prices, purchases, embedded readers, scheduled publishing and offline sync remain deferred.
+- **R-PUB-01:** use a separate `public_church_profiles` projection as the explicit publication boundary. Only rows with `publishedAt` are public; the projection contains no pastor, member, membership, pastoral or operational fields. Public events require both the existing published event state and an explicit `publicPublishedAt`; unauthenticated reads return a generic not-found for unpublished/deleted records.
+- **R-NOT-01:** use a separate per-recipient in-app inbox with typed target descriptors and optional current-church context. Audience rows are created server-side with an idempotent source key; reads and read-state mutations are owner-scoped and re-check active memberships. Push, email, SMS, device permissions and external delivery remain deferred. AI entry remains a shell-worker integration against the existing conversation route.
 
 ## Shared product invariants
 
@@ -114,7 +123,7 @@ List/search/detail/download evaluate publication and audience on the server. A s
 
 **Acceptance:** same network resource reachable from two authorized branches; branch-only item denied from the other; unrelated organization denied; unpublished/deleted item absent from list/search/detail/access; stale client IDs cannot bypass checks. Test pagination and query validation. Test old documents retain original scope after generated migration. Test Library header/context and client transition compatibility.
 
-Effort L; risk HIGH (audience broadening). Requires serialized schema/API owner and network model decision; R-CNT-01 consumes this contract. Generate Drizzle migrations only after schema approval; inspect before applying; production remains approval-gated.
+Effort L; risk HIGH (audience broadening). Uses the recorded explicit network model and serialized schema/API owner; R-CNT-01 consumes this contract. Generate Drizzle migrations only after schema approval; inspect before applying; production remains approval-gated.
 
 ## R-CNT-01 — Complete publishing metadata, media and progress
 
@@ -146,7 +155,7 @@ Effort L; risk MED/HIGH. Depends on R-LIB-01 contracts; independent metadata UI 
 
 **Acceptance:** signed-out visitor reads only approved published fields; unpublished record absent; authenticated public browsing preserves activeChurchId and role; RSVP directs through sign-in with safe return URL; website and app do not display conflicting independently hard-coded schedules.
 
-Effort L; risk MED (accidental data publication). Depends on public-field/ownership contract; no provider required.
+Effort L; risk MED (accidental data publication). Uses the recorded public projection ownership contract; no provider required.
 
 ## R-AUTH-01 — Safe account recovery
 
@@ -180,7 +189,7 @@ Effort L; risk HIGH (account takeover/session lifecycle). Depends on auth owner 
 
 **Acceptance:** two-user ownership denial, unrelated tenant denial, revoked membership, safe target validation, duplicate-source event, pagination, unread/read retry and deleted target all tested. AI/inbox header entries keyboard accessible, correctly routed in both spaces and no overlap at narrow widths. No live AI calls or external notifications required for these checks.
 
-Effort M for entries, L for inbox; risk MED. Shared shell contract first; inbox schema/API serialized independently from content metadata where no shared files overlap.
+Effort M for entries, L for inbox; risk MED. Uses the recorded audience/source choice; shared shell contract remains required for the header entry, while inbox schema/API is serialized independently from content metadata where no shared files overlap.
 
 ## Execution dependencies and ownership
 
@@ -209,3 +218,14 @@ At dispatch inspect actual scripts; commands below describe the baseline, not pr
 - Human evidence after code completion: D-01 layout/identity review, Q-02 role/branch/device/accessibility journeys, native Swahili review, verified real content, and the staff visibility change observed in member Library. Record date, commit, environment, role and observable result without credentials or personal data.
 
 Completion means code, contracts, meaningful negative tests and acceptance evidence are linked to each stable ID. Distinguish code-complete, awaiting provider/decision, human-unverified and deferred. A historical checklist or passing export does not establish that the final design has shipped.
+
+## Decisions taken
+
+Recorded 2026-11-26 by the web shell implementation pass (R-WEB-01, R-UX-01, R-DES-01 tokens; R-WEB-02 partial). Each choice takes the spec's recommended option; none changes DEC-01–16.
+
+- R-WEB-01: the dashboard header reads `churchId` from route params and builds the profile link with `churchPath()`; with no church context the link is omitted. Done in `components/layout/dashboard/dashboard-header.tsx` and `lib/shell/navigation.ts`.
+- R-UX-01 destinations: member bar is Home / Church / Events / Library / Profile; staff bar is Dashboard / People / Services / Content / More, mapped to existing routes (no route deleted). Staff bar is hidden for ordinary members. Phone uses a fixed labelled bottom bar with safe-area padding; desktop keeps the sidebar.
+- R-UX-01 sign-in: a same-origin callback path wins (protocol-relative, backslash and control-character forms rejected); otherwise staff (any non-`member` role) land on `dashboard/home` and members on `portal`. Role-based, not `read:member`.
+- R-UX-01 space switching: NOT implemented. "Switch to staff/member" needs new message keys in `packages/config`, which this pass does not own. Pending the owner of the shared catalogue.
+- R-WEB-02: NOT implemented in this pass. The count is rendered by `components/church-management/church-card.tsx`, which is outside this pass's owned paths. Pending that owner; the home page still passes `totalMembers={0}` until then.
+- R-DES-01 tokens: brand/ink/canvas/muted/border values from DESIGN.md applied to the light theme (`globals.css`); named semantic tokens added to `@theme`. Dark theme unchanged. Staff table cards, WCAG audit and device review remain open.

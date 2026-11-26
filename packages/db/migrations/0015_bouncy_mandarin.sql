@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "ux_inbox_notifications_source" ON "inbox_notifications" USING btree ("source_key");

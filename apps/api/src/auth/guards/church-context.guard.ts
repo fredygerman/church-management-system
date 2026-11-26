@@ -10,6 +10,7 @@ import { UserContext, UserRole } from '../types/permission.types'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator'
 import { and, eq, isNull } from 'drizzle-orm'
 import { db, userChurchMemberships } from '@church/db'
+import { isPlatformAdmin } from '../platform-admin'
 
 @Injectable()
 export class ChurchContextGuard implements CanActivate {
@@ -102,11 +103,12 @@ export class ChurchContextGuard implements CanActivate {
       user.activeChurchId = membership.churchId
       user.activeMembershipId = membership.id
       user.assignedZoneId = membership.assignedZoneId ?? undefined
-    } else if (user.role !== UserRole.SUPER_ADMIN) {
+    } else if (!isPlatformAdmin(user)) {
       throw new ForbiddenException(
         'You do not have access to this church. Access denied.'
       )
     } else {
+      user.role = UserRole.SUPER_ADMIN
       user.churchId = requestedChurchId
       user.activeChurchId = requestedChurchId
     }

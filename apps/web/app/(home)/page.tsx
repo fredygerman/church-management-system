@@ -46,7 +46,6 @@ export default async function HomePage() {
           <ChurchCard
             key={church.id}
             church={church}
-            totalMembers={0}
             className="w-full sm:w-80 lg:w-96"
           />
         ))}

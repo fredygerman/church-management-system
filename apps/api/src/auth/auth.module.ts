@@ -11,6 +11,7 @@ import { SmsModule } from '../sms/sms.module';
 import { JwtStrategy,  JwtRefreshStrategy } from './strategies';
 import { JwtAuthGuard } from './guards';
 import config from '../config';
+import { GoogleIdentityVerifier } from './google-identity-verifier';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import config from '../config';
     JwtStrategy,
     JwtRefreshStrategy,
     JwtAuthGuard,
+    GoogleIdentityVerifier,
   ],
   exports: [AuthService, RegistrationService, JwtAuthGuard],
 })

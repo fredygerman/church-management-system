@@ -3,6 +3,19 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
+  /* Semantic brand tokens from docs/product-design/DESIGN.md (theme-independent). */
+  --color-ink: #172554;
+  --color-brand: #1d4ed8;
+  --color-brand-strong: #1e3a8a;
+  --color-ai: #7c3aed;
+  --color-canvas: #f8fafc;
+  --color-surface: #ffffff;
+  --color-tint: #eef2ff;
+  --color-muted-ink: #64748b;
+  --color-success: #15803d;
+  --color-warning: #a16207;
+  --color-danger: #b91c1c;
+
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
 
@@ -54,17 +67,18 @@
 /* *=========== Default theme =========== */
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    /* Light theme: ink text, brand primary, canvas page (DESIGN.md). Contrast: ink on canvas and white primary text on brand both exceed 4.5:1. */
+    --background: 210 40% 98%;
+    --foreground: 226 57% 21%;
 
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 226 57% 21%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
+    --popover-foreground: 226 57% 21%;
 
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
+    --primary: 224.3 76.3% 48%;
+    --primary-foreground: 0 0% 100%;
 
     --main: 240, 100%, 50%;
     --main-hover: 240, 100%, 60%;
@@ -75,7 +89,7 @@
     --secondary-foreground: 0 0% 9%;
 
     --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
     --accent: 0 0% 96.1%;
     --accent-foreground: 0 0% 9%;
@@ -83,9 +97,9 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 224.3 76.3% 48%;
 
     --radius: 0.5rem;
 

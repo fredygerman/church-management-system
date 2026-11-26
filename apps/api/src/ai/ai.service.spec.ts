@@ -35,10 +35,24 @@ class FakeStore {
     return this.rows.find((r) => r.id === id && r.userId === userId && r.churchId === churchId)
   }
   async create(row: any) {
-    this.rows.push({ ...row, expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000) })
+    this.rows.push({
+      ...row,
+      updatedAt: new Date(),
+      expiresAt: new Date(Date.now() + 30 * 24 * 3600 * 1000),
+    })
   }
-  async replaceMessages(id: string, messages: any[]) {
-    this.rows.find((r) => r.id === id).messages = messages
+  async appendMessagesIfUnchanged(
+    id: string,
+    userId: string,
+    churchId: string,
+    expectedUpdatedAt: Date | undefined,
+    messages: any[],
+  ) {
+    const row = this.rows.find((r) => r.id === id && r.userId === userId && r.churchId === churchId)
+    if (!row || !expectedUpdatedAt || (row.updatedAt && row.updatedAt !== expectedUpdatedAt)) return false
+    row.messages = messages
+    row.updatedAt = new Date()
+    return true
   }
 }
 
@@ -246,6 +260,7 @@ describe('AiService.chat', () => {
       userId: OWNER,
       churchId: CHURCH,
       messages: history,
+      updatedAt: new Date(),
       expiresAt: new Date(Date.now() + 1000),
     })
 
@@ -274,6 +289,32 @@ describe('AiService.chat', () => {
     const result = await service.chat(admin, { message: 'record it' })
 
     expect(result.components).toEqual([TEXT('Here you go')])
+  })
+
+  it('returns a conflict instead of overwriting a conversation changed during completion', async () => {
+    mockCreate.mockResolvedValueOnce(respond([TEXT('ok')]))
+    const { service, store } = setup()
+    const conversation = {
+      id: '77777777-7777-4777-8777-777777777777',
+      userId: OWNER,
+      churchId: CHURCH,
+      messages: [{ role: 'user', content: 'before' }],
+      updatedAt: new Date(),
+      expiresAt: new Date(Date.now() + 1000),
+    }
+    store.rows.push(conversation)
+    const original = store.appendMessagesIfUnchanged.bind(store)
+    store.appendMessagesIfUnchanged = async (...args: any[]) => {
+      conversation.updatedAt = new Date(conversation.updatedAt.getTime() + 1)
+      return original(...args)
+    }
+
+    await expect(
+      service.chat(admin, { message: 'next', conversationId: conversation.id }),
+    ).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'conversation_conflict' }),
+    })
+    expect(conversation.messages).toEqual([{ role: 'user', content: 'before' }])
   })
 
   it('exposes only the read-only tools (no prayer, family, giving or write tools)', () => {

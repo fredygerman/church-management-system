@@ -16,8 +16,14 @@ import {
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import config from '../config';
-import { and, eq, isNull } from 'drizzle-orm';
-import { db, documents } from '@church/db';
+import { and, eq, ilike, isNull } from 'drizzle-orm';
+import {
+  db,
+  documents,
+  documentPublicationEvents,
+  resourceProgress,
+  userChurchMemberships,
+} from '@church/db';
 import { roleHasPermission } from '../auth/types/permission.types';
 
 // Local imports
@@ -55,6 +61,51 @@ export interface DocumentMetadata {
   description: string | null;
   visibleToMembers: boolean;
   createdAt: Date;
+  updatedAt: Date;
+}
+
+export type LibraryResourceScope = 'network' | 'branch';
+export type LibraryPublicationStatus = 'draft' | 'review' | 'published' | 'archived';
+
+export interface LibraryResourceQuery {
+  limit?: number;
+  cursor?: string;
+  query?: string;
+  resourceType?: string;
+  category?: string;
+  branchId?: string;
+}
+
+export interface LibraryResource {
+  id: string;
+  scope: LibraryResourceScope;
+  branchId: string;
+  title: string;
+  description: string | null;
+  originalFileName: string;
+  contentType: string;
+  sizeBytes: number;
+  resourceType: string;
+  language: string | null;
+  authorSpeaker: string | null;
+  categories: string[];
+  durationSeconds: number | null;
+  pageCount: number | null;
+  publicationStatus: LibraryPublicationStatus;
+  publishedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface LibraryResourceList {
+  items: LibraryResource[];
+  nextCursor: string | null;
+}
+
+export interface ResourceProgressResult {
+  resourceId: string;
+  positionSeconds: number;
+  pageNumber: number | null;
   updatedAt: Date;
 }
 
@@ -147,6 +198,68 @@ export class FileUploadService {
     };
   }
 
+  private toLibraryResource(document: any): LibraryResource {
+    return {
+      id: document.id,
+      scope: document.scope,
+      branchId: document.churchId,
+      title: document.title,
+      description: document.description,
+      originalFileName: document.originalFileName,
+      contentType: document.contentType,
+      sizeBytes: document.sizeBytes,
+      resourceType: document.resourceType,
+      language: document.language,
+      authorSpeaker: document.authorSpeaker,
+      categories: Array.isArray(document.categories) ? document.categories : [],
+      durationSeconds: document.durationSeconds,
+      pageCount: document.pageCount,
+      publicationStatus: document.publicationStatus,
+      publishedAt: document.publishedAt,
+      createdAt: document.createdAt,
+      updatedAt: document.updatedAt,
+    };
+  }
+
+  private async getAuthorizedNetworkIds(userId: string): Promise<Set<string>> {
+    const memberships = await db.query.userChurchMemberships.findMany({
+      where: and(
+        eq(userChurchMemberships.userId, userId),
+        eq(userChurchMemberships.status, 'active'),
+        isNull(userChurchMemberships.deletedAt),
+      ),
+      with: { church: true },
+    });
+
+    return new Set(
+      memberships
+        .map((membership: any) => membership.church?.networkId)
+        .filter((networkId: unknown): networkId is string => typeof networkId === 'string'),
+    );
+  }
+
+  private canAccessResource(
+    document: any,
+    userId: string,
+    churchId: string,
+    canManageFiles: boolean,
+    networkIds: Set<string> = new Set(),
+  ): boolean {
+    if (!document || document.deletedAt) return false;
+
+    if (canManageFiles && document.churchId === churchId) {
+      return true;
+    }
+
+    if (document.publicationStatus !== 'published') return false;
+
+    if (document.scope === 'branch') {
+      return document.churchId === churchId && document.visibleToMembers === true;
+    }
+
+    return Boolean(document.networkId && networkIds.has(document.networkId));
+  }
+
   private validateFileSize(file: MulterFile): void {
     if (file.size > this.maxFileSize) {
       throw new BadRequestException({
@@ -218,7 +331,7 @@ export class FileUploadService {
         fileUrl,
         fileName: file.originalname,
         mimeType: file.mimetype,
-        size: file.size,
+        size: file.buffer.length,
         uploadedAt: new Date().toISOString(),
       };
 
@@ -304,12 +417,13 @@ export class FileUploadService {
         uploadedBy: userId,
         originalFileName: file.originalname,
         contentType: file.mimetype,
-        sizeBytes: file.size,
+        sizeBytes: file.buffer?.length ?? file.size,
         storageKey: uploaded.storageKey,
         title: (metadata.title || metadata.displayName || name) as string,
         description: (metadata.description as string | undefined) ?? null,
-        visibleToMembers:
-          metadata.visibleToMembers === true || metadata.isPublicUpload === true,
+        visibleToMembers: false,
+        scope: 'branch',
+        publicationStatus: 'draft',
       }).returning();
     } catch (error) {
       try {
@@ -343,7 +457,9 @@ export class FileUploadService {
       ),
     });
 
-    return rows.map((document) => this.toDocumentMetadata(document));
+    return rows
+      .filter((document: any) => document.publicationStatus == null || document.publicationStatus === 'published')
+      .map((document) => this.toDocumentMetadata(document));
   }
 
   async getMemberLibrary(churchId: string): Promise<MemberLibraryDocument[]> {
@@ -355,7 +471,9 @@ export class FileUploadService {
       ),
     });
 
-    return rows.map((document) => ({
+    return rows
+      .filter((document: any) => document.publicationStatus == null || document.publicationStatus === 'published')
+      .map((document) => ({
       id: document.id,
       title: document.title,
       description: document.description,
@@ -363,7 +481,7 @@ export class FileUploadService {
       content_type: document.contentType,
       size_bytes: document.sizeBytes,
       created_at: document.createdAt,
-    }));
+      }));
   }
 
   async getMemberDownloadUrl(
@@ -379,7 +497,7 @@ export class FileUploadService {
       ),
     });
 
-    if (!document) {
+    if (!document || (document.publicationStatus != null && document.publicationStatus !== 'published')) {
       throw new NotFoundException('Document not found');
     }
 
@@ -397,6 +515,265 @@ export class FileUploadService {
       expiresAt: new Date(
         Date.now() + MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS * 1000,
       ).toISOString(),
+    };
+  }
+
+  async listLibraryResources(
+    userId: string,
+    churchId: string,
+    userRole: string,
+    input: LibraryResourceQuery = {},
+  ): Promise<LibraryResourceList> {
+    const canManageFiles = roleHasPermission(userRole as any, 'manage:files');
+    const networkIds = await this.getAuthorizedNetworkIds(userId);
+    const branchId = input.branchId ?? churchId;
+    const cursor = input.cursor ? Number.parseInt(input.cursor, 10) : 0;
+    const limit = Math.min(Math.max(input.limit ?? 20, 1), 100);
+    const offset = Number.isInteger(cursor) && cursor >= 0 ? cursor : 0;
+
+    const rows = await db.query.documents.findMany({
+      where: and(
+        isNull(documents.deletedAt),
+        input.resourceType ? eq(documents.resourceType, input.resourceType) : undefined,
+        input.query ? ilike(documents.title, `%${input.query}%`) : undefined,
+      ),
+    });
+
+    const visible = rows
+      .filter((document: any) => {
+        if (document.scope === 'branch' && document.churchId !== branchId) return false;
+        if (document.scope === 'branch' && branchId !== churchId) return false;
+        if (
+          input.category &&
+          (!Array.isArray(document.categories) || !document.categories.includes(input.category))
+        ) {
+          return false;
+        }
+        return this.canAccessResource(document, userId, churchId, canManageFiles, networkIds);
+      })
+      .sort((a: any, b: any) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    const page = visible.slice(offset, offset + limit);
+    return {
+      items: page.map((document: any) => this.toLibraryResource(document)),
+      nextCursor: offset + limit < visible.length ? String(offset + limit) : null,
+    };
+  }
+
+  async getLibraryResource(
+    userId: string,
+    churchId: string,
+    userRole: string,
+    id: string,
+  ): Promise<LibraryResource> {
+    const [document] = await db.query.documents.findMany({
+      where: and(eq(documents.id, id), isNull(documents.deletedAt)),
+    });
+    const canManageFiles = roleHasPermission(userRole as any, 'manage:files');
+    const networkIds = await this.getAuthorizedNetworkIds(userId);
+    if (!this.canAccessResource(document, userId, churchId, canManageFiles, networkIds)) {
+      throw new NotFoundException('Resource not found');
+    }
+    return this.toLibraryResource(document);
+  }
+
+  async getLibraryResourceAccessUrl(
+    userId: string,
+    churchId: string,
+    userRole: string,
+    id: string,
+  ): Promise<DocumentDownloadUrl> {
+    const [document] = await db.query.documents.findMany({
+      where: and(eq(documents.id, id), isNull(documents.deletedAt)),
+    });
+    const canManageFiles = roleHasPermission(userRole as any, 'manage:files');
+    const networkIds = await this.getAuthorizedNetworkIds(userId);
+    if (!this.canAccessResource(document, userId, churchId, canManageFiles, networkIds)) {
+      throw new NotFoundException('Resource not found');
+    }
+
+    const url = await getSignedUrl(
+      this.s3Client as any,
+      new GetObjectCommand({ Bucket: this.s3Config.bucket, Key: document.storageKey }),
+      { expiresIn: MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS },
+    );
+
+    return {
+      url,
+      expiresAt: new Date(Date.now() + MEMBER_DOWNLOAD_URL_EXPIRY_SECONDS * 1000).toISOString(),
+    };
+  }
+
+  async updateLibraryResource(
+    userId: string,
+    churchId: string,
+    id: string,
+    input: {
+      title?: string;
+      description?: string | null;
+      resourceType?: string;
+      language?: string | null;
+      authorSpeaker?: string | null;
+      categories?: string[];
+      durationSeconds?: number | null;
+      pageCount?: number | null;
+      scope?: LibraryResourceScope;
+    },
+  ): Promise<LibraryResource> {
+    const [current] = await db.query.documents.findMany({
+      where: and(eq(documents.id, id), eq(documents.churchId, churchId), isNull(documents.deletedAt)),
+    });
+    if (!current) throw new NotFoundException('Resource not found');
+
+    let networkId = current.networkId;
+    if (input.scope === 'network') {
+      const memberships = await db.query.userChurchMemberships.findMany({
+        where: and(
+          eq(userChurchMemberships.userId, userId),
+          eq(userChurchMemberships.churchId, churchId),
+          eq(userChurchMemberships.status, 'active'),
+          isNull(userChurchMemberships.deletedAt),
+        ),
+        with: { church: true },
+      });
+      networkId = memberships[0]?.church?.networkId ?? null;
+      if (!networkId) throw new BadRequestException('An explicit network is required for network resources');
+    } else if (input.scope === 'branch') {
+      networkId = null;
+    }
+
+    const [updated] = await db
+      .update(documents)
+      .set({
+        ...(input.title !== undefined ? { title: input.title } : {}),
+        ...(input.description !== undefined ? { description: input.description } : {}),
+        ...(input.resourceType !== undefined ? { resourceType: input.resourceType } : {}),
+        ...(input.language !== undefined ? { language: input.language } : {}),
+        ...(input.authorSpeaker !== undefined ? { authorSpeaker: input.authorSpeaker } : {}),
+        ...(input.categories !== undefined ? { categories: input.categories } : {}),
+        ...(input.durationSeconds !== undefined ? { durationSeconds: input.durationSeconds } : {}),
+        ...(input.pageCount !== undefined ? { pageCount: input.pageCount } : {}),
+        ...(input.scope !== undefined ? { scope: input.scope, networkId } : {}),
+        updatedAt: new Date(),
+      })
+      .where(and(eq(documents.id, id), eq(documents.churchId, churchId), isNull(documents.deletedAt)))
+      .returning();
+
+    if (!updated) throw new NotFoundException('Resource not found');
+    return this.toLibraryResource(updated);
+  }
+
+  async transitionLibraryResource(
+    userId: string,
+    churchId: string,
+    id: string,
+    targetStatus: LibraryPublicationStatus,
+  ): Promise<LibraryResource> {
+    const [current] = await db.query.documents.findMany({
+      where: and(eq(documents.id, id), eq(documents.churchId, churchId), isNull(documents.deletedAt)),
+    });
+    if (!current) throw new NotFoundException('Resource not found');
+
+    const allowed: Record<LibraryPublicationStatus, LibraryPublicationStatus[]> = {
+      draft: ['review'],
+      review: ['published', 'draft'],
+      published: ['archived', 'draft'],
+      archived: ['draft'],
+    };
+    if (!allowed[current.publicationStatus as LibraryPublicationStatus]?.includes(targetStatus)) {
+      throw new BadRequestException(`Invalid resource transition: ${current.publicationStatus} -> ${targetStatus}`);
+    }
+
+    const now = new Date();
+    const [updated] = await db
+      .update(documents)
+      .set({
+        publicationStatus: targetStatus,
+        visibleToMembers: targetStatus === 'published',
+        publishedAt: targetStatus === 'published' ? now : null,
+        publishedBy: targetStatus === 'published' ? userId : null,
+        updatedAt: now,
+      })
+      .where(and(eq(documents.id, id), eq(documents.churchId, churchId), isNull(documents.deletedAt)))
+      .returning();
+
+    if (!updated) throw new NotFoundException('Resource not found');
+    await db.insert(documentPublicationEvents).values({
+      documentId: id,
+      actorId: userId,
+      fromStatus: current.publicationStatus,
+      toStatus: targetStatus,
+      createdAt: now,
+    });
+    return this.toLibraryResource(updated);
+  }
+
+  async getResourceProgress(
+    userId: string,
+    churchId: string,
+    userRole: string,
+    resourceId: string,
+  ): Promise<ResourceProgressResult | null> {
+    const [document] = await db.query.documents.findMany({
+      where: and(eq(documents.id, resourceId), isNull(documents.deletedAt)),
+    });
+    const canManageFiles = roleHasPermission(userRole as any, 'manage:files');
+    const networkIds = await this.getAuthorizedNetworkIds(userId);
+    if (!this.canAccessResource(document, userId, churchId, canManageFiles, networkIds)) {
+      throw new NotFoundException('Resource not found');
+    }
+    const [progress] = await db.query.resourceProgress.findMany({
+      where: and(eq(resourceProgress.resourceId, resourceId), eq(resourceProgress.userId, userId)),
+    });
+    return progress
+      ? {
+          resourceId,
+          positionSeconds: progress.positionSeconds,
+          pageNumber: progress.pageNumber,
+          updatedAt: progress.updatedAt,
+        }
+      : null;
+  }
+
+  async updateResourceProgress(
+    userId: string,
+    churchId: string,
+    userRole: string,
+    resourceId: string,
+    input: { positionSeconds?: number; pageNumber?: number | null },
+  ): Promise<ResourceProgressResult> {
+    const [document] = await db.query.documents.findMany({
+      where: and(eq(documents.id, resourceId), isNull(documents.deletedAt)),
+    });
+    const canManageFiles = roleHasPermission(userRole as any, 'manage:files');
+    const networkIds = await this.getAuthorizedNetworkIds(userId);
+    if (!this.canAccessResource(document, userId, churchId, canManageFiles, networkIds)) {
+      throw new NotFoundException('Resource not found');
+    }
+
+    const positionSeconds = Math.min(
+      Math.max(input.positionSeconds ?? 0, 0),
+      document.durationSeconds ?? 2147483647,
+    );
+    const pageNumber =
+      input.pageNumber == null
+        ? null
+        : Math.min(Math.max(input.pageNumber, 1), document.pageCount ?? 2147483647);
+    const now = new Date();
+    const [progress] = await db
+      .insert(resourceProgress)
+      .values({ resourceId, userId, positionSeconds, pageNumber, updatedAt: now })
+      .onConflictDoUpdate({
+        target: [resourceProgress.resourceId, resourceProgress.userId],
+        set: { positionSeconds, pageNumber, updatedAt: now },
+      })
+      .returning();
+
+    return {
+      resourceId,
+      positionSeconds: progress.positionSeconds,
+      pageNumber: progress.pageNumber,
+      updatedAt: progress.updatedAt,
     };
   }
 

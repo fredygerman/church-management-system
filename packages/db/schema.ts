@@ -112,9 +112,24 @@ import { offerings, type Offering, type NewOffering } from "./tables/offerings"
 import { givingGoals, type GivingGoal, type NewGivingGoal } from "./tables/givingGoals"
 import { events, eventScopeEnum, eventStatusEnum, type Event, type NewEvent } from "./tables/events"
 import { eventRsvps, eventRsvpStatusEnum, type EventRsvp, type NewEventRsvp } from "./tables/eventRsvps"
-import { documents, type Document, type NewDocument } from "./tables/documents"
+import {
+  documents,
+  documentScopeEnum,
+  documentPublicationStatusEnum,
+  type Document,
+  type NewDocument,
+} from "./tables/documents"
 import { aiConversations, type AiConversation, type NewAiConversation, type AiStoredMessage } from "./tables/aiConversations"
 import { aiFeedback, aiFeedbackRatingEnum, type AiFeedback, type NewAiFeedback } from "./tables/aiFeedback"
+import { networks, type Network, type NewNetwork } from "./tables/networks"
+import {
+  documentPublicationEvents,
+  type DocumentPublicationEvent,
+  type NewDocumentPublicationEvent,
+} from "./tables/documentPublicationEvents"
+import { resourceProgress, type ResourceProgress, type NewResourceProgress } from "./tables/resourceProgress"
+import { publicChurchProfiles, type PublicChurchProfile, type NewPublicChurchProfile } from "./tables/publicChurchProfiles"
+import { inboxNotifications, type InboxNotification, type NewInboxNotification } from "./tables/inboxNotifications"
 
 // Import all relations
 import {
@@ -218,6 +233,13 @@ export {
   events,
   eventRsvps,
   documents,
+  documentScopeEnum,
+  documentPublicationStatusEnum,
+  documentPublicationEvents,
+  resourceProgress,
+  networks,
+  publicChurchProfiles,
+  inboxNotifications,
   aiConversations,
   aiFeedback,
   aiFeedbackRatingEnum,
@@ -327,4 +349,14 @@ export {
   type AiStoredMessage,
   type AiFeedback,
   type NewAiFeedback,
+  type Network,
+  type NewNetwork,
+  type DocumentPublicationEvent,
+  type NewDocumentPublicationEvent,
+  type ResourceProgress,
+  type NewResourceProgress,
+  type PublicChurchProfile,
+  type NewPublicChurchProfile,
+  type InboxNotification,
+  type NewInboxNotification,
 }

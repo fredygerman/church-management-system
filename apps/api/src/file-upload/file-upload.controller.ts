@@ -53,6 +53,14 @@ enum VerificationStatus {
 }
 
 const { maxFileSizeMB, allowedDocumentTypes } = config;
+export const MULTIPART_LIMITS = {
+  fileSize: maxFileSizeMB * 1024 * 1024,
+  files: 1,
+  fields: 12,
+  parts: 14,
+  fieldSize: 64 * 1024,
+  headerPairs: 200,
+} as const;
 
 @Controller('api/files')
 @UseGuards(ChurchContextGuard)
@@ -74,7 +82,7 @@ export class FileUploadController {
   @Post('diagnostics')
   @UseGuards(JwtAuthGuard)
   @RequirePermission('manage:files')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: MULTIPART_LIMITS }))
   async runDiagnostics(@UploadedFile() file?: MulterFile): Promise<any> {
     this.logger.log('========== DIAGNOSTICS START ==========');
     const diagnostics: any = {
@@ -159,7 +167,7 @@ export class FileUploadController {
     },
   })
   // @UseInterceptors(FileExtender)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: MULTIPART_LIMITS }))
   async uploadFile(
     @UploadedFile() file: MulterFile,
     @Body('name') name: string,
@@ -234,7 +242,7 @@ export class FileUploadController {
       },
     },
   })
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FileInterceptor('file', { limits: MULTIPART_LIMITS }))
   async uploadPublicFile(
     @UploadedFile() file: MulterFile,
     @Body('name') name: string,

@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm"
 import { date, pgTable, text, uuid, varchar, index } from "drizzle-orm/pg-core"
+import { networks } from "./networks"
 
 export const churches = pgTable(
   "churches",
@@ -8,6 +9,7 @@ export const churches = pgTable(
       .primaryKey()
       .default(sql`gen_random_uuid()`)
       .notNull(),
+    networkId: uuid("network_id").references(() => networks.id),
     name: varchar("name", { length: 255 }).notNull(),
     location: varchar("location", { length: 255 }).notNull(),
     leadPastorName: varchar("lead_pastor_name", { length: 255 }).notNull(),
@@ -22,6 +24,7 @@ export const churches = pgTable(
     emailIdx: index("idx_churches_email").on(table.email),
     phoneIdx: index("idx_churches_phone").on(table.phone),
     nameIdx: index("idx_churches_name").on(table.name),
+    networkIdx: index("idx_churches_network").on(table.networkId),
   })
 )
 

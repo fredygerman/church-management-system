@@ -53,31 +53,30 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
-          // Decode the access token to get user info
-          // JWT tokens have 3 parts separated by dots
-          const tokenParts = credentials.accessToken.split(".")
-          if (tokenParts.length !== 3) {
-            console.error("[Auth] Invalid token format")
-            return null
-          }
+          // Ask the API to validate the access token and derive the identity.
+          // A JWT-shaped string, stale token, or token from another API must
+          // never be enough to create a NextAuth session.
+          const response = await fetch(`${env.API_BASE_URL.replace(/\/$/, "")}/auth/profile`, {
+            headers: { Authorization: `Bearer ${credentials.accessToken}` },
+            cache: "no-store",
+          })
+          const body = await response.json().catch(() => null)
+          if (!response.ok) return null
+          const profile = body?.data ?? body
+          if (!profile || typeof profile.id !== "string") return null
 
-          // Decode the payload (second part) from base64
-          const payload = JSON.parse(
-            Buffer.from(tokenParts[1], "base64").toString()
-          )
-
-          // Return user object with tokens
+          // Return only identity and claims re-derived by the API.
           return {
-            id: payload.sub,
-            email: payload.email,
-            name: payload.name,
-            image: payload.picture,
-            role: payload.activeRole || payload.role,
-            churchId: payload.activeChurchId || payload.churchId,
-            activeChurchId: payload.activeChurchId || payload.churchId,
-            activeMembershipId: payload.activeMembershipId,
-            activeRole: payload.activeRole || payload.role,
-            assignedZoneId: payload.assignedZoneId,
+            id: profile.id,
+            email: profile.email,
+            name: profile.name,
+            image: profile.picture,
+            role: profile.role,
+            churchId: profile.churchId,
+            activeChurchId: profile.activeChurchId ?? profile.churchId,
+            activeMembershipId: profile.activeMembershipId,
+            activeRole: profile.activeRole ?? profile.role,
+            assignedZoneId: profile.assignedZoneId,
             accessToken: credentials.accessToken,
             refreshToken: credentials.refreshToken,
           }

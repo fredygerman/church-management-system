@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ConflictException,
   Injectable,
   Logger,
   NotFoundException,
@@ -115,13 +116,13 @@ export class AiService {
 
     await this.store.purgeExpired(new Date())
 
-    let existing: { id: string; messages: AiStoredMessage[] } | undefined
+    let existing: { id: string; messages: AiStoredMessage[]; updatedAt?: Date } | undefined
     if (input.conversationId) {
       const row = await this.store.findOwned(input.conversationId, caller.userId, caller.churchId)
       if (!row) {
         throw new NotFoundException('Conversation not found')
       }
-      existing = { id: row.id, messages: row.messages ?? [] }
+      existing = { id: row.id, messages: row.messages ?? [], updatedAt: row.updatedAt }
     }
 
     const { components, ...meta } = await this.answer(provider, settings.model, caller, [
@@ -135,7 +136,21 @@ export class AiService {
       { role: 'assistant', content: JSON.stringify(components), id: answerId },
     ]
     if (existing) {
-      await this.store.replaceMessages(existing.id, capHistory([...existing.messages, ...turns]))
+      const saved = await this.store.appendMessagesIfUnchanged(
+        existing.id,
+        caller.userId,
+        caller.churchId,
+        existing.updatedAt,
+        capHistory([...existing.messages, ...turns]),
+      )
+      if (!saved) {
+        const current = await this.store.findOwned(existing.id, caller.userId, caller.churchId)
+        if (!current) throw new NotFoundException('Conversation not found')
+        throw new ConflictException({
+          code: 'conversation_conflict',
+          message: 'Conversation changed while the answer was being prepared',
+        })
+      }
       return { conversationId: existing.id, components, answerId, ...meta }
     }
     const conversationId = randomUUID()

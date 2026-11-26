@@ -28,7 +28,8 @@ interface ChurchCardProps {
     membershipRole?: string
     membershipStatus?: string
   }
-  totalMembers: number
+  /** Shown only when a verified count is passed (R-WEB-02). */
+  totalMembers?: number
   className?: string
 }
 
@@ -100,12 +101,14 @@ export function ChurchCard({
         </CardHeader>
         <CardContent className="p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Users className="size-5 text-muted-foreground" />
-              <span className="text-sm font-medium">
-                {t("final.church.membersCount", { count: formatLocaleNumber(totalMembers, locale) })}
-              </span>
-            </div>
+            {totalMembers !== undefined && (
+              <div className="flex items-center space-x-2">
+                <Users className="size-5 text-muted-foreground" />
+                <span className="text-sm font-medium">
+                  {t("final.church.membersCount", { count: formatLocaleNumber(totalMembers, locale) })}
+                </span>
+              </div>
+            )}
             <div className="flex items-center space-x-1 text-sm font-medium text-green-600">
               <CheckCircle className="size-4" />
               <span>{church.membershipStatus || t("final.church.cardActive")}</span>

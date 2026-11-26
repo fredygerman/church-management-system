@@ -12,6 +12,7 @@ import {
   roleHasPermission,
   getPermissionDenialReason,
 } from '../types/permission.types'
+import { isPlatformAdmin } from '../platform-admin'
 
 export const REQUIRED_PERMISSION_KEY = 'required_permission'
 
@@ -38,12 +39,13 @@ export class PermissionGuard implements CanActivate {
     }
 
     // Check if user has at least one of the required permissions
+    const effectiveRole = isPlatformAdmin(user) ? 'super_admin' : user.role
     const hasPermission = requiredPermissions.some((permission) =>
-      roleHasPermission(user.role as any, permission)
+      roleHasPermission(effectiveRole as any, permission)
     )
 
     if (!hasPermission) {
-      const userRole = user.role as any
+      const userRole = effectiveRole as any
       const denialMessages = requiredPermissions.map((permission) =>
         getPermissionDenialReason(permission, userRole)
       )

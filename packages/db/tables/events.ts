@@ -23,6 +23,7 @@ export const events = pgTable(
     endsAt: timestamp("ends_at"),
     scope: eventScopeEnum("scope").default("church").notNull(),
     status: eventStatusEnum("status").default("draft").notNull(),
+    publicPublishedAt: timestamp("public_published_at"),
     headcount: integer("headcount"),
     createdAt: timestamp("created_at").defaultNow(),
     updatedAt: timestamp("updated_at").defaultNow(),
@@ -33,6 +34,7 @@ export const events = pgTable(
     startsAtIdx: index("idx_events_starts_at").on(table.startsAt),
     statusIdx: index("idx_events_status").on(table.status),
     scopeStatusIdx: index("idx_events_scope_status").on(table.scope, table.status),
+    publicIdx: index("idx_events_public").on(table.churchId, table.publicPublishedAt, table.startsAt),
   })
 )
 

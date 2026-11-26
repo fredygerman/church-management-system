@@ -4,6 +4,7 @@ import { useState } from "react"
 import { DashboardSidebar } from "./dashboard-sidebar"
 import { DashboardHeader } from "./dashboard-header"
 import { DashboardContent } from "./dashboard-content"
+import { SpaceNav } from "@/components/layout/space-nav"
 
 interface Church {
   id: string
@@ -42,6 +43,11 @@ export function DashboardLayout({
 
         {/* Content */}
         <DashboardContent>{children}</DashboardContent>
+
+        {/* Phone staff destinations; desktop uses the sidebar */}
+        <div className="md:hidden">
+          <SpaceNav space="staff" />
+        </div>
       </div>
     </div>
   )
