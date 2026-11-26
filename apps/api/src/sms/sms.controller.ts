@@ -1,9 +1,7 @@
 import {
   Controller,
   Post,
-  Get,
   Body,
-  Param,
   HttpCode,
   HttpStatus,
   Logger,
@@ -14,8 +12,11 @@ import {
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { SmsService } from './sms.service';
 import { SendSmsDto } from './dtos/send-sms.dto';
-import { JwtAuthGuard } from '../auth/guards';
+import { JwtAuthGuard, RoleGuard } from '../auth/guards';
 import { RequirePermission } from '../auth/decorators/require-permission.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/types/permission.types';
+import { maskPhone } from '../common/utils/mask-phone';
 
 @ApiTags('SMS')
 @Controller('sms')
@@ -26,16 +27,20 @@ export class SmsController {
 
   constructor(private readonly smsService: SmsService) {}
 
+  // Direct sends reach arbitrary numbers on global credentials: platform admin / SUPER_ADMIN only (D-18).
   @Post('send')
   @HttpCode(HttpStatus.OK)
+  @UseGuards(RoleGuard)
+  @Roles(UserRole.SUPER_ADMIN)
   @ApiOperation({
-    summary: 'Send SMS notification',
+    summary: 'Send SMS notification (platform admin only)',
   })
   @ApiResponse({ status: 200, description: 'SMS sent successfully' })
   @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 403, description: 'Platform admin only' })
   @ApiResponse({ status: 500, description: 'Internal server error' })
   async sendSms(@Body() sendSmsDto: SendSmsDto) {
-    this.logger.log(`Sending SMS to ${sendSmsDto.to}`);
+    this.logger.log(`Sending SMS to ${maskPhone(sendSmsDto.to)}`);
 
     const result = await this.smsService.sendSms(sendSmsDto);
 
@@ -58,12 +63,20 @@ export class SmsController {
 
   @Post('test')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Send a test SMS to a phone number' })
+  @UseGuards(RoleGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Send a test SMS to a phone number (platform admin only, non-production)' })
   @ApiResponse({ status: 200, description: 'Test SMS sent successfully' })
+  @ApiResponse({ status: 403, description: 'Platform admin only' })
+  @ApiResponse({ status: 404, description: 'Not available in production' })
   async sendTestSms(@Body() body: { phoneNumber: string; userId: string }) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new NotFoundException();
+    }
+
     const { phoneNumber, userId } = body;
 
-    this.logger.log(`Sending test SMS to ${phoneNumber}`);
+    this.logger.log(`Sending test SMS to ${maskPhone(phoneNumber)}`);
 
     const testMessage = `Hello from Church! This is a test SMS sent at ${new Date().toLocaleString()}`;
 
@@ -86,20 +99,5 @@ export class SmsController {
       error: result.error,
       data: result.response,
     };
-  }
-
-  @Get('notification/:reference')
-  @ApiOperation({ summary: 'Get notification details by reference' })
-  @ApiResponse({ status: 200, description: 'Notification found' })
-  @ApiResponse({ status: 404, description: 'Notification not found' })
-  async getNotification(@Param('reference') reference: string) {
-    const notification =
-      await this.smsService.getNotificationByReference(reference);
-
-    if (!notification) {
-      throw new NotFoundException('Notification not found');
-    }
-
-    return notification;
   }
 }

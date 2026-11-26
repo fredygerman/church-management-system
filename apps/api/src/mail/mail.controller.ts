@@ -1,13 +1,14 @@
-import { Body, Controller, Post, Get } from '@nestjs/common';
+import { Body, Controller, Post, Get, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { MailService } from './mail.service';
 import { SendEmailDto } from './dtos/send-email.dto';
 import { SendWelcomeEmailDto } from './dtos/send-welcome-email.dto';
 import { SendPasswordResetEmailDto } from './dtos/send-password-reset-email.dto';
 import { SendOrderConfirmationDto } from './dtos/send-order-confirmation.dto';
-import { UseGuards } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards';
+import { JwtAuthGuard, RoleGuard } from '../auth/guards';
 import { RequirePermission } from '../auth/decorators/require-permission.decorator';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '../auth/types/permission.types';
 
 @ApiTags('Mail')
 @Controller('mail')
@@ -36,8 +37,11 @@ export class MailController {
     return this.mailService.getServiceStatus();
   }
 
+  // Arbitrary recipients: platform admin / SUPER_ADMIN only (D-18). Plain text only, no raw HTML.
   @Post('send')
-  @ApiOperation({ summary: 'Send a custom email' })
+  @UseGuards(RoleGuard)
+  @Roles(UserRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Send a custom plain-text email (platform admin only)' })
   @ApiBody({ type: SendEmailDto })
   @ApiResponse({
     status: 200,
@@ -53,6 +57,7 @@ export class MailController {
       },
     },
   })
+  @ApiResponse({ status: 403, description: 'Platform admin only' })
   @ApiResponse({
     status: 400,
     description: 'Email sending failed',
