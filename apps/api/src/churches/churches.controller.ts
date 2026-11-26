@@ -15,21 +15,13 @@ import { GetUser } from '@/auth/decorators'
 import { churches } from '@church/db'
 import { UserContext } from '@/auth/types/permission.types'
 import { RequirePermission } from '@/auth/decorators/require-permission.decorator'
+import { UpdateChurchDto } from './dtos/update-church.dto'
 
 export type CreateChurchInput = {
   churchId?: string
   name: string
   location: string
   leadPastorName: string
-  phone?: string
-  email?: string
-  description?: string
-}
-
-export type UpdateChurchInput = {
-  name?: string
-  location?: string
-  leadPastorName?: string
   phone?: string
   email?: string
   description?: string
@@ -99,7 +91,7 @@ export class ChurchController {
   @RequirePermission('manage:churches')
   async update(
     @Param('id') id: string,
-    @Body() input: UpdateChurchInput,
+    @Body() input: UpdateChurchDto,
   ) {
     return this.churchService.updateChurch(id, input)
   }

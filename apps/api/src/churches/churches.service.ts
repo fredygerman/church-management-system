@@ -98,9 +98,18 @@ export class ChurchService {
    * Update church details
    */
   async updateChurch(churchId: string, data: Partial<Church>): Promise<Church> {
+    // Explicit field pick: callers can never write networkId, id, deletedAt or timestamps (RM-013).
+    const allowed: Partial<Church> = {}
+    if (data.name !== undefined) allowed.name = data.name
+    if (data.location !== undefined) allowed.location = data.location
+    if (data.leadPastorName !== undefined) allowed.leadPastorName = data.leadPastorName
+    if (data.phone !== undefined) allowed.phone = data.phone
+    if (data.email !== undefined) allowed.email = data.email
+    if (data.description !== undefined) allowed.description = data.description
+
     const [updatedChurch] = await db
       .update(churches)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...allowed, updatedAt: new Date() })
       .where(eq(churches.id, churchId))
       .returning()
     return updatedChurch
