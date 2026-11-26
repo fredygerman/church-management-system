@@ -1,7 +1,7 @@
 import {
   Injectable,
   NotFoundException,
-  ConflictException,
+  BadRequestException,
   Logger,
   OnModuleInit,
 } from '@nestjs/common';
@@ -14,7 +14,7 @@ import {
   userChurchMembershipRoleEvents,
   type RoleType,
 } from '../database/schema';
-import { eq, and, ne, isNull } from 'drizzle-orm';
+import { eq, and, isNull } from 'drizzle-orm';
 import { Database } from '../database/interfaces/database.interfaces';
 
 @Injectable()
@@ -73,30 +73,23 @@ export class UsersService implements OnModuleInit {
       throw new NotFoundException('User not found');
     }
 
-    // Check for duplicate email
-    if (dto.email && dto.email !== currentUser.email) {
-      const existing = await this.db
-        .select()
-        .from(users)
-        .where(
-          and(
-            eq(users.email, dto.email),
-            ne(users.id, userId),
-            isNull(users.deletedAt),
-          ),
-        )
-        .limit(1);
-
-      if (existing.length > 0) {
-        throw new ConflictException('Email already registered');
-      }
+    // Email is read-only until a verified change flow exists (RM-033, D-29).
+    // An unchanged email is ignored; a different one is refused so no
+    // unverified address can be attached to the account.
+    if (
+      dto.email !== undefined &&
+      dto.email.trim().toLowerCase() !== currentUser.email.toLowerCase()
+    ) {
+      throw new BadRequestException({
+        message: 'Email change requires verification',
+        code: 'EMAIL_CHANGE_REQUIRES_VERIFICATION',
+      });
     }
 
-    // Build update object (only include provided fields)
+    // Build update object (only include provided fields; email is never written here)
     const updateData: any = {};
 
     if (dto.name !== undefined) updateData.name = dto.name;
-    if (dto.email !== undefined) updateData.email = dto.email;
     if (dto.picture !== undefined) updateData.picture = dto.picture;
 
     // Update user in database

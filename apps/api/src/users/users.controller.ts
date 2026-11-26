@@ -113,8 +113,8 @@ export class UsersController {
     description: 'Unauthorized',
   })
   @ApiResponse({
-    status: 409,
-    description: 'Email already registered',
+    status: 400,
+    description: 'Email change requires verification (EMAIL_CHANGE_REQUIRES_VERIFICATION)',
   })
   async updateMe(
     @Request() req: any,

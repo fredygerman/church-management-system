@@ -33,7 +33,7 @@ jest.mock('../database/schema', () => {
 });
 
 import { UsersService } from './users.service';
-import { NotFoundException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { DatabaseService } from '../database/database.service';
 import { FileUploadService } from '../file-upload/file-upload.service';
 
@@ -118,6 +118,51 @@ describe('UsersService', () => {
 
       await expect(service.restoreUser(USER_ID, CHURCH_B)).rejects.toThrow(NotFoundException);
       expect(fakeDb.__rows()[0].deletedAt).toBe(deletedAt);
+    });
+  });
+  describe('updateAccount', () => {
+    const STORED_EMAIL = 'member@example.org';
+    const seed = () => [
+      { id: USER_ID, churchId: CHURCH_A, deletedAt: null, email: STORED_EMAIL, name: 'Old', picture: null },
+    ];
+
+    it('refuses a different email with EMAIL_CHANGE_REQUIRES_VERIFICATION and keeps the stored email', async () => {
+      const { service, fakeDb } = setup(seed());
+      await service.onModuleInit();
+
+      const error = await service
+        .updateAccount(USER_ID, { email: 'other@x.org' })
+        .catch((e) => e);
+
+      expect(error).toBeInstanceOf(BadRequestException);
+      expect(error.getResponse()).toEqual({
+        message: 'Email change requires verification',
+        code: 'EMAIL_CHANGE_REQUIRES_VERIFICATION',
+      });
+      expect(fakeDb.__rows()[0].email).toBe(STORED_EMAIL);
+    });
+
+    it('ignores an email equal to the stored one, ignoring case and whitespace', async () => {
+      const { service, fakeDb } = setup(seed());
+      await service.onModuleInit();
+
+      await service.updateAccount(USER_ID, { email: '  MEMBER@example.org ', name: 'New' });
+
+      expect(fakeDb.__rows()[0].email).toBe(STORED_EMAIL);
+      expect(fakeDb.__rows()[0].name).toBe('New');
+    });
+
+    it('still updates name and picture without touching email', async () => {
+      const { service, fakeDb } = setup(seed());
+      await service.onModuleInit();
+
+      await service.updateAccount(USER_ID, { name: 'Amina', picture: 'https://cdn.example/a.png' });
+
+      expect(fakeDb.__rows()[0]).toMatchObject({
+        email: STORED_EMAIL,
+        name: 'Amina',
+        picture: 'https://cdn.example/a.png',
+      });
     });
   });
 });
