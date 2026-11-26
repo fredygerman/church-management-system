@@ -1,6 +1,31 @@
-# Future allocation manifest
+# Current remediation allocation manifest
 
-Planning proposal only; no dispatch authorized. Logical IDs map exactly to [backlog](backlog.md). Existing paths are verified candidates; paths marked **proposed** do not currently exist. At dispatch, re-check source and split any shared file to one writer. Default is shared checkout, same branch, no worktrees; serialize commits, installs, generators, manifests, shared contracts and full checks. Capacity is unknown; check then. Luna is preferred by user; do not silently substitute another model/provider. No monitor.
+Baseline `81de7d2` (2026-11-26). The authoritative all-21-ID coverage/owner/dependency register is [remediation-plan](remediation-plan.md#coverage-register); each ID links its owning specification. The rows below allocate proposed implementation lanes, not active agents or approved dispatch. Exact worker paths, capacity and model availability must be recorded before a future authorized run. Accepted DEC-11 retains shared checkout/disjoint paths with Haiku frontend and Luna backend/review preferences; no substitution is implied.
+
+| Lane / leader | IDs | Candidate owned paths; exclusions | Concurrency / serialized edges | Required evidence |
+| --- | --- | --- | --- | --- |
+| Auth/API integrator | R-SEC-01/02; auth part of R-AUTH-01 | API auth/controller/service/guards/tests; affected web auth callback/provider route by coordinated handoff. No sending or general role redesign | One writer for overlapping auth files; trust/linking decisions first; recovery delivery gated | Negative controller/provisioning/tenant tests, existing refresh tests, API/web checks |
+| API files worker | R-API-01 | File-upload interceptors/policy and receiver tests; no storage migration | Parallel with auth if files disjoint; dependency patch integration reserved | HTTP multipart limits including diagnostics; no storage call on rejection |
+| API AI worker | R-API-02 | AI service/store and mocked concurrency tests; coordinated client 409 handling | Store/schema contract frozen first; no live provider activation | Concurrent append/purge/feedback tests; no silent lost turns |
+| Dependency integrator | R-DEP-01 | Manifests/lockfile and concise advisory ledger; no blind fix | Exclusive manifests/install/generator window; research can run in parallel | Reachability decisions, primary advisory evidence, affected type/test/build/export |
+| Web page workers | R-WEB-01/02 | Exact dashboard-header profile link and home branch-card files/tests | Disjoint small slices; header work reserved against shell lane | Scoped path and absent/zero/unavailable count tests |
+| Product/design shell leader | R-UX-01/R-DES-01 | Shared shell/nav/header/theme/token files; exact page allocation after contract | One writer per shared shell; native uses separate paths after contract | Five destinations, mode policy, responsive/a11y/screenshots; human pending |
+| Content/API leader | R-LIB-01/R-CNT-01 | Catalogue/publication contracts and API/client feature files after approved allocation | Network model decision; schema lane before dependent client work | Access tests, real metadata/state transitions, no commerce |
+| Public/account/notification feature leaders | R-PUB-01/R-AUTH-01/R-NOT-01 | Disjoint public projection, recovery UI/core, inbox feature paths; auth/header edits via owners | Per-feature policy/DTO gate; no provider/sending activation | Public-field denial, single-use recovery, inbox ownership/read state |
+| Mobile session integrator | R-MOB-01/02/03 | lib/api.ts,session.tsx,storage.ts as needed; dependent route invalidation/mode | One session writer; R-MOB-02 after generation contract; mode follows R-UX-01 | Temporary failure, stale response, context switch and space routing tests |
+| Mobile Church worker | R-MOB-04 | Member Church loader/test only | Coordinate same file with R-MOB-02 owner | Failure then success clears error; old branch ignored |
+| Mobile staff feature leader | R-MOB-05 | Chosen staff screens/contracts/tests; no blanket parity or sensitive-data expansion | Approved slice/contract; disjoint screen workers after shell/session | Permitted write/read journey, denied/duplicate/context-change handling |
+| Quality/integration leader and one bounded reviewer | R-QA-01/02 | Meaningful package journey tests and evidence docs; CI only a proposal pending approval | Package owners coordinate test seams; serialize full checks/commits; human stage last | Exact command/revision/results, platform limits, visual/device/EN-SW evidence |
+
+Schema/contracts owner is a separate exclusive lane supporting any ID above; workers request table/DTO/export changes rather than concurrent editing. DB builds before config; mobile script is `typecheck`. Read the owning specs for exact commands and acceptance. No production migration/deployment/push or implementation worker launch is authorized by this documentation task.
+
+## Historical allocation retained below
+
+Old proposed paths, pending Expo/AI decisions and absence claims below describe their original checkpoint only. Expo/mobile/AI/dashboard/document implementations now exist. Current decisions/register supersede these rows; do not dispatch directly from them.
+
+# Historical W/M allocation manifest
+
+Historical planning proposal retained for provenance; rows below describe the original W/M allocation, not the current R-* remediation. No current dispatch is authorized. Existing paths are verified candidates; paths marked **proposed** do not currently exist. At dispatch, re-check source and split any shared file to one writer. Default is shared checkout, same branch, no worktrees; serialize commits, installs, generators, manifests, shared contracts and full checks. Capacity is unknown; check then. Luna is preferred by user; do not silently substitute another model/provider. No monitor.
 
 | ID | Scope / exclusions | Owned files (proposed paths labeled) | Shared paths | Branch / harness / model / effort | Concurrency and reason | Dependencies | Checks / handoff |
 |---|---|---|---|---|---|---|---|

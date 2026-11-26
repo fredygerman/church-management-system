@@ -1,6 +1,8 @@
 # Implementation acceptance checklist
 
-Use this to review a proposed implementation. It is not evidence that any item is already implemented.
+Use this to review the final vision against an accepted candidate. All boxes remain unverified until observable evidence is recorded; existing code/builds do not check them automatically. Current baseline `81de7d2` has substantial implemented features and 21 specified deltas in the [remediation register](../shipwave/platform/remediation-plan.md). R-DES-01 owns visual implementation; R-UX-01 owns shells/mode policy; R-QA-02 and Fredy own final human evidence. Accepted DEC-01–16 override older concept copy.
+
+This is an acceptance inventory, not an authorization to build every illustrated feature. Commerce, sending/store activation, full offline and managed download storage remain deferred; native browser reading remains accepted. AI entry and deterministic renderer checks are distinct from deferred provider activation/live tests.
 
 ## Identity and content
 
@@ -35,5 +37,5 @@ Use this to review a proposed implementation. It is not evidence that any item i
 - [ ] Keyboard focus is visible and logical; dialogs trap/restore focus; icon-only controls have accessible names.
 - [ ] Prayer, household, visitor contact, staff roles, content review, and AI data handling follow approved privacy and consent policies.
 - [ ] AI indicates uncertainty and source links where available; it cannot bypass the user's branch or role permissions.
-- [ ] Offline downloads are explicit, eligible-content-only, removable, and show storage and failure states; full offline use is not implied.
+- [ ] Browser-based eligible signed-resource access handles expiry/retry honestly. Managed downloads/storage/removal and full offline are explicitly deferred rather than implied as implemented.
 - [ ] Store accounts, agreements, publishing, and unapproved commerce flows remain deferred.

@@ -1,6 +1,6 @@
 # Programme decisions
 
-No decision is accepted by this planning package. Recommended defaults are proposals for explicit human acceptance.
+DEC-01–16 below record accepted historical decisions. The original recommendation column is retained for provenance; accepted status takes precedence. The 2026-11-26 remediation documentation accepts no new decision.
 
 | ID | Decision | Recommended default | Status |
 |---|---|---|---|
@@ -16,9 +16,14 @@ No decision is accepted by this planning package. Recommended defaults are propo
 | DEC-10 | Human verification owner/evidence | Named human records observable results | Accepted 2026-11-24 by Fredy: Fredy performs the human verification, only after ALL code work in ALL waves is done; results are recorded in `human-verification.md` |
 | DEC-11 | Future checkout, capacity and dispatch | Shared checkout, disjoint scopes, capacity/harness/model checked at dispatch | Accepted 2026-11-24 by Fredy (recommendation): shared checkout, disjoint file scopes, haiku for frontend, Luna for backend and review; push only at the end of a major wave |
 
-Decision IDs are stable programme references. No proposal implies approval.
+Decision IDs are stable programme references. Accepted historical entries remain accepted; a new proposal does not imply approval.
 | DEC-12 | Schema migrations on dev | Apply pending migrations without asking | Accepted 2026-11-25 by Fredy: Claude applies pending migrations on dev through a one-off scheduled task on the `backend` container (runbook `docs/agents/coolify-access.md`), creates it disabled, executes it, reads the log, then deletes it. Production still needs Fredy's approval |
 | DEC-13 | Swahili copy and its review | Claude writes and reviews all Swahili copy; a fluent native review happens after all code work in all waves | Accepted 2026-11-25 by Fredy: copy lives in `packages/config/src/i18n/messages/` with en/sw parity enforced by the type-checker and the copy test. Claude writes and reviews it now; the native-speaker review is a human check, done at the end (DEC-10) |
 | DEC-14 | Timing of human work and AI scope | Human checks only after all code work; AI deferred | Accepted 2026-11-25 by Fredy: no questions and no stops until all code work on all waves is done; human checks (Q-02, D-01 design review, native Swahili review) come last. AI configuration, AI testing and the AI feedback route are deferred and documented in `specs/ai-api.md` |
 | DEC-15 | Open code items after the fifth pass (feedback, visitors, reader, actions) | Finish code work that has a verified source; record what stays out | Accepted 2026-11-26 by Fredy ("finish the work"; no questions): (1) AI feedback route implemented as `POST /ai/feedback` with table `ai_feedback` (migration 0013), ratings only, owner-only, answer text kept with the rating. (2) Dashboard `pendingVisitors` added (DEC-01 amended): non-deleted visitors with no linked member and no follow-up marked converted or dropped; shown only to roles with `view:visitors`. `recentActivities` stays out: no verified source. (3) Mobile in-app reader: the device browser stays; no WebView dependency added. (4) AI action registry stays empty this release: each action needs an existing endpoint and a confirm control, and none is chosen yet. (5) Mail and SMS DTOs unchanged: sending work is off (DEC-05). (6) Logout revocation already implemented in the auth lane. AI configuration and AI testing stay deferred (DEC-14). |
 | DEC-16 | Date and number format per language | One formatter for both apps, English and Swahili formats | Accepted 2026-11-26 on the recommendation (no question asked): English uses en-GB (day month year), Swahili uses sw-TZ. Currency keeps en-US formatting. Implemented as `formatLocaleDate` and `formatLocaleNumber` in `packages/config/src/i18n/format.ts` |
+
+
+## Remediation proposal gates (not accepted)
+
+The [remediation plan](remediation-plan.md) records proposed platform-operator trust/provisioning, verified OAuth/linking, network/shared catalogue ownership, recovery delivery, presentation-mode persistence and prioritized native staff workflows. These are not amendments silently accepted by this documentation update. Preserve DEC-06 while resolving the concrete security distinction between platform-wide authority and church-scoped administration. Commerce, sending, store setup and AI activation remain deferred as recorded above.

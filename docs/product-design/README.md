@@ -1,6 +1,12 @@
 # Mito Ya Baraka Church — product design and screen specification
 
-Status: **concept for review**, 2026-11-16. These screens describe a proposed product, not verified existing functionality. Names, people, branches other than HQ, prices, metrics and content in visual concepts are illustrative. The first intended user is Mito Ya Baraka HQ; the design should accommodate other branches. The church's [public website](https://www.mitoyabarakachurch.org/en) describes services in Dar es Salaam and provides English and Swahili versions.
+Status: **concept for review**, originally 2026-11-16; implementation-status correction at `81de7d2` (2026-11-26). These screens describe a proposed product, not verified existing functionality. Names, people, branches other than HQ, prices, metrics and content in visual concepts are illustrative. The first intended user is Mito Ya Baraka HQ; the design should accommodate other branches. The church's [public website](https://www.mitoyabarakachurch.org/en) describes services in Dar es Salaam and provides English and Swahili versions.
+
+## Current implementation versus final vision
+
+The repository now includes API, web and Expo mobile apps, documents/signed downloads, member actions, AI chat/feedback/retention and EN/SW. Expo is accepted under DEC-03; DEC-01–16 supersede original pending proposals in this document. The boards and screen inventory remain intended visual/product direction, not a completed-feature claim. Current [remediation plan](../shipwave/platform/remediation-plan.md) tracks all 21 audited deltas and three owning specs; human/device/design verification remains unperformed.
+
+Current library is branch-scoped, not the final shared catalogue. Explicit member/staff presentation switching, consistent five-item navigation, visual language and public discovery still need the specified follow-through. Commerce/sending/store setup/full offline and AI activation/live-provider testing stay deferred; native browser reading stays accepted. No new proposal is accepted by this documentation update.
 
 ## Product shape
 
@@ -51,13 +57,13 @@ These are a product inventory, not a commitment to deliver all screens in the fi
 
 ## AI assistant
 
-The agreed direction is an AI button in the top bar beside notifications, opening a dedicated conversation page rather than a floating control that covers content. It can provide answers with contextual cards such as a service, event or book. Use selected branch context when relevant and make that context visible; shared-library questions need not be branch-specific. Staff answers must be limited by the user's current branch and actual permissions, with source attribution where possible. Handle uncertainty, unavailable data and sensitive personal or pastoral questions explicitly. Which sources, actions, retention and AI provider are authorized remains open.
+The agreed direction is an AI button in the top bar beside notifications, opening a dedicated conversation page rather than a floating control that covers content. It can provide answers with contextual cards such as a service, event or book. Use selected branch context when relevant and make that context visible; shared-library questions need not be branch-specific. Staff answers must be limited by the user's current branch and actual permissions, with source attribution where possible. Handle uncertainty, unavailable data and sensitive personal or pastoral questions explicitly. DEC-08 accepts read-only, permission-scoped sources with exclusions and 30-day retention; DEC-15 keeps the action registry empty. Provider activation/live testing remain deferred.
 
 ## Offline and content
 
-Full offline operation is not required. People may explicitly download selected eligible content for later reading or listening; show download status, available storage, removal and clear offline errors. Paid resources require access checks and defined handling of refunds and lost access. Exact formats, protection, access expiry, payment provider and purchase rules are undecided. Neither example prices nor purchase flows in images are approved commercial terms.
+Full offline operation is not required. People may explicitly download selected eligible content for later reading or listening; show download status, available storage, removal and clear offline errors. Paid resources require access checks and defined handling of refunds and lost access. Commerce remains deferred under DEC-07. Format/publication/shared-catalogue choices are proposed in the remediation specs, while native signed resources open in the device browser under DEC-15. Neither example prices nor purchase flows in images are approved commercial terms.
 
-## Work to validate before implementation
+## Original validation checklist — historical planning intent
 
 1. Audit existing church API and web flows, including mobile-compatible session handling, branch memberships, permissions, shared types and content capabilities. Do not assume a new token implementation or contracts package is necessary.
 2. Resolve durable storage and verify isolation, authenticated workflows and CORS, as tracked in the operations backlog.
@@ -66,7 +72,7 @@ Full offline operation is not required. People may explicitly download selected 
 5. Define AI sources, privacy, retention, permissions, user-visible uncertainty and whether it can take actions.
 6. Create detailed interaction designs and test member and staff journeys on phones and desktop, including error, empty and permission states.
 
-Store accounts, store agreements and publishing are explicitly deferred for now. Expo and Expo Router are an earlier recommendation, not an approved implementation decision; verify stack and existing repository conventions before building.
+Store accounts, store agreements and publishing are explicitly deferred for now. Expo/Expo Router is now accepted (DEC-03) and implemented. The validation questions above are historical intent; current decisions and remediation specs supersede any outdated pending claim.
 
 ## Visual concept boards
 

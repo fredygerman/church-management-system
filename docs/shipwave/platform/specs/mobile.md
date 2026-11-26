@@ -1,6 +1,20 @@
+# Mobile product and delivery specification — current status
+
+Baseline `81de7d2`, 2026-11-26. Expo/Expo Router is accepted (DEC-03) and implemented in `apps/mobile`. Member Home/Church/Events/Library/Profile, staff read-only screens, secure token storage, membership switching, EN/SW and AI views exist. Dashboard/document/AI APIs also exist; old “missing/stub/no mobile” statements below are historical only.
+
+Current owning technical spec: [mobile and quality remediation](remediation-mobile-and-quality.md), R-MOB-01–05/R-QA-01–02. Product space/navigation/catalogue policy belongs to [product/design remediation](remediation-product-and-design.md). [Security/API remediation](remediation-security-and-api.md) owns auth trust, upload/AI concurrency and dependency work. See the [21-ID plan](../remediation-plan.md) for proposed waves; no implementation dispatch is authorized here.
+
+Native transport/session resilience, mounted branch-data invalidation, explicit presentation switching, retry recovery and prioritized staff mutations remain specified work. Existing screenshots/build/export do not establish runtime/design acceptance. Browser reading remains accepted (DEC-15); no full-offline/managed-download/WebView requirement. Commerce, sending, store publishing and AI provider activation/live tests remain deferred. Human device/native-language checks remain unperformed.
+
+Current exact package commands: `pnpm --filter @church/mobile typecheck`, `pnpm --filter @church/mobile test`, `pnpm --filter @church/mobile exec expo export --platform android --output-dir /tmp/church-mobile-remediation-android`. Build DB before config when preparing a fresh checkout. Mobile has no independent migration ownership; shared contract/schema work is serialized. Production migrations require approval.
+
+## Historical planning snapshot
+
+The original text below is retained as provenance and acceptance intent. Every absence/status/decision claim describes its original checkpoint and must not be used as the current capability inventory.
+
 # Mobile product and delivery specification
 
-Status: proposed; blocked on stack/product decisions; implementation not started. Design sources: `docs/product-design/{README.md,DESIGN.md,screen-specification.md,implementation-checklist.md,visual-audit.md}`. Group plan: `docs/shipwave/platform/groups/mobile.md`.
+Historical proposal snapshot (superseded for current status): Design sources: `docs/product-design/{README.md,DESIGN.md,screen-specification.md,implementation-checklist.md,visual-audit.md}`. Group plan: `docs/shipwave/platform/groups/mobile.md`.
 
 ## Objective and boundaries
 
@@ -8,7 +22,7 @@ Proposed mobile client for **Mito Ya Baraka Church**, HQ first. Repository curre
 
 Public branch browsing is distinct from selecting an active membership. Operational views/actions use an authorized selected membership and show context; public browsing never silently changes membership. HQ is initial context. Library and account are shared where item access permits. Do not call the old common guard a proven tenant leak: verify each endpoint/service. The checked `ChurchContextGuard` extracts church context and allows super_admin; membership-aware behavior requires route-specific verification.
 
-## Facts checked against code
+## Historical facts checked at the original planning checkpoint
 
 - Root `package.json` uses pnpm/Turbo and filters builds to API/web; no mobile package exists.
 - Web portal routes exist for events, profile, family, prayer, announcements and giving goals. They do not prove mobile support.
@@ -39,7 +53,7 @@ Public branch browsing is distinct from selecting an active membership. Operatio
 
 See group plan for M0-M4 IDs, leads, dependencies and concurrency. Foundation/contracts precede member journeys and shared library; staff/AI/notifications follow auth/permission contracts; readiness follows integration. No assumption mobile requires API changes. Contract gaps need separately approved ownership. Mobile has no migration ownership.
 
-## Decisions required before dispatch
+## Historical decision questions — accepted DEC-01–16 supersede this table
 
 | Decision | Recommended default | Status |
 |---|---|---|

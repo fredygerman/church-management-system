@@ -1,6 +1,8 @@
 # D-01 design acceptance artifact
 
-This is a planning artifact for implementation and review. No decision is accepted here beyond the decisions already accepted in `docs/shipwave/platform/decisions.md`: DEC-02 (existing rules only), DEC-03 (Expo), and DEC-09 (private S3-compatible bucket). DEC-01, DEC-04 to DEC-08, DEC-10, and DEC-11 remain pending. This artifact does not authorize implementation or commerce, AI, schema, or content-policy changes.
+Current correction baseline: `81de7d2`, 2026-11-26. DEC-01–16 are accepted as individually recorded in [decisions](../decisions.md). Expo, AI read-only integration, private storage and dashboard metrics are implemented in code; AI provider activation/live testing remain deferred. Human design acceptance has not been performed. Current design/shell ownership is R-DES-01/R-UX-01 in [product/design remediation](../specs/remediation-product-and-design.md), coordinated with [mobile/quality](../specs/remediation-mobile-and-quality.md).
+
+The matrix below is a **historical acceptance-planning snapshot**, not a current implementation inventory. Its pending-decision, missing-source and unavailable-AI cells describe the original checkpoint. Preserve its intended state/permission questions, but use the current specs and [21-ID register](../remediation-plan.md) for implementation dispatch. Four visual boards remain illustrative; commerce and invented copy remain excluded.
 
 ## Surface acceptance matrix
 

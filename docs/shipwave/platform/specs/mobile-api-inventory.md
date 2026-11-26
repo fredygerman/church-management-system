@@ -1,6 +1,17 @@
 # Mobile API inventory
 
-Source-verified inventory for M1. Paths below are API paths (controllers have no global prefix).
+Current correction baseline: `81de7d2` (2026-11-26). Paths are API paths (no global prefix); route presence does not certify live behavior. This correction supersedes original M1 absence/status claims retained below.
+
+- `POST /auth/refresh` now uses `rotateRefreshToken`: stored token families, atomic consumption, reuse detection and a grace race response exist (`auth.service.ts:327–379`). Access-token strategy rejects refresh tokens. Logout revokes all sessions. Mobile resilience defects are R-MOB-01; do not report rotation as missing.
+- `GET /auth/memberships` exists; `POST /auth/switch-church` verifies active membership. The active global guard is `apps/api/src/auth/guards/church-context.guard.ts`. Its super-admin exception and publicly reachable provisioning/OAuth trust are the concrete R-SEC-01/02 findings; ordinary member isolation is not generally disproved.
+- Dashboard API and native dashboard calls exist. `totalMembers`, `activeZones`, and permission-gated `pendingVisitors` are implemented; `recentActivities` stays excluded by DEC-15.
+- Durable document CRUD, branch-scoped member library and signed URLs exist. Both clients have local library search; absence of a search endpoint alone is not a broken current search flow. Network-shared catalogue/resource/media/progress expansion belongs to R-LIB-01/R-CNT-01.
+- Native uses SecureStore. Native browser reading is accepted; no missing-WebView prerequisite. AI chat/feedback/retention exist; provider activation/live tests remain deferred.
+- Current [API contracts](api-contracts.md), [AI API](ai-api.md), [remediation plan](../remediation-plan.md) and owning remediation specs supersede older inventory status. Verify line anchors before implementation.
+
+## Historical M1 inventory
+
+The original inventory below is retained for provenance. Its old line anchors and “not implemented/missing” assertions describe that checkpoint only, not current scope or runtime status.
 
 ## 1. Native session contract
 

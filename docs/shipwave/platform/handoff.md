@@ -1,14 +1,21 @@
 # Portable programme handoff
 
-- Programme: Church Management System platform/design audit follow-through
-- Status: Foundation wave (W-01, W-02, navigation consistency) code complete locally; not pushed; no CI (Coolify auto-deploys on push)
-- Owning ledger: [backlog](backlog.md); dispatch map: [allocation manifest](allocation-manifest.md)
-- Checkpoint: local commits on `design/mito-ya-baraka-concepts`: `9a4eae1` W-01 refresh validation (+ review fixes in the following commit), `17d46ca` W-02 dashboard unavailable state, navigation consistency commit
-- Next safe step: confirm and apply migration `0009_parched_maverick` (adds `users.token_version`) BEFORE pushing. Coolify auto-deploys on push, and the new API reads `token_version`, so pushing first breaks authentication. Then human verification.
-- Branch/base/commit: `design/mito-ya-baraka-concepts`; nothing pushed
-- Completed: W-01 refresh validation (deleted and missing users rejected; server errors surface as 500); W-02 dashboard unavailable state; sidebar links for missing pages removed; shared `UnavailableState`; token revocation on logout via `token_version` (access and refresh tokens carry `tv`); web sign-out calls `POST /auth/logout`; route matching now uses the most specific route, so child permission keys are enforced (analytics, offerings, events, event add/edit added)
-- Remaining: migration 0009 not applied (needs confirmation); refresh-token rotation with reuse detection not implemented; Documentation and Contact Us are open to any signed-in role (no key chosen); DEC-01–11 pending; mobile and AI not started
-- Checks: API type-check 0 errors; API auth Jest 11/11 passing; web type-check 0 errors; route impact checked for all six roles with a throwaway script outside the repo
-- Review: one bounded integration review before the revocation and route changes; those later changes have no independent review
-- Migration: `packages/db/migrations/0009_parched_maverick.sql` generated and committed, not applied
-- Human verification: [backlog](human-verification.md); dashboard unavailable state, sidebar, sign-out, and role access changes not yet checked by a person
+## Current checkpoint
+
+Audit/documentation baseline: `81de7d2` (2026-11-26). The checkout at documentation commit time is `design/mito-ya-baraka-concepts`; preceding history records a push to `origin/develop`, but this audit did not verify remote state or live deployment. Do not infer the current checkout branch from that historical push. Repository code includes API/web/mobile implementation, refresh rotation, documents, AI and EN/SW. The original foundation-only handoff is superseded; its commit history remains in [backlog](backlog.md).
+
+Current objective: document all audit findings and implementation-ready specifications for the final product/design vision. No source changes, deployment, migrations or implementation dispatch authorized by this documentation update. Planning files may be uncommitted until the final documentation integrator receives commit authorization; consult git status rather than inferring a final documentation SHA.
+
+## Next owner and action
+
+The future programme leader starts with [remediation-plan](remediation-plan.md), [allocation manifest](allocation-manifest.md), [run policy](RUN-POLICY.md), all three owning remediation specs and [decisions](decisions.md). Resolve the critical administrator-trust/OAuth choices and assign the serialized auth owner before a new implementation wave. The 21-ID register is the current ledger; do not restart already implemented W/M work from old group plans.
+
+Accepted DEC-01–16 remain in force. New trust, shared-catalog and recovery-delivery choices are proposals. Commerce/sending/store setup/full offline and AI activation/live testing stay deferred. Mobile browser reader is accepted; managed download storage is not a new prerequisite.
+
+## Verification and unknowns
+
+Fresh audit evidence: `pnpm --filter api test -- --runInBand`, 19 suites/146 tests passed. Prior config/web/mobile/build/export results in the backlog are historical, not rerun by this documentation task. Critical controller security paths and mounted mobile journeys need the new specified tests.
+
+Live revision/environment, production migration state, private-bucket ACLs, actual provider configuration and runtime outcomes were not checked. Historical dev migrations through 0013 were reported; do not infer production application. Production migration approval remains Fredy's. Push and deployment are separate facts.
+
+Human design/device/accessibility/native-Swahili review remains unperformed in [human-verification](human-verification.md), after all authorized code work. No claim of production readiness or active exploitation is made. Rollback/containment requirements are in each owning spec; source state is unchanged by this audit.

@@ -1,26 +1,23 @@
 # Platform improvement programme
 
-Planning baseline only. This document organizes the audited gaps into design, web/API, and mobile groups. It does not authorize implementation or accept any pending product or runtime decision.
+Current audit baseline: `81de7d2` (2026-11-26). The repository contains implemented NestJS API, Next.js web and Expo mobile applications. Earlier planning documents remain useful intent/history, but their unqualified “not started”, missing-mobile/AI and unapproved-Expo statements are superseded by this index, accepted decisions and the current remediation register. Code present is not proof of deployed behavior.
 
-## Source of truth
+## Current work and source of truth
 
-- Product identity and design baseline: [product design](../../product-design/README.md), [design language](../../product-design/DESIGN.md), [screen inventory](../../product-design/screen-specification.md), [visual audit](../../product-design/visual-audit.md), and [acceptance checklist](../../product-design/implementation-checklist.md).
-- Programme status and execution boundaries: [run policy](RUN-POLICY.md), [backlog](backlog.md), [decisions](decisions.md), [human verification](human-verification.md), [handoff](handoff.md), and [incidental findings](incidental-findings.md).
-- Group specifications are [design](groups/design.md), [web/API](groups/web-api.md), and [mobile](groups/mobile.md); detailed owning specs are linked from the stable [backlog](backlog.md). The [allocation manifest](allocation-manifest.md) maps every stable task ID to scope, ownership, dependencies, checks and dispatch fields.
-- Prompt templates: [programme leader](prompts/programme-leader.md) and [worker](prompts/worker.md); the mobile prompt is owned by the mobile writer.
+- [Remediation plan and all 21 audit findings](remediation-plan.md): prioritized coverage, owning specs, proposal gates and future waves. This documentation update authorizes no implementation dispatch.
+- Owning specifications: [security/API/dependencies](specs/remediation-security-and-api.md), [product/design/web](specs/remediation-product-and-design.md), [mobile/quality](specs/remediation-mobile-and-quality.md).
+- Execution: [run policy](RUN-POLICY.md), [allocation manifest](allocation-manifest.md), [backlog and historical W/M work](backlog.md), [accepted decisions DEC-01–16](decisions.md), [handoff](handoff.md), [human verification](human-verification.md).
+- Product direction: [design index and visual boards](../../product-design/README.md), [design language](../../product-design/DESIGN.md), [screen inventory](../../product-design/screen-specification.md), [acceptance checklist](../../product-design/implementation-checklist.md).
+- Existing contracts: [API inventory](specs/mobile-api-inventory.md), [API contracts](specs/api-contracts.md), [AI API](specs/ai-api.md). Historical group plans remain [design](groups/design.md), [web/API](groups/web-api.md), [mobile](groups/mobile.md); current remediation allocation supersedes stale task statuses there.
 
 ## Product baseline
 
-Design for Mito Ya Baraka Church HQ as the initial context. Preserve member navigation Home / Church / Events / Library / Profile and staff navigation Dashboard / People / Services / Content / More. Membership branch context is distinct from public branch browsing. Shared account and library behavior follows item access. AI is an entry beside notifications that opens a dedicated conversation. Use the current design docs as proposed direction, not verified production artwork or behavior. Verify all church data and copy.
+Mito Ya Baraka Church, HQ first. Member Home / Church / Events / Library / Profile; staff Dashboard / People / Services / Content / More; explicit same-account space switching. Public branch viewing must be distinct from membership context. Shared library is the vision, while current document access is branch-scoped. AI is a top-bar entry beside notifications, opening its own conversation; placement/visual implementation still needs remediation.
 
-## Programme groups
+Existing code includes refresh rotation/revocation, dashboard metrics, member actions, persisted documents/signed downloads, AI conversation/feedback/retention, EN/SW copy and mobile member/staff screens. Newly confirmed security and session/context findings mean old “all code done” notes are not a present readiness claim.
 
-1. **Design**: reconcile current UI with the baseline, define responsive member/staff journeys and observable states, and produce implementation-ready acceptance artifacts.
-2. **Web/API**: close dashboard false-zero/missing-stat behavior, establish refresh-token type and revocation semantics, replace document storage stubs with a durable authenticated workflow, define email capability accurately, and strengthen CI/test evidence.
-3. **Mobile**: separately plan and implement member home/edit/navigation and the missing library, AI, and content/commerce surfaces, subject to approved scope and contracts. Expo and Expo Router remain unapproved.
+## Completion and exclusions
 
-Specs verify code facts, acceptance rows and guard tests. See [allocation manifest](allocation-manifest.md) for dispatch fields. Independent fixes may proceed without a blanket foundation wave; only actual contract/schema edges block. A serialized schema/contract/integration lane names one migration owner and one bounded reviewer covering correctness, scope and complexity. CI/testing baseline is part of Q-01. Pending decisions are proposals, not approvals.
+Code complete, automated checks passed, human verified and deployed are separate states. The audit freshly passed API 19 suites/146 tests; other prior checks are historical until rerun. Device/design/accessibility/Swahili checks remain unperformed. Live revision, storage configuration and production schema are unverified by this audit. A push does not establish a deployment.
 
-## Completion model
-
-Completion means all human-approved backlog tasks are implemented against their specs; recorded checks have fresh command/exit/log evidence; bounded review covers correctness, scope, and complexity; integration checks pass; and every remaining human check is listed with observable steps. “Code complete” does not mean human verified or released. See [state vocabulary](RUN-POLICY.md#state-vocabulary).
+Commerce, email/SMS sending enablement, store setup/publishing, full offline operation and AI provider activation/live-provider testing remain deferred. Browser-based mobile reading remains accepted under DEC-15. Do not turn illustration details or these exclusions into release commitments.
