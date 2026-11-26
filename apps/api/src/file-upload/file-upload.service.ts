@@ -141,7 +141,7 @@ export class FileUploadService {
   private readonly maxFileSize: number;
   private readonly s3Config = {
     bucket: config.s3BucketName,
-    endpoint: config.s3StorageEndpoint,
+    endpoint: config.s3StorageEndpoint || undefined,
     region: config.s3Region,
     publicUrl: config.s3PublicUrl,
     accessKeyId: config.s3AccessKeyId,
