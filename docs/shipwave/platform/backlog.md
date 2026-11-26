@@ -90,7 +90,7 @@ Open, code (deferred by decision, DEC-14):
 
 ## Status 2026-11-26 (sixth pass, finish code work)
 
-Verified for this pass: `@church/db` build, `@church/config` build and copy tests (38), API type-check and jest (19 suites, 146 tests; three new feedback tests, no provider calls), web type-check, web tests (13) and `next build` with placeholder build-only env values, mobile type-check, mobile tests (12) and Android export. Migration 0013 generated; it applies on dev after the deploy of this push (DEC-12).
+Verified for this pass: `@church/db` build, `@church/config` build and copy tests (38), API type-check and jest (19 suites, 146 tests; three new feedback tests, no provider calls), web type-check, web tests (13) and `next build` with placeholder build-only env values, mobile type-check, mobile tests (12) and Android export. Migration 0013 (`ai_feedback`) applied on dev on 2026-11-26 after the dev deploy of `f91f10f` finished: one-off task on the backend container, status success, task deleted afterwards (DEC-12).
 
 Done:
 - AI feedback: `POST /ai/feedback` with table `ai_feedback` (migration 0013). Web and mobile show Helpful and Not helpful under each answer. Owner-only, ratings only, answer text kept with the rating. Feedback is accepted while the answer is in the stored history (the last 12 messages).
