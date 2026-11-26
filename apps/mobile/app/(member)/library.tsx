@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { ActivityIndicator, FlatList, Linking, Pressable, StyleSheet, Text, TextInput, View } from "react-native"
+import { FlatList, Linking, StyleSheet, View } from "react-native"
 import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
 import { useT } from "../../lib/locale"
 import type { Translate } from "@church/config/i18n"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
-import { Card, Pill } from "../../components/ui"
-import { colors, spacing, type } from "../../theme"
+import { TextField } from "../../components/ui"
+import { LibraryMediaRow, mediaKindForContentType } from "../../components/library-media"
+import { spacing } from "../../theme"
 
 type LibraryDocument = {
   id: string
@@ -105,14 +106,13 @@ export default function LibraryScreen() {
 
   return <FlatList
     ListEmptyComponent={<EmptyState message={t("mobile.member.library.noMatches")} />}
-    ListHeaderComponent={<View>
-      <Text style={styles.formLabel}>{t("mobile.member.library.search")}</Text>
-      <TextInput
-        accessibilityLabel={t("mobile.member.library.search")}
+    ListHeaderComponent={<View style={{ marginBottom: spacing.md }}>
+      <TextField
         autoCapitalize="none"
         autoCorrect={false}
+        label={t("mobile.member.library.search")}
         onChangeText={setQuery}
-        style={styles.input}
+        placeholder={t("mobile.member.library.search")}
         value={query}
       />
     </View>}
@@ -121,36 +121,25 @@ export default function LibraryScreen() {
     keyboardShouldPersistTaps="handled"
     keyExtractor={(document) => document.id}
     renderItem={({ item }) => {
+      const kind = mediaKindForContentType(item.content_type)
       const busy = downloadingId === item.id
-      const rowError = rowErrors[item.id]
-      return <Pressable
-        accessibilityLabel={item.title}
-        accessibilityRole="button"
-        accessibilityState={{ busy }}
+      return <LibraryMediaRow
+        accessLabel={t("mobile.member.library.available")}
+        busy={busy}
+        busyLabel={t("mobile.member.library.opening")}
+        coverLabel={t(`wiring.library.type.${kind}`)}
         disabled={Boolean(downloadingId)}
+        error={rowErrors[item.id]}
+        kind={kind}
         onPress={() => void openDocument(item)}
-        style={libraryStyles.pressable}
-      >
-        <Card style={libraryStyles.mediaCard}>
-          <View style={libraryStyles.rowHeader}>
-            <View style={libraryStyles.cover}><Text style={libraryStyles.coverText}>{fileType(item, t).slice(0, 3)}</Text></View>
-            <View style={libraryStyles.copy}><Text style={styles.heading}>{item.title}</Text>{item.description ? <Text style={libraryStyles.description}>{item.description}</Text> : null}<Pill label={`${fileType(item, t)} · ${formatFileSize(item.size_bytes, t)}`} /></View>
-            {busy ? <ActivityIndicator accessibilityLabel={t("mobile.member.library.opening")} /> : null}
-          </View>
-          {rowError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{rowError}</Text> : null}
-        </Card>
-      </Pressable>
+        pillLabel={`${fileType(item, t)} · ${formatFileSize(item.size_bytes, t)}`}
+        subtitle={item.description ?? undefined}
+        title={item.title}
+      />
     }}
   />
 }
 
 const libraryStyles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.md },
-  pressable: { marginBottom: spacing.md, minHeight: 44 },
-  mediaCard: { marginBottom: 0 },
-  rowHeader: { alignItems: "center", flexDirection: "row", gap: spacing.md },
-  cover: { alignItems: "center", backgroundColor: colors.tint, borderRadius: 12, height: 92, justifyContent: "center", width: 68 },
-  coverText: { ...type.caption, color: colors.brand, fontWeight: "700" },
-  copy: { flex: 1, gap: spacing.xs },
-  description: { ...type.supporting, color: colors.muted },
+  content: { padding: spacing.lg, gap: spacing.xs },
 })

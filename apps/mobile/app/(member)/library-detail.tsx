@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react"
-import { Linking, Pressable, ScrollView, Text, TextInput, View } from "react-native"
+import { Linking, ScrollView, Text, TextInput, View } from "react-native"
 import { useLocalSearchParams } from "expo-router"
 import { ApiError } from "../../lib/api"
 import { useT } from "../../lib/locale"
 import { libraryApi, type LibraryResource } from "../../lib/library-api"
 import { ErrorState, LoadingState, styles } from "../../components/screen-state"
-import { Button, Card, Pill, SectionHeader, TextField } from "../../components/ui"
-import { spacing } from "../../theme"
+import { Button, Card, Pill, SectionHeader } from "../../components/ui"
+import { LibraryCover } from "../../components/library-media"
+import { colors, spacing, type } from "../../theme"
 
 // Detail with a device-browser access action (DEC-15: no WebView) and a numeric position save.
 export default function LibraryDetailScreen() {
@@ -75,16 +76,24 @@ export default function LibraryDetailScreen() {
   if (loading) return <LoadingState />
   if (error || !resource) return <ErrorState message={error || t("wiring.library.loadError")} onRetry={() => void load()} />
 
+  const typeLabel = t(`wiring.library.type.${resource.resourceType}`)
   return <ScrollView contentContainerStyle={[styles.content, { padding: spacing.lg, gap: spacing.md }]}>
-    <Card><View style={{ height: 180, alignItems: "center", justifyContent: "center", backgroundColor: "#EEF2FF", borderRadius: 12, marginBottom: spacing.md }}><Pill label={t(`wiring.library.type.${resource.resourceType}`)} /></View><Text style={styles.title}>{resource.title}</Text>
-    {resource.description ? <Text style={styles.text}>{resource.description}</Text> : null}
-    {resource.authorSpeaker ? <Text style={styles.text}>{resource.authorSpeaker}</Text> : null}</Card>
+    <Card style={{ gap: spacing.sm }}>
+      <LibraryCover kind={resource.resourceType} label={typeLabel} large />
+      <Text accessibilityRole="header" style={{ ...type.h2, color: colors.ink }}>{resource.title}</Text>
+      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: spacing.xs }}>
+        <Pill label={typeLabel} />
+        {resource.language ? <Pill label={resource.language.toUpperCase()} /> : null}
+      </View>
+      {resource.authorSpeaker ? <Text style={{ ...type.supporting, color: colors.muted }}>{resource.authorSpeaker}</Text> : null}
+      {resource.description ? <Text style={{ ...type.body, color: colors.muted }}>{resource.description}</Text> : null}
+    </Card>
 
     <Button loading={opening} disabled={opening} title={opening ? t("wiring.library.opening") : t("wiring.library.open")} onPress={() => void openResource()} icon="open-outline" />
     {actionError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{actionError}</Text> : null}
 
-    <View>
-      <Card><SectionHeader title={t("wiring.library.progressLabel")} />
+    <Card>
+      <SectionHeader title={t("wiring.library.progressLabel")} />
       <TextInput
         accessibilityLabel={t("wiring.library.progressLabel")}
         keyboardType="number-pad"
@@ -95,6 +104,6 @@ export default function LibraryDetailScreen() {
       <Button disabled={saveState === "saving"} loading={saveState === "saving"} title={t("wiring.library.progressSave")} onPress={() => void savePosition()} />
       {saveState === "saved" ? <Text accessibilityLiveRegion="polite" style={styles.text}>{t("wiring.library.progressSaved")}</Text> : null}
       {saveState === "error" ? <Text accessibilityLiveRegion="polite" style={styles.error}>{t("wiring.library.progressError")}</Text> : null}
-      </Card></View>
+    </Card>
   </ScrollView>
 }

@@ -1,14 +1,18 @@
-import { useEffect, useRef, useState } from "react"
-import { ScrollView, StyleSheet, Text, View } from "react-native"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { ScrollView, StyleSheet, View } from "react-native"
 import { router } from "expo-router"
 import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
 import { useT } from "../../lib/locale"
 import { createRequestGate } from "../../lib/request-gate"
-import { formatLocaleDate, type Locale } from "@church/config/i18n"
-import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
-import { Card, HeroBanner, QuickAction, SectionHeader } from "../../components/ui"
-import { colors, spacing, type } from "../../theme"
+import { EmptyState, ErrorState, LoadingState } from "../../components/screen-state"
+import { Card, SectionHeader } from "../../components/ui"
+import { HomeHero } from "../../components/home/home-hero"
+import { HomeAction } from "../../components/home/home-action"
+import { VerseCard } from "../../components/home/verse-card"
+import { AnnouncementCard, UpcomingCard, type AnnouncementItem, type UpcomingItem } from "../../components/home/home-cards"
+import { darDayIndex, darMidnightFromDateOnly } from "../../components/home/dar-time"
+import { colors, shadow, spacing } from "../../theme"
 
 type ServiceSession = {
   id: string
@@ -18,11 +22,28 @@ type ServiceSession = {
   serviceType: { id: string; name: string } | null
 }
 
-function formatServiceDate(sessionDate: string, locale: Locale) {
-  // Plain YYYY-MM-DD dates: parse as local midnight so the day does not shift.
-  const date = new Date(`${sessionDate}T00:00:00`)
-  if (Number.isNaN(date.getTime())) return sessionDate
-  return formatLocaleDate(date, locale, { weekday: "short", month: "short", day: "numeric" })
+type EventItem = { id?: string; title?: string | null; startsAt?: string | null; location?: string | null }
+
+const VERSE_COUNT = 7
+
+/** Strips markup and collapses whitespace so API bodies read as plain text. */
+function plainText(value: unknown): string {
+  if (typeof value !== "string") return ""
+  return value.replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim()
+}
+
+function firstText(...values: unknown[]): string {
+  for (const value of values) {
+    const text = plainText(value)
+    if (text) return text
+  }
+  return ""
+}
+
+function validDate(value: unknown): Date | null {
+  if (typeof value !== "string") return null
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
 }
 
 export default function HomeScreen() {
@@ -30,12 +51,14 @@ export default function HomeScreen() {
   const { t, locale } = useT()
   const [member, setMember] = useState<Record<string, unknown> | null>(null)
   const [announcements, setAnnouncements] = useState<Record<string, unknown>[]>([])
+  const [churchName, setChurchName] = useState<string | null>(null)
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading")
   const [error, setError] = useState("")
   const [attempt, setAttempt] = useState(0)
   const loadGate = useRef(createRequestGate()).current
-  // Separate from the profile load: a services failure should not hide the announcements.
+  // Separate from the profile load: a services or events failure should not hide the announcements.
   const [services, setServices] = useState<ServiceSession[]>([])
+  const [events, setEvents] = useState<EventItem[]>([])
   const [servicesStatus, setServicesStatus] = useState<"loading" | "ready" | "error">("loading")
   const [servicesAttempt, setServicesAttempt] = useState(0)
   const servicesGate = useRef(createRequestGate()).current
@@ -45,12 +68,17 @@ export default function HomeScreen() {
     // Rows from the previous church or role must not show while this context loads.
     setMember(null)
     setAnnouncements([])
+    setChurchName(null)
     setStatus("loading")
-    Promise.all([api.get<Record<string, unknown> | null>("/members/me"), api.get<Record<string, unknown>[]>("/communications/announcements")]).then(
-      ([memberData, announcementData]) => {
+    const churchId = typeof user?.churchId === "string" ? user.churchId : null
+    // The church name is display-only; a failure just falls back to a generic label.
+    const church = churchId ? api.get<Record<string, unknown> | null>(`/churches/${churchId}`).catch(() => null) : Promise.resolve(null)
+    Promise.all([api.get<Record<string, unknown> | null>("/members/me"), api.get<Record<string, unknown>[]>("/communications/announcements"), church]).then(
+      ([memberData, announcementData, churchData]) => {
         if (!isCurrent()) return
         setMember(memberData)
         setAnnouncements(Array.isArray(announcementData) ? announcementData : [])
+        setChurchName(typeof churchData?.name === "string" && churchData.name.trim() ? churchData.name.trim() : null)
         setStatus("ready")
       },
       (caught: unknown) => {
@@ -60,41 +88,110 @@ export default function HomeScreen() {
       },
     )
     return () => loadGate.invalidate()
+    // user?.churchId changes with contextKey, so contextKey is the reload trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contextKey, attempt, t, loadGate])
 
   useEffect(() => {
     const isCurrent = servicesGate.start()
     setServices([])
+    setEvents([])
     setServicesStatus("loading")
-    api.get<ServiceSession[]>("/attendance/sessions").then(
-      (sessions) => {
-        if (!isCurrent()) return
-        setServices(Array.isArray(sessions) ? sessions.slice(0, 3) : [])
-        setServicesStatus("ready")
-      },
-      () => { if (isCurrent()) setServicesStatus("error") },
-    )
+    Promise.all([
+      api.get<ServiceSession[]>("/attendance/sessions").catch(() => null),
+      api.get<EventItem[]>("/events").catch(() => null),
+    ]).then(([sessions, eventData]) => {
+      if (!isCurrent()) return
+      if (sessions === null && eventData === null) {
+        setServicesStatus("error")
+        return
+      }
+      setServices(Array.isArray(sessions) ? sessions : [])
+      setEvents(Array.isArray(eventData) ? eventData : [])
+      setServicesStatus("ready")
+    })
     return () => servicesGate.invalidate()
   }, [contextKey, servicesAttempt, servicesGate])
 
+  // Next service or event, earliest first. Dates are judged on Dar es Salaam calendar days.
+  const upcoming = useMemo<UpcomingItem | null>(() => {
+    const todayIndex = darDayIndex(new Date())
+    const candidates: UpcomingItem[] = []
+    for (const event of events) {
+      const at = validDate(event.startsAt)
+      if (!at || darDayIndex(at) < todayIndex) continue
+      candidates.push({
+        title: typeof event.title === "string" && event.title.trim() ? event.title : t("mobile.member.events.fallbackTitle"),
+        place: typeof event.location === "string" && event.location.trim() ? event.location : churchName,
+        at,
+        showTime: true,
+        route: event.id ? `/(member)/events/${event.id}` : "/(member)/events",
+      })
+    }
+    for (const service of services) {
+      const at = darMidnightFromDateOnly(service.sessionDate)
+      if (Number.isNaN(at.getTime()) || darDayIndex(at) < todayIndex) continue
+      candidates.push({
+        title: service.title || service.serviceType?.name || t("mobile.member.home.serviceFallback"),
+        place: churchName,
+        at,
+        showTime: false,
+        route: "/(member)/events",
+      })
+    }
+    candidates.sort((a, b) => a.at.getTime() - b.at.getTime())
+    return candidates[0] ?? null
+  }, [events, services, churchName, t])
+
+  const announcementItems = useMemo<AnnouncementItem[]>(() => announcements.map((item, index) => ({
+    id: String(item.id ?? index),
+    title: firstText(item.subject, item.name, item.title) || t("mobile.member.home.announcementFallback"),
+    excerpt: firstText(item.body, item.content),
+    sentAt: validDate(item.sentAt),
+  })), [announcements, t])
+
   if (status === "loading") return <LoadingState />
   if (status === "error") return <ErrorState message={error} onRetry={() => setAttempt((value) => value + 1)} />
-  const name = typeof user?.name === "string" ? user.name : typeof member?.name === "string" ? member.name : t("mobile.member.home.guestName")
+
+  const fullName = typeof user?.name === "string" && user.name.trim() ? user.name.trim() : typeof member?.name === "string" && member.name.trim() ? member.name.trim() : ""
+  const firstName = fullName ? fullName.split(/\s+/)[0] : t("mobile.member.home.guestName")
+  const activeRole = typeof user?.activeRole === "string" && user.activeRole ? user.activeRole : "member"
+  const roleLabel = activeRole === "member" ? t("mobile.member.home.roleMember") : activeRole.charAt(0).toUpperCase() + activeRole.slice(1)
+  const displayChurch = churchName ?? t("mobile.member.home.churchFallback")
+  const verseIndex = (darDayIndex(new Date()) + 4) % VERSE_COUNT // 1970-01-01 was a Thursday; index 0 is Sunday.
+  const now = new Date()
+
   return <ScrollView style={homeStyles.screen} contentContainerStyle={homeStyles.content}>
-    <HeroBanner title={t("mobile.member.home.welcome", { name })} subtitle={t("mobile.member.home.intro")} />
-    <View style={homeStyles.actions}>
-      <QuickAction icon="heart-outline" label={t("mobile.member.home.prayerButton")} onPress={() => router.push("/(member)/prayer")} />
-      <QuickAction icon="library-outline" label={t("wiring.home.libraryButton")} onPress={() => router.push("/(member)/library-catalog")} />
-      <QuickAction icon="mail-outline" label={t("wiring.home.inboxButton")} onPress={() => router.push("/(member)/inbox")} />
-      {isStaff ? <QuickAction icon="people-outline" label={t("wiring.spaces.toStaff")} onPress={() => setSpace("staff")} /> : null}
+    <HomeHero greeting={t("mobile.member.home.welcome", { name: firstName })} roleLine={`${roleLabel} · ${displayChurch}`} churchName={displayChurch} />
+    <View style={homeStyles.body}>
+    <View style={homeStyles.actionsWrap}>
+      <View style={[homeStyles.actions, shadow]}>
+        <HomeAction icon="heart-outline" label={t("mobile.member.home.prayerButton")} onPress={() => router.push("/(member)/prayer")} />
+        <HomeAction icon="library-outline" label={t("wiring.home.libraryButton")} onPress={() => router.push("/(member)/library-catalog")} />
+        <HomeAction icon="mail-outline" label={t("wiring.home.inboxButton")} onPress={() => router.push("/(member)/inbox")} />
+        <HomeAction icon="calendar-outline" label={t("mobile.member.tabs.events")} onPress={() => router.push("/(member)/events")} />
+        {isStaff ? <HomeAction icon="people-outline" label={t("wiring.spaces.toStaff")} onPress={() => setSpace("staff")} /> : null}
+      </View>
     </View>
-    <Card><SectionHeader title={t("mobile.member.home.servicesHeading")} />
-      {servicesStatus === "loading" ? <LoadingState /> : servicesStatus === "error" ? <ErrorState message={t("mobile.member.home.servicesError")} onRetry={() => setServicesAttempt((value) => value + 1)} /> : services.length ? services.map((service) => <View key={service.id} style={homeStyles.item}><Text style={homeStyles.itemTitle}>{service.title || service.serviceType?.name || t("mobile.member.home.serviceFallback")}</Text><Text style={homeStyles.meta}>{formatServiceDate(service.sessionDate, locale)}</Text></View>) : <EmptyState message={t("mobile.member.home.noServices")} />}
-    </Card>
-    <Card><SectionHeader title={t("mobile.member.home.announcementsHeading")} />
-      {announcements.length ? announcements.map((item, index) => <View key={String(item.id ?? index)} style={homeStyles.item}><Text style={homeStyles.itemTitle}>{typeof item.title === "string" ? item.title : t("mobile.member.home.announcementFallback")}</Text>{typeof item.content === "string" ? <Text style={homeStyles.meta}>{item.content}</Text> : null}</View>) : <EmptyState message={t("mobile.member.home.noAnnouncements")} />}
-    </Card>
+    <VerseCard heading={t("mobile.member.home.verseHeading")} text={t(`mobile.member.home.verseText.${verseIndex}` as "mobile.member.home.verseText.0")} reference={t(`mobile.member.home.verseRef.${verseIndex}` as "mobile.member.home.verseRef.0")} />
+    <View>
+      <SectionHeader title={t("mobile.member.home.upcomingHeading")} actionLabel={t("mobile.member.home.seeAll")} onAction={() => router.push("/(member)/events")} />
+      {servicesStatus === "loading" ? <LoadingState /> : servicesStatus === "error" ? <ErrorState message={t("mobile.member.home.servicesError")} onRetry={() => setServicesAttempt((value) => value + 1)} /> : upcoming ? <UpcomingCard item={upcoming} locale={locale} onPress={() => router.push(upcoming.route as "/(member)/events")} /> : <Card><EmptyState message={t("mobile.member.home.noUpcoming")} /></Card>}
+    </View>
+    <View>
+      <SectionHeader title={t("mobile.member.home.announcementsHeading")} />
+      {announcementItems.length ? <View style={homeStyles.stack}>{announcementItems.map((item) => <AnnouncementCard key={item.id} item={item} locale={locale} now={now} t={t} />)}</View> : <Card><EmptyState message={t("mobile.member.home.noAnnouncements")} /></Card>}
+    </View>
+    </View>
   </ScrollView>
 }
 
-const homeStyles = StyleSheet.create({ screen: { flex: 1, backgroundColor: colors.canvas }, content: { padding: spacing.lg, gap: spacing.lg }, actions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", backgroundColor: colors.surface, borderRadius: 12 }, item: { paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.xs }, itemTitle: { ...type.body, color: colors.ink, fontWeight: "600" }, meta: { ...type.supporting, color: colors.muted } })
+const homeStyles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.canvas },
+  content: { paddingBottom: spacing.xxxl },
+  body: { paddingHorizontal: spacing.lg, gap: spacing.lg },
+  // Pulls the card up over the hero's rounded bottom edge.
+  actionsWrap: { marginTop: -48 },
+  actions: { flexDirection: "row", justifyContent: "space-between", backgroundColor: colors.surface, borderRadius: 16, paddingVertical: spacing.md, paddingHorizontal: spacing.sm, borderWidth: 1, borderColor: colors.border, elevation: 4 },
+  stack: { gap: spacing.md },
+})

@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState } from "react"
-import { ActivityIndicator, FlatList, Pressable, Text, View } from "react-native"
-import { Card, ListRow, Pill } from "../../components/ui"
+import { FlatList, Pressable, Text, View } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import { Card, Pill } from "../../components/ui"
 import { colors, spacing, type } from "../../theme"
 import { ApiError } from "../../lib/api"
 import { useT } from "../../lib/locale"
-import { formatLocaleDate } from "@church/config/i18n"
 import { notificationsApi, type NotificationItem } from "../../lib/library-api"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
+import { formatRelativeTime } from "../../components/events/format"
+import { describeNotification } from "../../components/events/model"
 
 // Per-recipient inbox. Opening an item marks it read; a failed mark keeps the item unread and reports it.
 // Targets are not followed yet (the typed target descriptor needs its own route resolver).
@@ -99,27 +101,26 @@ export default function InboxScreen() {
     ListFooterComponent={cursor ? <Pressable accessibilityRole="button" onPress={() => void loadMore()} style={{ minHeight: 44, justifyContent: "center", alignItems: "center" }}>
       <Text style={styles.heading}>{t("wiring.inbox.loadMore")}</Text>
     </Pressable> : undefined}
-    renderItem={({ item }) => {
-      const unread = item.readAt == null
-      return <Card onPress={() => void markRead(item)} style={{ marginBottom: spacing.sm }}>
-        <ListRow
-          icon="notifications-outline"
-          title={t("wiring.inbox.item")}
-          subtitle={formatLocaleDate(item.createdAt, locale, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
-          onPress={() => void markRead(item)}
-          trailing={unread ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.brand }} /> : undefined}
-        />
-      </Card>
-      /*
-      return <Pressable
-        accessibilityHint={unread ? t("wiring.inbox.unreadLabel") : undefined}
-        accessibilityRole="button"
-        onPress={() => void markRead(item)}
-        style={styles.card}
-      >
-        <Text style={styles.heading}>{unread ? `● ${t("wiring.inbox.item")}` : t("wiring.inbox.item")}</Text>
-        <Text style={styles.text}>{formatLocaleDate(item.createdAt, locale, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}</Text>
-      </Pressable> */
-    }}
+    renderItem={({ item }) => <NotificationRow item={item} onPress={() => void markRead(item)} />}
   />
+}
+
+function NotificationRow({ item, onPress }: { item: NotificationItem; onPress: () => void }) {
+  const { t, locale } = useT()
+  const unread = item.readAt == null
+  const info = describeNotification(item.templateKey, item.templateData, locale, t("wiring.inbox.item"))
+  const when = formatRelativeTime(item.createdAt, locale)
+  return <Card onPress={onPress} style={{ marginBottom: spacing.sm, padding: spacing.md }}>
+    <View accessibilityLabel={unread ? t("wiring.inbox.unreadLabel") : undefined} style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
+      <View style={{ width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center", backgroundColor: unread ? colors.brand : colors.tint }}>
+        <Ionicons name={info.icon} size={20} color={unread ? colors.surface : colors.brand} />
+      </View>
+      <View style={{ flex: 1, gap: spacing.xs }}>
+        <Text numberOfLines={2} style={{ ...type.body, color: colors.ink, fontWeight: unread ? "700" : "500" }}>{info.title}</Text>
+        {info.body ? <Text numberOfLines={2} style={{ ...type.supporting, color: unread ? colors.ink : colors.muted }}>{info.body}</Text> : null}
+        {when ? <Text style={{ ...type.caption, color: colors.muted }}>{when}</Text> : null}
+      </View>
+      {unread ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.brand }} /> : null}
+    </View>
+  </Card>
 }

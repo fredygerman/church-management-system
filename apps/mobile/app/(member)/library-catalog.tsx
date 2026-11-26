@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useState } from "react"
-import { ActivityIndicator, FlatList, Pressable, Text, TextInput, View } from "react-native"
+import { useCallback, useEffect, useMemo, useState } from "react"
+import { ActivityIndicator, FlatList, Pressable, ScrollView, Text, View } from "react-native"
 import { useRouter } from "expo-router"
 import { ApiError } from "../../lib/api"
 import { useT } from "../../lib/locale"
 import { libraryApi, type LibraryResource } from "../../lib/library-api"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
-import { Card, Pill } from "../../components/ui"
+import { Button, Card, TextField } from "../../components/ui"
+import { CategoryChip, LibraryMediaRow } from "../../components/library-media"
 import { colors, spacing, type } from "../../theme"
 
 // Minimal catalogue: server-side search and cursor pagination. Opening a row goes to library-detail.
+// Category chips filter the pages already loaded; the server does not filter by category.
 export default function LibraryCatalogScreen() {
   const { t } = useT()
   const router = useRouter()
@@ -16,6 +18,7 @@ export default function LibraryCatalogScreen() {
   const [cursor, setCursor] = useState<string | null>(null)
   const [search, setSearch] = useState("")
   const [appliedQuery, setAppliedQuery] = useState("")
+  const [category, setCategory] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState("")
@@ -55,44 +58,58 @@ export default function LibraryCatalogScreen() {
     }
   }, [appliedQuery, cursor, loadingMore, t])
 
+  const categories = useMemo(
+    () => Array.from(new Set(items.flatMap((item) => item.categories ?? []))).sort((a, b) => a.localeCompare(b)),
+    [items],
+  )
+  const visibleItems = useMemo(
+    () => (category ? items.filter((item) => item.categories?.includes(category)) : items),
+    [category, items],
+  )
+
   if (loading && items.length === 0) return <LoadingState />
   if (error && items.length === 0) return <ErrorState message={error} onRetry={() => void load(appliedQuery)} />
 
   return <FlatList
     contentContainerStyle={[styles.content, { padding: spacing.lg }]}
-    data={items}
+    data={visibleItems}
     keyExtractor={(item) => item.id}
     keyboardShouldPersistTaps="handled"
-    ListEmptyComponent={<EmptyState message={appliedQuery ? t("wiring.library.noMatches") : t("wiring.library.empty")} />}
-    ListHeaderComponent={<View>
-      <Text style={styles.formLabel}>{t("wiring.library.search")}</Text>
-      <TextInput
-        accessibilityLabel={t("wiring.library.search")}
+    ListEmptyComponent={<EmptyState message={appliedQuery || category ? t("wiring.library.noMatches") : t("wiring.library.empty")} />}
+    ListHeaderComponent={<View style={{ gap: spacing.md, marginBottom: spacing.md }}>
+      <TextField
         autoCapitalize="none"
         autoCorrect={false}
+        label={t("wiring.library.search")}
         onChangeText={setSearch}
         onSubmitEditing={() => setAppliedQuery(search.trim())}
+        placeholder={t("wiring.library.search")}
         returnKeyType="search"
-        style={styles.input}
         value={search}
       />
-      <Pressable accessibilityRole="button" onPress={() => setAppliedQuery(search.trim())} style={{ minHeight: 44, marginBottom: spacing.lg }}><Card><Text style={styles.heading}>{t("wiring.library.searchButton")}</Text></Card></Pressable>
+      <Button title={t("wiring.library.searchButton")} variant="secondary" icon="search-outline" onPress={() => setAppliedQuery(search.trim())} />
+      {categories.length > 0 ? <ScrollView contentContainerStyle={{ gap: spacing.sm, paddingVertical: spacing.xs }} horizontal showsHorizontalScrollIndicator={false}>
+        <CategoryChip label={t("mobile.member.library.all")} onPress={() => setCategory(null)} selected={category === null} />
+        {categories.map((name) => <CategoryChip key={name} label={name} onPress={() => setCategory(name)} selected={category === name} />)}
+      </ScrollView> : null}
       {error ? <Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text> : null}
     </View>}
     ListFooterComponent={<View>
       {moreError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{moreError}</Text> : null}
       {cursor ? <Pressable accessibilityRole="button" disabled={loadingMore} onPress={() => void loadMore()} style={{ minHeight: 44, marginVertical: spacing.md }}>
         <Card>
-        {loadingMore ? <ActivityIndicator /> : <Text style={styles.heading}>{t("wiring.library.loadMore")}</Text>}
+          {loadingMore ? <ActivityIndicator color={colors.brand} /> : <Text style={{ ...type.body, color: colors.brand, fontWeight: "600", textAlign: "center" }}>{t("wiring.library.loadMore")}</Text>}
         </Card>
       </Pressable> : null}
     </View>}
-    renderItem={({ item }) => <Pressable
-      accessibilityRole="button"
+    renderItem={({ item }) => <LibraryMediaRow
+      accessLabel={t("mobile.member.library.available")}
+      coverLabel={t(`wiring.library.type.${item.resourceType}`)}
+      kind={item.resourceType}
       onPress={() => router.push({ pathname: "/library-detail", params: { id: item.id } })}
-      style={{ minHeight: 44, marginBottom: spacing.md }}
-    >
-      <Card><View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}><View style={{ width: 68, height: 92, borderRadius: 12, backgroundColor: colors.tint, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.caption, color: colors.brand, fontWeight: "700" }}>{item.resourceType.slice(0, 3).toUpperCase()}</Text></View><View style={{ flex: 1, gap: spacing.xs }}><Text style={styles.heading}>{item.title}</Text>{item.description ? <Text style={styles.text}>{item.description}</Text> : null}<Pill label={t(`wiring.library.type.${item.resourceType}`)} /></View></View></Card>
-    </Pressable>}
+      pillLabel={t(`wiring.library.type.${item.resourceType}`)}
+      subtitle={item.authorSpeaker ?? item.description ?? undefined}
+      title={item.title}
+    />}
   />
 }
