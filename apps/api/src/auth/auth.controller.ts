@@ -15,6 +15,7 @@ import {
   UnauthorizedException,
   Req,
 } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards';
@@ -45,6 +46,22 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   async login(@Body() body: { email?: string; password?: string }) {
     return this.authService.loginWithPassword(body.email ?? '', body.password ?? '');
+  }
+
+  @Public()
+  @Post('password-recovery')
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
+  @HttpCode(HttpStatus.ACCEPTED)
+  async requestPasswordRecovery(@Body() body: { email?: string }, @Req() request: any) {
+    return this.authService.requestPasswordRecovery(body?.email ?? '', request?.ip ?? 'unknown');
+  }
+
+  @Public()
+  @Post('password-reset')
+  @Throttle({ default: { limit: 10, ttl: 60_000 } })
+  @HttpCode(HttpStatus.OK)
+  async confirmPasswordRecovery(@Body() body: { token?: string; newPassword?: string }) {
+    return this.authService.confirmPasswordRecovery(body?.token ?? '', body?.newPassword ?? '');
   }
 
   /**

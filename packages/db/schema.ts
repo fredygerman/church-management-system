@@ -130,6 +130,16 @@ import {
 import { resourceProgress, type ResourceProgress, type NewResourceProgress } from "./tables/resourceProgress"
 import { publicChurchProfiles, type PublicChurchProfile, type NewPublicChurchProfile } from "./tables/publicChurchProfiles"
 import { inboxNotifications, type InboxNotification, type NewInboxNotification } from "./tables/inboxNotifications"
+import {
+  oauthProviderIdentities,
+  type OauthProviderIdentity,
+  type NewOauthProviderIdentity,
+} from "./tables/oauthProviderIdentities"
+import {
+  passwordRecoveryTokens,
+  type PasswordRecoveryToken,
+  type NewPasswordRecoveryToken,
+} from "./tables/passwordRecoveryTokens"
 
 // Import all relations
 import {
@@ -157,6 +167,8 @@ import {
   messageDeliveriesRelations,
   campaignEventsRelations,
   prayerRequestsRelations,
+  oauthProviderIdentitiesRelations,
+  passwordRecoveryTokensRelations,
 } from "./tables/relations"
 
 export {
@@ -240,6 +252,8 @@ export {
   networks,
   publicChurchProfiles,
   inboxNotifications,
+  oauthProviderIdentities,
+  passwordRecoveryTokens,
   aiConversations,
   aiFeedback,
   aiFeedbackRatingEnum,
@@ -268,6 +282,8 @@ export {
   messageDeliveriesRelations,
   campaignEventsRelations,
   prayerRequestsRelations,
+  oauthProviderIdentitiesRelations,
+  passwordRecoveryTokensRelations,
   // Type exports
   type User,
   type NewUser,
@@ -359,4 +375,8 @@ export {
   type NewPublicChurchProfile,
   type InboxNotification,
   type NewInboxNotification,
+  type OauthProviderIdentity,
+  type NewOauthProviderIdentity,
+  type PasswordRecoveryToken,
+  type NewPasswordRecoveryToken,
 }

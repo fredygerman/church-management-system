@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { FileUploadController, MULTIPART_LIMITS } from "./file-upload.controller";
 import { FileUploadService } from "./file-upload.service";
+import { NotificationsService } from "../notifications/notifications.service";
 
 describe("FileUploadController", () => {
   let controller: FileUploadController;
@@ -8,7 +9,7 @@ describe("FileUploadController", () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [FileUploadController],
-      providers: [FileUploadService],
+      providers: [FileUploadService, { provide: NotificationsService, useValue: {} }],
     }).compile();
 
     controller = module.get<FileUploadController>(FileUploadController);

@@ -25,6 +25,7 @@ import {
   userChurchMemberships,
 } from '@church/db';
 import { roleHasPermission } from '../auth/types/permission.types';
+import { NotificationsService } from '../notifications/notifications.service';
 
 // Local imports
 import { ExceptionConstants } from '../core/exceptions/exceptions.constants';
@@ -145,7 +146,7 @@ export class FileUploadService {
     secretAccessKey: config.s3SecretKeyId,
   };
 
-  constructor() {
+  constructor(private readonly notificationsService: NotificationsService = new NotificationsService()) {
     this.maxFileSize = config.maxFileSizeMB * 1024 * 1024;
 
     // Create S3Client configuration
@@ -705,6 +706,17 @@ export class FileUploadService {
       toStatus: targetStatus,
       createdAt: now,
     });
+    if (targetStatus === 'published') {
+      await this.notificationsService.notifyChurchMembers({
+        churchId: updated.churchId,
+        type: 'document_published',
+        templateKey: 'library.document_published',
+        templateData: { title: updated.title },
+        targetType: 'library_resource',
+        targetParams: { resourceId: updated.id },
+        sourceKey: `document-published:${updated.id}`,
+      });
+    }
     return this.toLibraryResource(updated);
   }
 

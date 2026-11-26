@@ -19,6 +19,16 @@ export interface NotificationListQuery {
   unreadOnly?: boolean
 }
 
+export interface CreateChurchNotificationInput {
+  churchId: string
+  type: string
+  templateKey: string
+  templateData?: Record<string, string | number | boolean | null>
+  targetType?: string | null
+  targetParams?: Record<string, string | number | boolean | null> | null
+  sourceKey: string
+}
+
 @Injectable()
 export class NotificationsService {
   async list(userId: string, input: NotificationListQuery = {}) {
@@ -90,6 +100,36 @@ export class NotificationsService {
       ? await query.onConflictDoNothing({ target: inboxNotifications.sourceKey }).returning()
       : await query.returning()
     return created ? this.toResponse(created) : null
+  }
+
+  async notifyChurchMembers(input: CreateChurchNotificationInput) {
+    const memberships = await db.query.userChurchMemberships.findMany({
+      where: and(
+        eq(userChurchMemberships.churchId, input.churchId),
+        eq(userChurchMemberships.status, 'active'),
+        isNull(userChurchMemberships.deletedAt),
+      ),
+    })
+    const rows = memberships.map((membership: any) => ({
+      userId: membership.userId,
+      churchId: input.churchId,
+      type: input.type,
+      templateKey: input.templateKey,
+      templateData: input.templateData,
+      targetType: input.targetType ?? null,
+      targetParams: input.targetParams ?? null,
+      // The unique index is global, so the recipient is part of the stable
+      // source key. This deduplicates retries without collapsing the audience.
+      sourceKey: `${input.sourceKey}:${membership.userId}`,
+    }))
+
+    if (rows.length === 0) return []
+    const created = await db
+      .insert(inboxNotifications)
+      .values(rows)
+      .onConflictDoNothing({ target: inboxNotifications.sourceKey })
+      .returning()
+    return created.map((row: any) => this.toResponse(row))
   }
 
   private async getVisibleNotification(userId: string, id: string) {

@@ -110,6 +110,7 @@ export default withAuth(
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|auth|signin|.*\\.(?:png|jpg|jpeg|gif|svg|webp)).*)",
+    // churches(/...)? is the public church directory (no sign-in required).
+    "/((?!api|_next/static|_next/image|favicon.ico|auth|signin|churches(?:/|$)|.*\\.(?:png|jpg|jpeg|gif|svg|webp)).*)",
   ],
 }

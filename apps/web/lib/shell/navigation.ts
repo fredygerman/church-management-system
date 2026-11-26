@@ -6,7 +6,7 @@ export type Space = "member" | "staff"
 export interface SpaceDestination {
   key: string
   // Message key from the shared catalogue; no English text here.
-  labelKey: "nav.home" | "nav.church" | "nav.events" | "nav.library" | "portal.nav.profile" | "nav.members" | "nav.content" | "nav.more"
+  labelKey: "nav.home" | "nav.church" | "nav.events" | "nav.library" | "portal.nav.profile" | "nav.members" | "nav.content" | "nav.more" | "wiring.nav.resources" | "wiring.nav.inbox"
   segment: string // path after /{churchId}/
 }
 
@@ -16,6 +16,8 @@ export const MEMBER_DESTINATIONS: SpaceDestination[] = [
   { key: "events", labelKey: "nav.events", segment: "portal/events" },
   { key: "library", labelKey: "nav.library", segment: "portal/library" },
   { key: "profile", labelKey: "portal.nav.profile", segment: "portal/profile" },
+  { key: "resources", labelKey: "wiring.nav.resources", segment: "portal/library/resources" },
+  { key: "inbox", labelKey: "wiring.nav.inbox", segment: "portal/inbox" },
 ]
 
 export const STAFF_DESTINATIONS: SpaceDestination[] = [

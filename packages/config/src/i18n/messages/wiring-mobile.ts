@@ -34,6 +34,10 @@ export const wiringMobileMessages = {
     'wiring.inbox.unreadCount': 'Unread: {count}',
     'wiring.inbox.unreadLabel': 'Unread notification',
     'wiring.inbox.item': 'Notification',
+    'wiring.home.libraryButton': 'Open library',
+    'wiring.home.inboxButton': 'Open inbox',
+    'wiring.spaces.toStaff': 'Switch to staff',
+    'wiring.spaces.toMember': 'Switch to member',
   },
   sw: {
     'wiring.library.title': 'Maktaba',
@@ -69,5 +73,9 @@ export const wiringMobileMessages = {
     'wiring.inbox.unreadCount': 'Hazijasomwa: {count}',
     'wiring.inbox.unreadLabel': 'Arifa ambayo haijasomwa',
     'wiring.inbox.item': 'Arifa',
+    'wiring.home.libraryButton': 'Fungua maktaba',
+    'wiring.home.inboxButton': 'Fungua kikasha',
+    'wiring.spaces.toStaff': 'Badili kwenda kwa wafanyakazi',
+    'wiring.spaces.toMember': 'Badili kwenda kwa washiriki',
   },
 } as const

@@ -28,6 +28,10 @@ import {
   campaignEvents,
 } from "./communications"
 import { prayerRequests } from "./prayerRequests"
+import { oauthProviderIdentities } from "./oauthProviderIdentities"
+import { passwordRecoveryTokens } from "./passwordRecoveryTokens"
+export { oauthProviderIdentitiesRelations } from "./oauthProviderIdentities"
+export { passwordRecoveryTokensRelations } from "./passwordRecoveryTokens"
 
 // Church relations
 export const churchesRelations = relations(churches, ({ many }) => ({
@@ -171,6 +175,8 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     references: [zones.id],
   }),
   churchMemberships: many(userChurchMemberships),
+  oauthProviderIdentities: many(oauthProviderIdentities),
+  passwordRecoveryTokens: many(passwordRecoveryTokens),
 }))
 
 export const userChurchMembershipsRelations = relations(userChurchMemberships, ({ one, many }) => ({

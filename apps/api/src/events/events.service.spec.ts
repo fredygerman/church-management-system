@@ -22,6 +22,7 @@ jest.mock('@church/db', () => {
     events: [],
     eventRsvps: [],
     members: [],
+    memberships: [],
   }
 
   const makeColumnRef = (tableName: string, keys: string[]) => {
@@ -39,6 +40,9 @@ jest.mock('@church/db', () => {
   ])
   const members = makeColumnRef('members', [
     'id', 'churchId', 'firstName', 'lastName', 'phone', 'email', 'createdAt', 'updatedAt', 'deletedAt',
+  ])
+  const userChurchMemberships = makeColumnRef('memberships', [
+    'userId', 'churchId', 'status', 'deletedAt',
   ])
 
   const tableArr = (table: any) => store[table.__table]
@@ -118,6 +122,7 @@ jest.mock('@church/db', () => {
       events: { findMany: findMany(events) },
       eventRsvps: { findMany: findMany(eventRsvps) },
       members: { findMany: findMany(members) },
+      userChurchMemberships: { findMany: findMany(userChurchMemberships) },
     },
   }
 
@@ -126,6 +131,7 @@ jest.mock('@church/db', () => {
     events,
     eventRsvps,
     members,
+    userChurchMemberships,
     __reset() {
       store.events = []
       store.eventRsvps = []

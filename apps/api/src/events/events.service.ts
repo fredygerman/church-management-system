@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common'
 import { eq, and, or, isNull, gte, lte, inArray } from 'drizzle-orm'
 import { db, events, eventRsvps, members, type Event, type EventRsvp } from '@church/db'
+import { NotificationsService } from '../notifications/notifications.service'
 
 export type EventScope = 'church' | 'network'
 export type EventStatus = 'draft' | 'published' | 'cancelled'
@@ -41,6 +42,7 @@ const now = () => new Date()
 
 @Injectable()
 export class EventsService {
+  constructor(private readonly notificationsService: NotificationsService = new NotificationsService()) {}
   /**
    * The single place a read predicate widens past the active church: rows the
    * church owns, OR published network events from any church. Used for every
@@ -66,6 +68,17 @@ export class EventsService {
 
   async createEvent(data: CreateEventInput): Promise<Event> {
     const [event] = await db.insert(events).values(data as any).returning()
+    if (event) {
+      await this.notificationsService.notifyChurchMembers({
+        churchId: event.churchId,
+        type: 'event_created',
+        templateKey: 'events.created',
+        templateData: { title: event.title },
+        targetType: 'event',
+        targetParams: { eventId: event.id },
+        sourceKey: `event-created:${event.id}`,
+      })
+    }
     return event
   }
 

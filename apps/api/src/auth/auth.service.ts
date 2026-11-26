@@ -4,12 +4,14 @@ import {
   ConflictException,
   ForbiddenException,
   Logger,
+  HttpException,
+  HttpStatus,
   NotFoundException,
   OnModuleInit,
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { randomUUID } from 'crypto';
+import { createHash, randomBytes, randomUUID } from 'crypto';
 import { JwtService } from '@nestjs/jwt';
 import { DatabaseService } from '../database/database.service';
 import { and, asc, desc, eq, gt, isNull, lt, sql } from 'drizzle-orm';
@@ -21,6 +23,8 @@ import {
   type Church,
   userChurchMemberships,
   type UserChurchMembership,
+  oauthProviderIdentities,
+  passwordRecoveryTokens,
 } from '../database/schema';
 import { Database } from '../database/interfaces/database.interfaces';
 import config from '../config';
@@ -35,6 +39,11 @@ export interface AuthTokens {
 const REFRESH_TOKEN_TTL_SECONDS = 604800; // 7 days
 // A replay this soon after rotation is treated as a parallel refresh, not theft.
 const REFRESH_REUSE_GRACE_MS = 10_000;
+const PASSWORD_RECOVERY_TOKEN_TTL_MS = 15 * 60 * 1000;
+const PASSWORD_RECOVERY_RATE_LIMIT = 5;
+const PASSWORD_RECOVERY_RATE_WINDOW_MS = 60 * 60 * 1000;
+const PASSWORD_RECOVERY_GENERIC_MESSAGE =
+  'If an account exists, recovery instructions will be available through the configured delivery channel.';
 
 // Root db or the transaction handle used during rotation.
 type DbExecutor = Pick<Database, 'select' | 'insert' | 'update' | 'delete'>;
@@ -74,6 +83,7 @@ export interface ActiveMembershipContext {
 export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
   private db: Database;
+  private readonly recoveryRateLimits = new Map<string, { count: number; resetAt: number }>();
 
   constructor(
     private readonly databaseService: DatabaseService,
@@ -456,7 +466,39 @@ export class AuthService implements OnModuleInit {
   async oauthLogin(
     identity: VerifiedGoogleIdentity,
   ): Promise<{ user: Omit<User, 'passwordHash'> | null; isNewUser: boolean }> {
+    const provider = 'google';
     const email = identity.email.trim().toLowerCase();
+
+    const [linkedIdentity] = await this.db
+      .select()
+      .from(oauthProviderIdentities)
+      .where(
+        and(
+          eq(oauthProviderIdentities.provider, provider),
+          eq(oauthProviderIdentities.providerSubject, identity.subject),
+        ),
+      )
+      .limit(1);
+
+    if (linkedIdentity) {
+      const [mappedUser] = await this.db
+        .select()
+        .from(users)
+        .where(and(eq(users.id, linkedIdentity.userId), isNull(users.deletedAt)))
+        .limit(1);
+
+      if (!mappedUser?.isActive || mappedUser.passwordHash) {
+        throw new UnauthorizedException('Invalid Google identity proof');
+      }
+
+      if (identity.picture && mappedUser.picture !== identity.picture) {
+        await this.db
+          .update(users)
+          .set({ picture: identity.picture })
+          .where(eq(users.id, mappedUser.id));
+      }
+      return { user: this.withoutPassword(mappedUser), isNewUser: false };
+    }
 
     // Check if user exists
     const [existingUser] = await this.db
@@ -484,6 +526,10 @@ export class AuthService implements OnModuleInit {
           .set({ picture: identity.picture })
           .where(eq(users.id, existingUser.id));
       }
+      await this.db
+        .insert(oauthProviderIdentities)
+        .values({ userId: existingUser.id, provider, providerSubject: identity.subject })
+        .returning();
       return { user: this.withoutPassword(existingUser), isNewUser: false };
     }
 
@@ -504,8 +550,133 @@ export class AuthService implements OnModuleInit {
       throw new BadRequestException('Failed to create user');
     }
 
+    await this.db
+      .insert(oauthProviderIdentities)
+      .values({ userId: createdUser.id, provider, providerSubject: identity.subject })
+      .returning();
+
     this.logger.log(`New OAuth user created: ${createdUser.id}`);
     return { user: this.withoutPassword(createdUser), isNewUser: true };
+  }
+
+  async requestPasswordRecovery(email: string, ipAddress = 'unknown') {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      throw new BadRequestException('A valid email address is required');
+    }
+
+    this.assertPasswordRecoveryRateLimit(`ip:${ipAddress}`);
+    this.assertPasswordRecoveryRateLimit(`email:${normalizedEmail}`);
+
+    const genericResponse = { message: PASSWORD_RECOVERY_GENERIC_MESSAGE };
+    if (process.env.PASSWORD_RECOVERY_DELIVERY_CONFIGURED !== 'true') {
+      this.logger.log('Password recovery requested while delivery is not configured');
+      return genericResponse;
+    }
+
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(and(eq(users.email, normalizedEmail), isNull(users.deletedAt)))
+      .limit(1);
+
+    // OAuth-only and inactive accounts intentionally follow the same response
+    // path as unknown accounts. Recovery never creates a password credential.
+    if (!user?.isActive || !user.passwordHash) {
+      this.logger.log('Password recovery request did not match a password account');
+      return genericResponse;
+    }
+
+    const rawToken = randomBytes(32).toString('base64url');
+    const tokenHash = this.hashRecoveryToken(rawToken);
+    const expiresAt = new Date(Date.now() + PASSWORD_RECOVERY_TOKEN_TTL_MS);
+
+    await this.db
+      .delete(passwordRecoveryTokens)
+      .where(and(eq(passwordRecoveryTokens.userId, user.id), lt(passwordRecoveryTokens.expiresAt, new Date())));
+    await this.db
+      .insert(passwordRecoveryTokens)
+      .values({ userId: user.id, tokenHash, expiresAt })
+      .returning();
+
+    // DEC-05 keeps external sending disabled. A configured delivery capability
+    // may consume this opaque URL later; the token is never returned or logged.
+    const resetUrl = new URL('/auth/reset-password', config.frontendUrl);
+    resetUrl.searchParams.set('token', rawToken);
+    this.logger.log(`Password recovery flow prepared for configured delivery for user ${user.id}`);
+    void resetUrl;
+    return genericResponse;
+  }
+
+  async confirmPasswordRecovery(token: string, newPassword: string) {
+    if (typeof token !== 'string' || !token.trim() || typeof newPassword !== 'string' || newPassword.length < 12) {
+      throw new BadRequestException('A valid token and a password of at least 12 characters are required');
+    }
+
+    const now = new Date();
+    const tokenHash = this.hashRecoveryToken(token);
+    await this.db.transaction(async (tx) => {
+      const [consumed] = await tx
+        .update(passwordRecoveryTokens)
+        .set({ consumedAt: now })
+        .where(
+          and(
+            eq(passwordRecoveryTokens.tokenHash, tokenHash),
+            isNull(passwordRecoveryTokens.consumedAt),
+            gt(passwordRecoveryTokens.expiresAt, now),
+          ),
+        )
+        .returning({ userId: passwordRecoveryTokens.userId });
+
+      if (!consumed) {
+        throw new UnauthorizedException('Invalid or expired password reset token');
+      }
+
+      const [user] = await tx
+        .select()
+        .from(users)
+        .where(and(eq(users.id, consumed.userId), isNull(users.deletedAt)))
+        .limit(1);
+      if (!user?.isActive || !user.passwordHash) {
+        throw new UnauthorizedException('Invalid or expired password reset token');
+      }
+
+      await tx
+        .update(users)
+        .set({ passwordHash: await bcrypt.hash(newPassword, 12), tokenVersion: sql`${users.tokenVersion} + 1` })
+        .where(eq(users.id, consumed.userId));
+      await tx
+        .update(refreshTokens)
+        .set({ usedAt: now })
+        .where(and(eq(refreshTokens.userId, consumed.userId), isNull(refreshTokens.usedAt)));
+      await tx
+        .update(passwordRecoveryTokens)
+        .set({ consumedAt: now })
+        .where(and(eq(passwordRecoveryTokens.userId, consumed.userId), isNull(passwordRecoveryTokens.consumedAt)));
+    });
+
+    return { message: 'Password reset successful' };
+  }
+
+  private hashRecoveryToken(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+
+  private assertPasswordRecoveryRateLimit(key: string): void {
+    const now = Date.now();
+    const current = this.recoveryRateLimits.get(key);
+    if (!current || current.resetAt <= now) {
+      this.recoveryRateLimits.set(key, {
+        count: 1,
+        resetAt: now + PASSWORD_RECOVERY_RATE_WINDOW_MS,
+      });
+      return;
+    }
+
+    if (current.count >= PASSWORD_RECOVERY_RATE_LIMIT) {
+      throw new HttpException('Too many password recovery requests', HttpStatus.TOO_MANY_REQUESTS);
+    }
+    current.count += 1;
   }
 
   /**

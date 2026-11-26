@@ -19,7 +19,7 @@ test("staff space is hidden for ordinary members and shows five destinations for
   const staff = spaceDestinations("staff", "abc", "branch_admin")
   assert.equal(staff.length, 5)
   assert.ok(staff.every((item) => item.href.startsWith("/abc/dashboard/")))
-  assert.equal(spaceDestinations("member", "abc", "member").length, 5)
+  assert.equal(spaceDestinations("member", "abc", "member").length, 7)
 })
 
 test("staff status depends on role, not on a missing or read-only role", () => {

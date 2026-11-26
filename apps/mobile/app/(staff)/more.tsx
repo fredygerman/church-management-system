@@ -15,7 +15,7 @@ function roleLabel(role: string, t: Translate) {
 }
 
 export default function MoreScreen() {
-  const { user, signOut } = useSession()
+  const { user, signOut, setSpace } = useSession()
   const { t } = useT()
 
   return (
@@ -24,6 +24,7 @@ export default function MoreScreen() {
       <LanguagePicker />
       <Text style={styles.heading}>{typeof user?.name === "string" ? user.name : t("mobile.staff.more.signedIn")}</Text>
       {user?.activeRole ? <Text style={styles.text}>{roleLabel(user.activeRole, t)}</Text> : null}
+      <Button title={t("wiring.spaces.toMember")} onPress={() => setSpace("member")} />
       <SpacesSection />
       <Button title={t("common.signOut")} onPress={() => void signOut()} />
     </ScrollView>
