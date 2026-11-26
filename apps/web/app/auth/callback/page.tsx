@@ -6,6 +6,7 @@ import { signIn } from "next-auth/react"
 import { toast } from "sonner"
 import { getOAuthTokensFromCookies } from "@/actions/auth"
 import { useT } from "@/components/i18n/locale-provider"
+import { isSafeInternalPath } from "@/lib/shell/navigation"
 
 export default function OAuthCallbackPage() {
   const { t } = useT()
@@ -70,7 +71,9 @@ export default function OAuthCallbackPage() {
         toast.success(t("final.callback.success"))
         
         // Get redirect URL from search params or use default
-        const callbackUrl = searchParams.get("callbackUrl") || "/"
+        // Same-origin paths only (RM-012): reject //host, /\\host, absolute and encoded tricks.
+        const requested = searchParams.get("callbackUrl")
+        const callbackUrl = isSafeInternalPath(requested) ? requested : "/"
         router.push(callbackUrl)
       } catch (err) {
         const message = err instanceof Error ? err.message : t("final.callback.unknownError")

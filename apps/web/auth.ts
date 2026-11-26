@@ -6,6 +6,7 @@ import NextAuth, {
 import CredentialsProvider from "next-auth/providers/credentials"
 import { env } from "./env.mjs"
 import { applyRotatedTokens, getRotatedTokens, RefreshInProgressError } from "./lib/auth-refresh"
+import { isSafeInternalPath } from "./lib/shell/navigation"
 
 declare module "next-auth" {
   interface Session {
@@ -160,13 +161,17 @@ export const authOptions: NextAuthOptions = {
     },
 
     async redirect({ url, baseUrl }) {
-      // Allow relative URLs to pass through
-      if (url.startsWith("/")) {
+      // Same-origin internal paths only (RM-012): rejects //host and /\\host.
+      if (isSafeInternalPath(url)) {
         return `${baseUrl}${url}`
       }
-      // Allow URLs on the same origin
-      if (new URL(url).origin === baseUrl) {
-        return url
+      // Absolute URLs are allowed only when they point at this origin
+      try {
+        if (new URL(url).origin === baseUrl) {
+          return url
+        }
+      } catch {
+        // Malformed URL: fall through to the base URL
       }
       return baseUrl
     },
