@@ -184,7 +184,7 @@ export class AttendanceService {
     const [member] = await db.query.members.findMany({
       where: and(eq(members.id, memberId), eq(members.churchId, churchId), isNull(members.deletedAt)),
     })
-    if (!member) throw new BadRequestException('Member not found in church')
+    if (!member) throw new NotFoundException('Member not found')
 
     const [existing] = await db.query.attendanceCheckins.findMany({
       where: and(eq(attendanceCheckins.sessionId, sessionId), eq(attendanceCheckins.memberId, memberId)),

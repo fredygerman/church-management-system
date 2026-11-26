@@ -17,6 +17,7 @@ import { MembersService } from '../members/members.service'
 import { ChurchContextGuard } from '../auth/guards/church-context.guard'
 import { RequirePermission } from '../auth/decorators/require-permission.decorator'
 import { UserRole } from '../auth/types/permission.types'
+import { CheckinDto } from './dto'
 
 @Controller('attendance')
 @UseGuards(ChurchContextGuard)
@@ -105,15 +106,13 @@ export class AttendanceController {
 
   @Post('sessions/:id/checkins/manual')
   @RequirePermission('manage:attendance')
-  async manualCheckin(@Req() request: Request, @Param('id') sessionId: string, @Body() body: { memberId: string }) {
-    if (!body?.memberId) throw new BadRequestException('memberId is required')
+  async manualCheckin(@Req() request: Request, @Param('id') sessionId: string, @Body() body: CheckinDto) {
     return this.attendanceService.manualCheckin(request['churchId'] as string, sessionId, body.memberId)
   }
 
   @Post('checkins/qr/:token')
   @RequirePermission('manage:attendance')
-  async qrCheckin(@Req() request: Request, @Param('token') token: string, @Body() body: { memberId: string }) {
-    if (!body?.memberId) throw new BadRequestException('memberId is required')
+  async qrCheckin(@Req() request: Request, @Param('token') token: string, @Body() body: CheckinDto) {
     return this.attendanceService.qrCheckin(request['churchId'] as string, token, body.memberId)
   }
 

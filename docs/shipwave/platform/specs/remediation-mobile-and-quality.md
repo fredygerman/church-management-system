@@ -94,6 +94,15 @@ Before dispatch, product/operations owners choose the first mobile workflows. Re
 
 Each chosen slice requires its own bounded contract row (method, input/output shape, permission, tenant/ownership, pagination, error semantics), route ownership, read/write state machine and tests. Paginate/search server-backed collections; preserve validation errors and safe input; prevent duplicate submission; show explicit save success/failure; handle session expiry, context change and permission changes. Display verified fields only. Family/prayer data may not be broadened under DEC-02. Communications sending, commerce, role redesign and report metrics without verified sources remain excluded.
 
+The first mutation slice selected from this sequence is attendance check-in for an existing open service session. Its API contract is:
+
+| Method | Path | Input/output | Permission and tenant rule | Errors and state |
+| --- | --- | --- | --- | --- |
+| POST | `/attendance/sessions/:id/checkins/manual` | Body `{ memberId: string }`; returns the created check-in row in the standard response envelope | `manage:attendance`; session and member must both belong to the active church; no pagination | `400` for invalid DTO, closed/missing-open session state or duplicate check-in; `403` without permission; `404` when the session or member is outside the active church |
+| POST | `/attendance/checkins/qr/:token` | Body `{ memberId: string }`; returns the created check-in row in the standard response envelope | `manage:attendance`; QR token, resolved session and member are active-church scoped; no pagination | Same validation, permission, duplicate and tenant-not-found semantics as manual check-in |
+
+Both routes use the shared `AttendanceCheckinInput` contract and a class-validator DTO. The existing attendance tables are sufficient; no schema change or migration is required. The native client mutation remains a follow-on delivery slice and must preserve the open-session, duplicate-submit, context-change and permission-change states above.
+
 Acceptance is per approved slice: an authorized role completes its named operation; an unauthorized role receives an honest denied state and no forbidden data; validation and transient failures preserve appropriate input; branch change cannot submit stale records; success is reflected after reload. Contract and API regression tests precede client mutation delivery. Effort L overall, subdivided into S/M tasks; risk MED/HIGH depending on mutation; confidence HIGH that current staff screens are read-only, product priority pending.
 
 ## R-QA-01 — Establish regression coverage for complete authorized journeys
@@ -166,7 +175,7 @@ Recorded by the mobile implementation slice (R-MOB-01, 02, 04, 05 partial, 03 pa
 - **Presentation space (R-MOB-03, partial):** in-memory only. Default is `staff` for staff-capable accounts and `member` otherwise. A choice applies to one context and resets on sign-in, church switch or sign-out. Nothing is persisted across launches. R-UX-01 has not recorded an initial or remembered-mode policy, so this default is a provisional choice that needs owner confirmation.
 - **Member/staff controls (R-MOB-03, not done):** the switch buttons need new labels in `packages/config`, which this slice may not edit. Required keys (EN/SW): staff entry on member Home and Profile; return-to-member on staff More.
 - **R-MOB-04:** Church clears its error on success and resets on context change. It is a single-owner change in `church.tsx`.
-- **R-MOB-05 (partial):** read-only people directory search using the existing `GET /members/search?q=` endpoint, reusing an existing label key. Member detail is not built: the display-safe field set under DEC-02 is not verified. No mutation was added; each mutation waits for its API contract.
+- **R-MOB-05 (partial):** read-only people directory search using the existing `GET /members/search?q=` endpoint, reusing an existing label key. Member detail is not built: the display-safe field set under DEC-02 is not verified. The first attendance check-in mutation contract is now defined and regression-tested on the API; native delivery remains pending.
 - **Staff tab list:** unchanged. It already lists the five tabs with permission gating, which was verified against `roleHasTabPermission`.
 - **Test seam:** the secure store is injected through `setSecureStoreBackend`, and `expo-secure-store` is imported lazily, so node tests never load native code.
 - **Verification:** `cd apps/mobile && npx tsc --noEmit && node --import tsx --test tests/*.test.ts`. No device or simulator run was performed.
