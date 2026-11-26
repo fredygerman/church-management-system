@@ -1,6 +1,8 @@
 // Reads the active church and role from an access token. The API signs these claims,
 // so the app only reads them to decide which area to show; the API still checks every call.
 
+import { PERMISSION_MAP, type UserRole } from "@church/config/permissions"
+
 export type AccessClaims = {
   activeChurchId?: string
   activeRole?: string
@@ -25,20 +27,13 @@ export function isStaffRole(role: string | undefined): boolean {
   return Boolean(role) && role !== "member"
 }
 
-// The permissions the staff tabs check. The access token and /users/me carry only the role, so the
-// grants are copied from PERMISSION_MAP in packages/config/src/permissions.ts. Importing @church/config
-// here would pull @church/db (native bcrypt) into the app bundle. Keep in sync; the API checks every call.
+// The permissions the staff tabs check. The grants come from PERMISSION_MAP, the same map the API checks.
+// The "./permissions" subpath is client-safe; the root @church/config export pulls in @church/db (native bcrypt).
 export type StaffTabPermission = "read:member" | "view:attendance" | "manage:files"
 
-export const STAFF_TAB_PERMISSIONS: Record<string, StaffTabPermission[]> = {
-  super_admin: ["read:member", "view:attendance", "manage:files"],
-  admin: ["read:member", "view:attendance", "manage:files"],
-  branch_admin: ["read:member", "view:attendance", "manage:files"],
-  zone_leader: ["read:member", "view:attendance"],
-  department_leader: ["read:member", "view:attendance"],
-}
-
 export function roleHasTabPermission(role: string | undefined, permission: StaffTabPermission): boolean {
+  // Staff tabs are for staff only: the map gives members some self-service permissions, which are not tabs.
   // Own keys only: a role such as "constructor" must not resolve to an inherited Object property.
-  return Boolean(role && Object.hasOwn(STAFF_TAB_PERMISSIONS, role) && STAFF_TAB_PERMISSIONS[role].includes(permission))
+  if (!role || !isStaffRole(role) || !Object.hasOwn(PERMISSION_MAP, role)) return false
+  return PERMISSION_MAP[role as UserRole].includes(permission)
 }

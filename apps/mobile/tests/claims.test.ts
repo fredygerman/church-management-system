@@ -1,10 +1,10 @@
 import { describe, it } from "node:test"
 import assert from "node:assert/strict"
+import { PERMISSION_MAP, UserRole } from "@church/config/permissions"
 import {
   decodeAccessClaims,
   isStaffRole,
   roleHasTabPermission,
-  STAFF_TAB_PERMISSIONS,
   type StaffTabPermission,
 } from "../lib/claims"
 
@@ -71,29 +71,28 @@ describe("roleHasTabPermission", () => {
     }
   })
 
-  it("matches STAFF_TAB_PERMISSIONS for every listed role", () => {
-    const roles = Object.keys(STAFF_TAB_PERMISSIONS)
-    assert.ok(roles.length > 0)
-    for (const role of roles) {
+  it("agrees with PERMISSION_MAP for every staff role", () => {
+    for (const role of Object.values(UserRole).filter((r) => r !== UserRole.MEMBER)) {
       for (const permission of ALL_TAB_PERMISSIONS) {
-        const expected = STAFF_TAB_PERMISSIONS[role].includes(permission)
+        const expected = PERMISSION_MAP[role].includes(permission)
         assert.equal(roleHasTabPermission(role, permission), expected, `${role} / ${permission}`)
       }
     }
   })
 
   it("grants a permission the map lists for a role", () => {
-    const [role, permissions] = Object.entries(STAFF_TAB_PERMISSIONS)[0]
-    assert.ok(permissions.length > 0)
-    assert.equal(roleHasTabPermission(role, permissions[0]), true)
+    const granted = PERMISSION_MAP[UserRole.ADMIN].find((p): p is StaffTabPermission => ALL_TAB_PERMISSIONS.includes(p as StaffTabPermission))
+    assert.ok(granted, "expected admin to hold at least one tab permission")
+    assert.equal(roleHasTabPermission(UserRole.ADMIN, granted), true)
   })
 
-  it("denies a permission the map does not list for a role", () => {
-    const restricted = Object.entries(STAFF_TAB_PERMISSIONS).find(([, perms]) => perms.length < ALL_TAB_PERMISSIONS.length)
-    assert.ok(restricted, "expected at least one role with fewer tab permissions")
-    const [role, permissions] = restricted
-    const missing = ALL_TAB_PERMISSIONS.find((p) => !permissions.includes(p))!
-    assert.equal(roleHasTabPermission(role, missing), false)
+  it("denies a permission the map does not list for a staff role", () => {
+    const restricted = Object.values(UserRole).find(
+      (role) => role !== UserRole.MEMBER && ALL_TAB_PERMISSIONS.some((p) => !PERMISSION_MAP[role].includes(p)),
+    )
+    assert.ok(restricted, "expected at least one staff role with fewer tab permissions")
+    const missing = ALL_TAB_PERMISSIONS.find((p) => !PERMISSION_MAP[restricted].includes(p))!
+    assert.equal(roleHasTabPermission(restricted, missing), false)
   })
 
   it("denies unknown and missing roles", () => {

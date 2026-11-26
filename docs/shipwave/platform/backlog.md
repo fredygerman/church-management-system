@@ -93,10 +93,10 @@ Open, code (deferred by decision, DEC-14):
 Done:
 - Deleted unused web files with no importers: `lib/member.ts`, `components/form/PrayerRequestForm.tsx`, `components/event/rsvp-buttons.tsx`, `components/date-range-picker.tsx`, `components/workspace/church-card.tsx`, `components/ui/sidebar.tsx`. Their English strings are gone with them.
 - Web type-check and web tests (13) pass after the deletions.
+- Mobile staff tabs now read `PERMISSION_MAP` directly, through a new client-safe `@church/config/permissions` subpath. The copied grants are gone, so they cannot drift. Staff-only guard kept: members have self-service grants in the map but no staff tabs. Mobile type-check, tests (12) and Android export pass.
 
 Left as is, on purpose:
 - `apps/mobile/lib/api.ts` "API is not configured" message stays in English. It is a developer message for a missing `EXPO_PUBLIC_API_BASE_URL`, which a correct build never shows to a member.
-- The mobile permission copy in `apps/mobile/lib/claims.ts` can drift from `PERMISSION_MAP`. The file's comment names the ceiling. Fix: a shared client-safe export of the grants, when the mobile app can take it.
 
 Open, human, after all code work (DEC-10, DEC-13):
 - Q-02 device and accessibility checks, including a mobile device run.
