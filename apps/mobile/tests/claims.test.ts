@@ -8,7 +8,7 @@ import {
   type StaffTabPermission,
 } from "../lib/claims"
 
-const ALL_TAB_PERMISSIONS: StaffTabPermission[] = ["read:member", "view:attendance", "manage:files"]
+const ALL_TAB_PERMISSIONS: StaffTabPermission[] = ["read:member", "view:attendance", "manage:files", "manage:attendance"]
 
 function fakeJwt(payload: unknown): string {
   const header = Buffer.from(JSON.stringify({ alg: "none", typ: "JWT" })).toString("base64url")

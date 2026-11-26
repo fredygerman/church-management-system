@@ -19,6 +19,8 @@ export default function StaffLayout() {
       <Tabs.Screen name="services" options={{ title: t("mobile.staff.tabs.services"), href: tabHref("view:attendance") }} />
       <Tabs.Screen name="content" options={{ title: t("mobile.staff.tabs.content"), href: tabHref("manage:files") }} />
       <Tabs.Screen name="more" options={{ title: t("mobile.staff.tabs.more") }} />
+      {/* Reached from the services screen; hidden from the tab bar. */}
+      <Tabs.Screen name="attendance" options={{ href: null, title: t("wiring.checkin.title") }} />
     </Tabs>
   )
 }

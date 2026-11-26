@@ -10,14 +10,13 @@ export interface SpaceDestination {
   segment: string // path after /{churchId}/
 }
 
+// Five primary member destinations. Events, resources, inbox and prayer live behind the More hub.
 export const MEMBER_DESTINATIONS: SpaceDestination[] = [
   { key: "home", labelKey: "nav.home", segment: "portal" },
   { key: "church", labelKey: "nav.church", segment: "portal/church" },
-  { key: "events", labelKey: "nav.events", segment: "portal/events" },
   { key: "library", labelKey: "nav.library", segment: "portal/library" },
   { key: "profile", labelKey: "portal.nav.profile", segment: "portal/profile" },
-  { key: "resources", labelKey: "wiring.nav.resources", segment: "portal/library/resources" },
-  { key: "inbox", labelKey: "wiring.nav.inbox", segment: "portal/inbox" },
+  { key: "more", labelKey: "nav.more", segment: "portal/more" },
 ]
 
 export const STAFF_DESTINATIONS: SpaceDestination[] = [

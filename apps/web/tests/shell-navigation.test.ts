@@ -19,7 +19,14 @@ test("staff space is hidden for ordinary members and shows five destinations for
   const staff = spaceDestinations("staff", "abc", "branch_admin")
   assert.equal(staff.length, 5)
   assert.ok(staff.every((item) => item.href.startsWith("/abc/dashboard/")))
-  assert.equal(spaceDestinations("member", "abc", "member").length, 7)
+  assert.equal(spaceDestinations("member", "abc", "member").length, 5)
+})
+
+test("member primary navigation keeps five items and reaches the rest through More", () => {
+  const member = spaceDestinations("member", "abc", "member")
+  assert.deepEqual(member.map((item) => item.key), ["home", "church", "library", "profile", "more"])
+  assert.equal(member.find((item) => item.key === "more")?.href, "/abc/portal/more")
+  assert.ok(!member.some((item) => ["events", "resources", "inbox"].includes(item.key)))
 })
 
 test("staff status depends on role, not on a missing or read-only role", () => {

@@ -1,6 +1,8 @@
 // Web wiring for remediation endpoints (library resources, notifications inbox). Keep en and sw keys identical.
 export const wiringWebMessages = {
   en: {
+    'wiring.more.title': 'More',
+    'wiring.more.description': 'Events, resources, inbox and prayer requests.',
     'wiring.common.retry': 'Try again',
     'wiring.common.loadFailed': "We couldn't load this. Please try again.",
     'wiring.common.actionFailed': "That didn't work. Please try again.",
@@ -54,6 +56,8 @@ export const wiringWebMessages = {
     'wiring.public.back': 'Back to churches',
   },
   sw: {
+    'wiring.more.title': 'Zaidi',
+    'wiring.more.description': 'Matukio, rasilimali, kikasha na maombi.',
     'wiring.common.retry': 'Jaribu tena',
     'wiring.common.loadFailed': 'Hatukuweza kupakia hili. Tafadhali jaribu tena.',
     'wiring.common.actionFailed': 'Kitendo hakikufanikiwa. Tafadhali jaribu tena.',

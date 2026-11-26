@@ -29,7 +29,7 @@ export function isStaffRole(role: string | undefined): boolean {
 
 // The permissions the staff tabs check. The grants come from PERMISSION_MAP, the same map the API checks.
 // The "./permissions" subpath is client-safe; the root @church/config export pulls in @church/db (native bcrypt).
-export type StaffTabPermission = "read:member" | "view:attendance" | "manage:files"
+export type StaffTabPermission = "read:member" | "view:attendance" | "manage:files" | "manage:attendance"
 
 export function roleHasTabPermission(role: string | undefined, permission: StaffTabPermission): boolean {
   // Staff tabs are for staff only: the map gives members some self-service permissions, which are not tabs.

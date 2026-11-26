@@ -1,6 +1,9 @@
-import { Text, View } from "react-native"
+import { Button, Text, View } from "react-native"
+import { router } from "expo-router"
 import { api } from "../../lib/api"
+import { roleHasTabPermission } from "../../lib/claims"
 import { useT } from "../../lib/locale"
+import { useSession } from "../../lib/session"
 import { StaffReadScreen, asRows, field, type StaffRow } from "../../components/staff-read-screen"
 import { styles } from "../../components/screen-state"
 
@@ -12,6 +15,8 @@ const loadServices = async () => {
 
 export default function ServicesScreen() {
   const { t } = useT()
+  const { user } = useSession()
+  const canCheckIn = roleHasTabPermission(user?.activeRole ?? undefined, "manage:attendance")
   return (
     <StaffReadScreen
       area={t("mobile.staff.services.title")}
@@ -21,6 +26,7 @@ export default function ServicesScreen() {
     >
       {({ types, sessions }) => (
         <>
+          {canCheckIn ? <Button title={t("wiring.checkin.open")} onPress={() => router.push("/attendance")} /> : null}
           <Text style={styles.heading}>{t("mobile.staff.services.typesHeading")}</Text>
           {types.length ? types.map((row, index) => (
             <View key={field(row, "id", `type-${index}`)} style={styles.card}>
