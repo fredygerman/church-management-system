@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Button, ScrollView, Text, TextInput, View } from "react-native"
+import { ScrollView, Text, View } from "react-native"
 import { validateAiResponse, type AiComponent, type AiSource } from "@church/config/ai"
 import { AiResponseView } from "../components/ai/ai-response"
 import { NotConnectedState } from "../components/not-connected-state"
@@ -7,6 +7,9 @@ import { styles } from "../components/screen-state"
 import { ApiError, api } from "../lib/api"
 import { useSession } from "../lib/session"
 import { useT } from "../lib/locale"
+import { Button, Card, TextField } from "../components/ui"
+import { colors, radii, spacing, type } from "../theme"
+import { StyleSheet } from "react-native"
 
 type Entry = { role: "user"; text: string } | { role: "assistant"; answerId: string; components: AiComponent[] | null; sources: AiSource[]; uncertain: boolean }
 type FeedbackState = "helpful" | "not_helpful" | "failed"
@@ -83,15 +86,15 @@ export default function AiScreen() {
         : ""
 
   return (
-    <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView contentContainerStyle={aiStyles.content} keyboardShouldPersistTaps="handled">
       <Text style={styles.title}>{t("mobile.member.ai.title")}</Text>
       <Text style={styles.text}>{t("mobile.member.ai.intro")}</Text>
 
       {entries.map((entry, index) =>
         entry.role === "user" ? (
-          <Text key={index} style={styles.heading}>{t("mobile.member.ai.you", { text: entry.text })}</Text>
+          <View key={index} style={aiStyles.userBubble}><Text style={aiStyles.userText}>{t("mobile.member.ai.you", { text: entry.text })}</Text></View>
         ) : (
-          <View key={index} style={{ marginBottom: 18 }}>
+          <View key={index} style={aiStyles.assistantBubble}>
             {entry.components ? <AiResponseView components={entry.components} /> : <Text style={styles.error}>{t("mobile.member.ai.invalidAnswer")}</Text>}
             {entry.components && entry.sources.length > 0 ? <Text style={styles.text}>{t("mobile.member.ai.sources", { sources: entry.sources.map((source) => source.title).join(", ") })}</Text> : null}
             {entry.components && entry.uncertain ? <Text style={styles.text}>{t("mobile.member.ai.uncertain")}</Text> : null}
@@ -101,8 +104,8 @@ export default function AiScreen() {
               ) : (
                 <View style={{ gap: 8 }}>
                   <Text style={styles.text}>{t("component.ai.feedback.label")}</Text>
-                  <Button title={t("component.ai.feedback.helpful")} onPress={() => void rate(entry.answerId, "helpful")} />
-                  <Button title={t("component.ai.feedback.notHelpful")} onPress={() => void rate(entry.answerId, "not_helpful")} />
+                  <Button variant="secondary" title={t("component.ai.feedback.helpful")} onPress={() => void rate(entry.answerId, "helpful")} />
+                  <Button variant="secondary" title={t("component.ai.feedback.notHelpful")} onPress={() => void rate(entry.answerId, "not_helpful")} />
                 </View>
               )
             ) : null}
@@ -119,22 +122,26 @@ export default function AiScreen() {
         </View>
       ) : null}
 
-      <Text style={styles.formLabel}>{t("mobile.member.ai.question")}</Text>
-      <TextInput
+      <View style={aiStyles.composer}>
+      <TextField
+        label={t("mobile.member.ai.question")}
         accessibilityLabel={t("mobile.member.ai.question")}
         editable={!busy}
         maxLength={1000}
         multiline
         onChangeText={setMessage}
         placeholder={t("mobile.member.ai.placeholder")}
-        style={[styles.input, styles.multilineInput]}
+        style={aiStyles.input}
         textAlignVertical="top"
         value={message}
       />
-      <Button disabled={busy || !trimmed || status.kind === "unavailable"} title={busy ? t("mobile.member.ai.sending") : t("mobile.member.ai.send")} onPress={() => void send(trimmed)} />
+      <Button icon="send" disabled={busy || !trimmed || status.kind === "unavailable"} title={busy ? t("mobile.member.ai.sending") : t("mobile.member.ai.send")} onPress={() => void send(trimmed)} />
+      </View>
       <View style={{ marginTop: 12 }}>
         <Button disabled={busy} title={t("mobile.member.ai.newConversation")} onPress={newConversation} />
       </View>
     </ScrollView>
   )
 }
+
+const aiStyles = StyleSheet.create({ content: { flexGrow: 1, backgroundColor: colors.canvas, padding: spacing.lg, gap: spacing.md }, userBubble: { alignSelf: "flex-end", maxWidth: "88%", backgroundColor: colors.brand, borderRadius: radii.panel, padding: spacing.md }, userText: { ...type.body, color: colors.surface }, assistantBubble: { alignSelf: "flex-start", width: "100%", backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: radii.panel, padding: spacing.md, marginBottom: spacing.sm, gap: spacing.sm }, composer: { gap: spacing.sm, backgroundColor: colors.surface, borderColor: colors.border, borderWidth: 1, borderRadius: radii.panel, padding: spacing.md }, input: { minHeight: 88, textAlignVertical: "top" } })

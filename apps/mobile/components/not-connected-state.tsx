@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from "react-native"
 import { useT } from "../lib/locale"
+import { colors, spacing, type } from "../theme"
 
 type NotConnectedStateProps = {
   area: string
@@ -19,25 +20,27 @@ export function NotConnectedState({ area }: NotConnectedStateProps) {
 }
 
 const styles = StyleSheet.create({
-  container: {
+    container: {
+    backgroundColor: colors.canvas,
     alignItems: "center",
     flex: 1,
-    gap: 12,
+    gap: spacing.md,
     justifyContent: "center",
-    padding: 24,
+    padding: spacing.xl,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "700",
+    ...type.h2,
+    color: colors.ink,
     textAlign: "center",
   },
   message: {
-    fontSize: 16,
+    ...type.body,
+    color: colors.ink,
     textAlign: "center",
   },
   detail: {
-    color: "#5f6368",
-    fontSize: 14,
+    ...type.supporting,
+    color: colors.muted,
     textAlign: "center",
   },
 })

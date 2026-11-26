@@ -3,6 +3,9 @@ import { ScrollView, Text, View } from "react-native"
 import { ApiError, api } from "../../lib/api"
 import { useT } from "../../lib/locale"
 import { ErrorState, LoadingState, styles } from "../../components/screen-state"
+import { Card, SectionHeader, Pill } from "../../components/ui"
+import { colors, spacing, type } from "../../theme"
+import { StyleSheet } from "react-native"
 
 // Permission: read:member (GET /dashboard/stats). Only the fields with a verified source are shown.
 // pendingVisitors is sent only to roles that can view visitors (DEC-01).
@@ -32,22 +35,18 @@ export default function DashboardScreen() {
   if (error || !stats) return <ErrorState message={error || t("mobile.staff.dashboard.unavailable")} onRetry={() => void load()} />
 
   return (
-    <ScrollView contentContainerStyle={styles.content}>
+    <ScrollView contentContainerStyle={dashboardStyles.content}>
       <Text style={styles.title}>{t("mobile.staff.dashboard.title")}</Text>
-      <View style={styles.card}>
-        <Text style={styles.heading}>{stats.totalMembers}</Text>
-        <Text style={styles.text}>{t("mobile.staff.dashboard.activeMembers")}</Text>
-      </View>
-      <View style={styles.card}>
-        <Text style={styles.heading}>{stats.activeZones}</Text>
-        <Text style={styles.text}>{t("mobile.staff.dashboard.activeZones")}</Text>
-      </View>
+      <SectionHeader title={t("mobile.staff.dashboard.activeMembers")} />
+      <View style={dashboardStyles.grid}>
+      <Card style={dashboardStyles.stat}><Text style={dashboardStyles.value}>{stats.totalMembers}</Text><Pill label={t("mobile.staff.dashboard.activeMembers")} tone="success" /></Card>
+      <Card style={dashboardStyles.stat}><Text style={dashboardStyles.value}>{stats.activeZones}</Text><Pill label={t("mobile.staff.dashboard.activeZones")} /></Card>
       {stats.pendingVisitors !== undefined ? (
-        <View style={styles.card}>
-          <Text style={styles.heading}>{stats.pendingVisitors}</Text>
-          <Text style={styles.text}>{t("mobile.staff.dashboard.pendingVisitors")}</Text>
-        </View>
+        <Card style={dashboardStyles.stat}><Text style={dashboardStyles.value}>{stats.pendingVisitors}</Text><Pill label={t("mobile.staff.dashboard.pendingVisitors")} tone="warning" /></Card>
       ) : null}
+      </View>
     </ScrollView>
   )
 }
+
+const dashboardStyles = StyleSheet.create({ content: { flexGrow: 1, backgroundColor: colors.canvas, padding: spacing.lg, gap: spacing.md }, grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.md }, stat: { flexGrow: 1, flexBasis: "45%", minHeight: 112, justifyContent: "space-between" }, value: { ...type.h1, color: colors.ink } })

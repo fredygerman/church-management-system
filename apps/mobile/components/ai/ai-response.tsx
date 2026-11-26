@@ -1,5 +1,7 @@
 import { router, type Href } from "expo-router"
-import { Button, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from "react-native"
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
+import { Button, Card, TextField } from "../ui"
+import { colors, radii, spacing, type } from "../../theme"
 import type { AiComponent, AiFormField, AiTableComponent } from "@church/config/ai"
 import { useT } from "../../lib/locale"
 
@@ -28,11 +30,11 @@ function AiComponentView({ component }: { component: AiComponent }) {
       return (
         <View style={styles.cardRow}>
           {component.items.map((item, index) => (
-            <View key={index} style={styles.statCard}>
+            <Card key={index} style={styles.statCard}>
               <Text style={styles.statLabel}>{item.label}</Text>
               <Text style={styles.statValue}>{item.value}</Text>
               {item.hint ? <Text style={styles.statHint}>{item.hint}</Text> : null}
-            </View>
+            </Card>
           ))}
         </View>
       )
@@ -120,7 +122,7 @@ function DisabledField({ field }: { field: AiFormField }) {
           {(field.options ?? []).map((option) => <Text key={option.value} style={styles.chip}>{option.label}</Text>)}
         </View>
       ) : (
-        <TextInput
+        <TextField
           accessibilityLabel={field.label}
           editable={false}
           multiline={field.kind === "textarea"}
@@ -135,27 +137,27 @@ function DisabledField({ field }: { field: AiFormField }) {
 
 const styles = StyleSheet.create({
   stack: { gap: 12 },
-  box: { borderColor: "#d1d5db", borderRadius: 8, borderWidth: 1, gap: 10, padding: 12 },
-  text: { color: "#1f2937", fontSize: 16, lineHeight: 22 },
+  box: { backgroundColor: colors.surface, borderColor: colors.border, borderRadius: radii.card, borderWidth: 1, gap: spacing.md, padding: spacing.md },
+  text: { ...type.body, color: colors.ink },
   cardRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
-  statCard: { borderColor: "#d1d5db", borderRadius: 8, borderWidth: 1, flexBasis: "45%", flexGrow: 1, gap: 4, padding: 12 },
-  statLabel: { color: "#4b5563", fontSize: 13 },
-  statValue: { fontSize: 22, fontWeight: "700" },
-  statHint: { color: "#6b7280", fontSize: 13 },
-  itemTitle: { fontSize: 16, fontWeight: "600" },
-  listRow: { borderBottomColor: "#e5e7eb", borderBottomWidth: 1, gap: 2, paddingVertical: 8 },
-  tableHeader: { backgroundColor: "#f3f4f6" },
-  tableRow: { flexDirection: "row", borderBottomColor: "#e5e7eb", borderBottomWidth: 1 },
-  cell: { padding: 8, width: 140, fontSize: 14 },
-  cellHeader: { fontWeight: "700" },
+  statCard: { flexBasis: "45%", flexGrow: 1, gap: spacing.xs, padding: spacing.md },
+  statLabel: { ...type.caption, color: colors.muted },
+  statValue: { ...type.h2, color: colors.ink },
+  statHint: { ...type.caption, color: colors.muted },
+  itemTitle: { ...type.body, color: colors.ink, fontWeight: "600" },
+  listRow: { borderBottomColor: colors.border, borderBottomWidth: 1, gap: spacing.xs, minHeight: 44, justifyContent: "center", paddingVertical: spacing.sm },
+  tableHeader: { backgroundColor: colors.tint },
+  tableRow: { flexDirection: "row", borderBottomColor: colors.border, borderBottomWidth: 1 },
+  cell: { ...type.supporting, color: colors.ink, padding: spacing.sm, width: 140 },
+  cellHeader: { fontWeight: "700", color: colors.brandStrong },
   field: { gap: 6 },
-  fieldLabel: { fontSize: 14, fontWeight: "600" },
-  input: { borderColor: "#d1d5db", borderRadius: 6, borderWidth: 1, color: "#6b7280", padding: 10 },
+  fieldLabel: { ...type.supporting, color: colors.ink, fontWeight: "600" },
+  input: { borderColor: colors.border, borderRadius: radii.card, borderWidth: 1, color: colors.muted, padding: spacing.md },
   textarea: { minHeight: 80, textAlignVertical: "top" },
   chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 6 },
-  chip: { borderColor: "#d1d5db", borderRadius: 16, borderWidth: 1, color: "#6b7280", overflow: "hidden", paddingHorizontal: 10, paddingVertical: 4 },
-  notice: { color: "#6b7280", fontSize: 13 },
-  info: { backgroundColor: "#eff6ff", borderRadius: 8, padding: 12 },
-  warning: { backgroundColor: "#fef3c7", borderRadius: 8, padding: 12 },
-  noticeText: { color: "#1f2937", fontSize: 14 },
+  chip: { borderColor: colors.border, borderRadius: radii.pill, borderWidth: 1, color: colors.muted, overflow: "hidden", paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  notice: { ...type.caption, color: colors.muted },
+  info: { backgroundColor: colors.tint, borderRadius: radii.card, padding: spacing.md },
+  warning: { backgroundColor: "#FEF3C7", borderRadius: radii.card, padding: spacing.md },
+  noticeText: { ...type.supporting, color: colors.ink },
 })

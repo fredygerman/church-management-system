@@ -1,8 +1,10 @@
 import { useState } from "react"
-import { Button, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from "react-native"
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, View } from "react-native"
 import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
 import { useT } from "../../lib/locale"
+import { Button, TextField } from "../../components/ui"
+import { colors, spacing, type } from "../../theme"
 
 export default function SignInScreen() {
   const { signIn } = useSession()
@@ -31,10 +33,10 @@ export default function SignInScreen() {
     <View style={styles.form}>
       <Text style={styles.title}>Mito Ya Baraka Church</Text>
       <Text style={styles.message}>{t("mobile.member.signIn.subtitle")}</Text>
-      <TextInput accessibilityLabel={t("mobile.member.signIn.email")} autoCapitalize="none" autoComplete="email" keyboardType="email-address" onChangeText={setEmail} placeholder={t("mobile.member.signIn.email")} style={styles.input} value={email} />
-      <TextInput accessibilityLabel={t("mobile.member.signIn.password")} autoCapitalize="none" autoComplete="password" onChangeText={setPassword} placeholder={t("mobile.member.signIn.password")} secureTextEntry style={styles.input} value={password} />
+      <TextField label={t("mobile.member.signIn.email")} accessibilityLabel={t("mobile.member.signIn.email")} autoCapitalize="none" autoComplete="email" keyboardType="email-address" onChangeText={setEmail} placeholder={t("mobile.member.signIn.email")} value={email} />
+      <TextField label={t("mobile.member.signIn.password")} accessibilityLabel={t("mobile.member.signIn.password")} autoCapitalize="none" autoComplete="password" onChangeText={setPassword} placeholder={t("mobile.member.signIn.password")} secureTextEntry value={password} />
       {error ? <Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text> : null}
-      <Button disabled={loading || !email || !password} title={loading ? t("mobile.member.signIn.submitting") : t("mobile.member.signIn.submit")} onPress={submit} />
+      <Button disabled={loading || !email || !password} loading={loading} title={loading ? t("mobile.member.signIn.submitting") : t("mobile.member.signIn.submit")} onPress={submit} />
     </View>
   </KeyboardAvoidingView>
 }
@@ -43,18 +45,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: "center",
-    padding: 24,
+    padding: spacing.lg,
   },
-  form: { gap: 14, width: "100%" },
+  form: { gap: spacing.md, width: "100%", backgroundColor: colors.surface, padding: spacing.xl, borderRadius: 16 },
   title: {
-    fontSize: 28,
-    fontWeight: "700",
+    ...type.display,
+    color: colors.brandStrong,
     textAlign: "center",
   },
   message: {
-    fontSize: 18,
+    ...type.body,
+    color: colors.muted,
     marginBottom: 12,
   },
-  input: { borderColor: "#9ca3af", borderRadius: 6, borderWidth: 1, fontSize: 16, padding: 12 },
-  error: { color: "#a21c1c" },
+  error: { ...type.supporting, color: colors.danger },
 })

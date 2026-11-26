@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Button, Text, View } from "react-native"
+import { ScrollView, StyleSheet, Text, View } from "react-native"
 import { router } from "expo-router"
 import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
@@ -7,6 +7,8 @@ import { useT } from "../../lib/locale"
 import { createRequestGate } from "../../lib/request-gate"
 import { formatLocaleDate, type Locale } from "@church/config/i18n"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
+import { Card, HeroBanner, QuickAction, SectionHeader } from "../../components/ui"
+import { colors, spacing, type } from "../../theme"
 
 type ServiceSession = {
   id: string
@@ -78,5 +80,21 @@ export default function HomeScreen() {
   if (status === "loading") return <LoadingState />
   if (status === "error") return <ErrorState message={error} onRetry={() => setAttempt((value) => value + 1)} />
   const name = typeof user?.name === "string" ? user.name : typeof member?.name === "string" ? member.name : t("mobile.member.home.guestName")
-  return <View style={styles.content}><Text style={styles.title}>{t("mobile.member.home.welcome", { name })}</Text><Text style={styles.text}>{t("mobile.member.home.intro")}</Text><Button title={t("mobile.member.home.prayerButton")} onPress={() => router.push("/(member)/prayer")} /><Button title={t("wiring.home.libraryButton")} onPress={() => router.push("/(member)/library-catalog")} /><Button title={t("wiring.home.inboxButton")} onPress={() => router.push("/(member)/inbox")} />{isStaff ? <Button title={t("wiring.spaces.toStaff")} onPress={() => setSpace("staff")} /> : null}<Text style={styles.heading}>{t("mobile.member.home.servicesHeading")}</Text>{servicesStatus === "loading" ? <LoadingState /> : servicesStatus === "error" ? <ErrorState message={t("mobile.member.home.servicesError")} onRetry={() => setServicesAttempt((value) => value + 1)} /> : services.length ? services.map((service) => <View key={service.id} style={styles.card}><Text style={styles.heading}>{service.title || service.serviceType?.name || t("mobile.member.home.serviceFallback")}</Text><Text style={styles.text}>{formatServiceDate(service.sessionDate, locale)}</Text></View>) : <EmptyState message={t("mobile.member.home.noServices")} />}<Text style={styles.heading}>{t("mobile.member.home.announcementsHeading")}</Text>{announcements.length ? announcements.map((item, index) => <View key={String(item.id ?? index)}><Text style={styles.heading}>{typeof item.title === "string" ? item.title : t("mobile.member.home.announcementFallback")}</Text>{typeof item.content === "string" ? <Text style={styles.text}>{item.content}</Text> : null}</View>) : <EmptyState message={t("mobile.member.home.noAnnouncements")} />}</View>
+  return <ScrollView style={homeStyles.screen} contentContainerStyle={homeStyles.content}>
+    <HeroBanner title={t("mobile.member.home.welcome", { name })} subtitle={t("mobile.member.home.intro")} />
+    <View style={homeStyles.actions}>
+      <QuickAction icon="heart-outline" label={t("mobile.member.home.prayerButton")} onPress={() => router.push("/(member)/prayer")} />
+      <QuickAction icon="library-outline" label={t("wiring.home.libraryButton")} onPress={() => router.push("/(member)/library-catalog")} />
+      <QuickAction icon="mail-outline" label={t("wiring.home.inboxButton")} onPress={() => router.push("/(member)/inbox")} />
+      {isStaff ? <QuickAction icon="people-outline" label={t("wiring.spaces.toStaff")} onPress={() => setSpace("staff")} /> : null}
+    </View>
+    <Card><SectionHeader title={t("mobile.member.home.servicesHeading")} />
+      {servicesStatus === "loading" ? <LoadingState /> : servicesStatus === "error" ? <ErrorState message={t("mobile.member.home.servicesError")} onRetry={() => setServicesAttempt((value) => value + 1)} /> : services.length ? services.map((service) => <View key={service.id} style={homeStyles.item}><Text style={homeStyles.itemTitle}>{service.title || service.serviceType?.name || t("mobile.member.home.serviceFallback")}</Text><Text style={homeStyles.meta}>{formatServiceDate(service.sessionDate, locale)}</Text></View>) : <EmptyState message={t("mobile.member.home.noServices")} />}
+    </Card>
+    <Card><SectionHeader title={t("mobile.member.home.announcementsHeading")} />
+      {announcements.length ? announcements.map((item, index) => <View key={String(item.id ?? index)} style={homeStyles.item}><Text style={homeStyles.itemTitle}>{typeof item.title === "string" ? item.title : t("mobile.member.home.announcementFallback")}</Text>{typeof item.content === "string" ? <Text style={homeStyles.meta}>{item.content}</Text> : null}</View>) : <EmptyState message={t("mobile.member.home.noAnnouncements")} />}
+    </Card>
+  </ScrollView>
 }
+
+const homeStyles = StyleSheet.create({ screen: { flex: 1, backgroundColor: colors.canvas }, content: { padding: spacing.lg, gap: spacing.lg }, actions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", backgroundColor: colors.surface, borderRadius: 12 }, item: { paddingVertical: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, gap: spacing.xs }, itemTitle: { ...type.body, color: colors.ink, fontWeight: "600" }, meta: { ...type.supporting, color: colors.muted } })

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
-import { Button, ScrollView, Text, View } from "react-native"
+import { ScrollView, Text, View } from "react-native"
 import { useLocalSearchParams } from "expo-router"
+import { Button, Card, Pill } from "../../../components/ui"
+import { colors, spacing, type } from "../../../theme"
 import { ApiError, api } from "../../../lib/api"
 import { useT } from "../../../lib/locale"
 import { ErrorState, LoadingState, styles } from "../../../components/screen-state"
@@ -65,19 +67,21 @@ export default function EventDetailScreen() {
   if (loading) return <LoadingState />
   if (error) return <ErrorState message={error} onRetry={() => void load()} />
   if (!event) return <ErrorState message={t("mobile.member.events.detail.unavailable")} onRetry={() => void load()} />
-  return <ScrollView contentContainerStyle={styles.content}>
-    <Text style={styles.title}>{typeof event.title === "string" ? event.title : t("mobile.member.events.fallbackTitle")}</Text>
-    {typeof event.description === "string" ? <Text style={styles.text}>{event.description}</Text> : null}
-    {fields.map(([label, value]) => value ? <Text key={label} style={styles.text}>{label}: {value}</Text> : null)}
-    <Text style={styles.heading}>{t("mobile.member.events.rsvp.heading")}</Text>
-    {currentRsvp ? <Text style={styles.text}>{t("mobile.member.events.rsvp.current", { response: t(RSVP_LABEL_KEYS[currentRsvp]) })}</Text> : null}
-    {confirmation ? <Text accessibilityLiveRegion="polite" style={styles.success}>{confirmation}</Text> : null}
-    {submitError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{submitError}</Text> : null}
-    {retryStatus ? <Button disabled={submitting} title={t("common.retry")} onPress={() => void submit(retryStatus)} /> : null}
-    <View style={styles.card}>
-      <Button disabled={submitting} title={submitting ? t("common.saving") : t("mobile.member.events.rsvp.going")} onPress={() => void submit("going")} />
-      <Button disabled={submitting} title={t("mobile.member.events.rsvp.maybe")} onPress={() => void submit("maybe")} />
-      <Button disabled={submitting} title={t("mobile.member.events.rsvp.declined")} onPress={() => void submit("declined")} />
-    </View>
+  return <ScrollView contentContainerStyle={[styles.content, { backgroundColor: colors.canvas, padding: spacing.lg }]}>
+    <Card style={{ gap: spacing.md }}>
+      <Pill label={t("mobile.member.events.rsvp.heading")} tone="accent" />
+      <Text style={{ ...type.h1, color: colors.ink }}>{typeof event.title === "string" ? event.title : t("mobile.member.events.fallbackTitle")}</Text>
+      {typeof event.description === "string" ? <Text style={styles.text}>{event.description}</Text> : null}
+      {fields.map(([label, value]) => value ? <Text key={label} style={styles.text}>{label}: {value}</Text> : null)}
+      {currentRsvp ? <Text style={styles.text}>{t("mobile.member.events.rsvp.current", { response: t(RSVP_LABEL_KEYS[currentRsvp]) })}</Text> : null}
+      {confirmation ? <Text accessibilityLiveRegion="polite" style={styles.success}>{confirmation}</Text> : null}
+      {submitError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{submitError}</Text> : null}
+      {retryStatus ? <Button disabled={submitting} title={t("common.retry")} onPress={() => void submit(retryStatus)} variant="secondary" /> : null}
+      <View style={{ gap: spacing.sm }}>
+        <Button disabled={submitting} loading={submitting} title={submitting ? t("common.saving") : t("mobile.member.events.rsvp.going")} onPress={() => void submit("going")} />
+        <Button disabled={submitting} title={t("mobile.member.events.rsvp.maybe")} onPress={() => void submit("maybe")} variant="secondary" />
+        <Button disabled={submitting} title={t("mobile.member.events.rsvp.declined")} onPress={() => void submit("declined")} variant="ghost" />
+      </View>
+    </Card>
   </ScrollView>
 }

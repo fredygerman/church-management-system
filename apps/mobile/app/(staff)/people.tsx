@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react"
-import { Button, Text, TextInput, View } from "react-native"
+import { Text, View } from "react-native"
+import { Button, Card, ListRow, TextField } from "../../components/ui"
 import { api } from "../../lib/api"
 import { useT } from "../../lib/locale"
 import { StaffReadScreen, asRows, field, type StaffRow } from "../../components/staff-read-screen"
@@ -19,23 +20,22 @@ export default function PeopleScreen() {
   return (
     <View style={{ flex: 1 }}>
       <View style={[styles.content, { paddingBottom: 0 }]}>
-        <TextInput
+        <TextField
           accessibilityLabel={t("staff.attendance.checkin.search")}
+          label={t("staff.attendance.checkin.search")}
           onChangeText={setDraft}
           onSubmitEditing={submit}
           returnKeyType="search"
-          style={styles.input}
+          style={{ marginBottom: 0 }}
           value={draft}
         />
-        <Button title={t("staff.attendance.checkin.search")} onPress={submit} />
+        <Button title={t("staff.attendance.checkin.search")} icon="search" onPress={submit} />
       </View>
       <StaffReadScreen area={t("mobile.staff.people.title")} emptyMessage={t("mobile.staff.people.empty")} isEmpty={(rows: StaffRow[]) => rows.length === 0} load={load}>
         {(rows) => rows.map((row, index) => {
           const name = `${field(row, "firstName")} ${field(row, "lastName")}`.trim() || t("mobile.staff.people.unnamed")
           return (
-            <View key={field(row, "id", String(index))} style={styles.card}>
-              <Text style={styles.heading}>{name}</Text>
-            </View>
+            <Card key={field(row, "id", String(index))}><ListRow icon="person-outline" title={name} /></Card>
           )
         })}
       </StaffReadScreen>

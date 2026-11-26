@@ -5,6 +5,8 @@ import { ApiError } from "../../lib/api"
 import { useT } from "../../lib/locale"
 import { libraryApi, type LibraryResource } from "../../lib/library-api"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
+import { Card, Pill } from "../../components/ui"
+import { colors, spacing, type } from "../../theme"
 
 // Minimal catalogue: server-side search and cursor pagination. Opening a row goes to library-detail.
 export default function LibraryCatalogScreen() {
@@ -57,7 +59,7 @@ export default function LibraryCatalogScreen() {
   if (error && items.length === 0) return <ErrorState message={error} onRetry={() => void load(appliedQuery)} />
 
   return <FlatList
-    contentContainerStyle={styles.content}
+    contentContainerStyle={[styles.content, { padding: spacing.lg }]}
     data={items}
     keyExtractor={(item) => item.id}
     keyboardShouldPersistTaps="handled"
@@ -74,25 +76,23 @@ export default function LibraryCatalogScreen() {
         style={styles.input}
         value={search}
       />
-      <Pressable accessibilityRole="button" onPress={() => setAppliedQuery(search.trim())} style={styles.card}>
-        <Text style={styles.heading}>{t("wiring.library.searchButton")}</Text>
-      </Pressable>
+      <Pressable accessibilityRole="button" onPress={() => setAppliedQuery(search.trim())} style={{ minHeight: 44, marginBottom: spacing.lg }}><Card><Text style={styles.heading}>{t("wiring.library.searchButton")}</Text></Card></Pressable>
       {error ? <Text accessibilityLiveRegion="polite" style={styles.error}>{error}</Text> : null}
     </View>}
     ListFooterComponent={<View>
       {moreError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{moreError}</Text> : null}
-      {cursor ? <Pressable accessibilityRole="button" disabled={loadingMore} onPress={() => void loadMore()} style={styles.card}>
+      {cursor ? <Pressable accessibilityRole="button" disabled={loadingMore} onPress={() => void loadMore()} style={{ minHeight: 44, marginVertical: spacing.md }}>
+        <Card>
         {loadingMore ? <ActivityIndicator /> : <Text style={styles.heading}>{t("wiring.library.loadMore")}</Text>}
+        </Card>
       </Pressable> : null}
     </View>}
     renderItem={({ item }) => <Pressable
       accessibilityRole="button"
       onPress={() => router.push({ pathname: "/library-detail", params: { id: item.id } })}
-      style={styles.card}
+      style={{ minHeight: 44, marginBottom: spacing.md }}
     >
-      <Text style={styles.heading}>{item.title}</Text>
-      {item.description ? <Text style={styles.text}>{item.description}</Text> : null}
-      <Text style={styles.text}>{t(`wiring.library.type.${item.resourceType}`)}</Text>
+      <Card><View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}><View style={{ width: 68, height: 92, borderRadius: 12, backgroundColor: colors.tint, alignItems: "center", justifyContent: "center" }}><Text style={{ ...type.caption, color: colors.brand, fontWeight: "700" }}>{item.resourceType.slice(0, 3).toUpperCase()}</Text></View><View style={{ flex: 1, gap: spacing.xs }}><Text style={styles.heading}>{item.title}</Text>{item.description ? <Text style={styles.text}>{item.description}</Text> : null}<Pill label={t(`wiring.library.type.${item.resourceType}`)} /></View></View></Card>
     </Pressable>}
   />
 }

@@ -5,6 +5,8 @@ import { ApiError } from "../../lib/api"
 import { useT } from "../../lib/locale"
 import { libraryApi, type LibraryResource } from "../../lib/library-api"
 import { ErrorState, LoadingState, styles } from "../../components/screen-state"
+import { Button, Card, Pill, SectionHeader, TextField } from "../../components/ui"
+import { spacing } from "../../theme"
 
 // Detail with a device-browser access action (DEC-15: no WebView) and a numeric position save.
 export default function LibraryDetailScreen() {
@@ -73,19 +75,16 @@ export default function LibraryDetailScreen() {
   if (loading) return <LoadingState />
   if (error || !resource) return <ErrorState message={error || t("wiring.library.loadError")} onRetry={() => void load()} />
 
-  return <ScrollView contentContainerStyle={styles.content}>
-    <Text style={styles.heading}>{resource.title}</Text>
+  return <ScrollView contentContainerStyle={[styles.content, { padding: spacing.lg, gap: spacing.md }]}>
+    <Card><View style={{ height: 180, alignItems: "center", justifyContent: "center", backgroundColor: "#EEF2FF", borderRadius: 12, marginBottom: spacing.md }}><Pill label={t(`wiring.library.type.${resource.resourceType}`)} /></View><Text style={styles.title}>{resource.title}</Text>
     {resource.description ? <Text style={styles.text}>{resource.description}</Text> : null}
-    {resource.authorSpeaker ? <Text style={styles.text}>{resource.authorSpeaker}</Text> : null}
-    <Text style={styles.text}>{t(`wiring.library.type.${resource.resourceType}`)}</Text>
+    {resource.authorSpeaker ? <Text style={styles.text}>{resource.authorSpeaker}</Text> : null}</Card>
 
-    <Pressable accessibilityRole="button" accessibilityState={{ busy: opening }} disabled={opening} onPress={() => void openResource()} style={styles.card}>
-      <Text style={styles.heading}>{opening ? t("wiring.library.opening") : t("wiring.library.open")}</Text>
-    </Pressable>
+    <Button loading={opening} disabled={opening} title={opening ? t("wiring.library.opening") : t("wiring.library.open")} onPress={() => void openResource()} icon="open-outline" />
     {actionError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{actionError}</Text> : null}
 
     <View>
-      <Text style={styles.formLabel}>{t("wiring.library.progressLabel")}</Text>
+      <Card><SectionHeader title={t("wiring.library.progressLabel")} />
       <TextInput
         accessibilityLabel={t("wiring.library.progressLabel")}
         keyboardType="number-pad"
@@ -93,11 +92,9 @@ export default function LibraryDetailScreen() {
         style={styles.input}
         value={position}
       />
-      <Pressable accessibilityRole="button" disabled={saveState === "saving"} onPress={() => void savePosition()} style={styles.card}>
-        <Text style={styles.heading}>{t("wiring.library.progressSave")}</Text>
-      </Pressable>
+      <Button disabled={saveState === "saving"} loading={saveState === "saving"} title={t("wiring.library.progressSave")} onPress={() => void savePosition()} />
       {saveState === "saved" ? <Text accessibilityLiveRegion="polite" style={styles.text}>{t("wiring.library.progressSaved")}</Text> : null}
       {saveState === "error" ? <Text accessibilityLiveRegion="polite" style={styles.error}>{t("wiring.library.progressError")}</Text> : null}
-    </View>
+      </Card></View>
   </ScrollView>
 }

@@ -1,4 +1,5 @@
-import { Button, Text, View } from "react-native"
+import { Text, View } from "react-native"
+import { Button, Card, ListRow, Pill, SectionHeader } from "../../components/ui"
 import { router } from "expo-router"
 import { api } from "../../lib/api"
 import { roleHasTabPermission } from "../../lib/claims"
@@ -26,20 +27,14 @@ export default function ServicesScreen() {
     >
       {({ types, sessions }) => (
         <>
-          {canCheckIn ? <Button title={t("wiring.checkin.open")} onPress={() => router.push("/attendance")} /> : null}
-          <Text style={styles.heading}>{t("mobile.staff.services.typesHeading")}</Text>
+          {canCheckIn ? <Button title={t("wiring.checkin.open")} icon="checkmark-circle-outline" onPress={() => router.push("/attendance")} /> : null}
+          <SectionHeader title={t("mobile.staff.services.typesHeading")} />
           {types.length ? types.map((row, index) => (
-            <View key={field(row, "id", `type-${index}`)} style={styles.card}>
-              <Text style={styles.heading}>{field(row, "name", t("mobile.staff.services.typeFallback"))}</Text>
-              <Text style={styles.text}>{row["isActive"] === false ? t("mobile.staff.services.inactive") : t("mobile.staff.services.active")}</Text>
-            </View>
+            <Card key={field(row, "id", `type-${index}`)}><ListRow icon="briefcase-outline" title={field(row, "name", t("mobile.staff.services.typeFallback"))} trailing={<Pill label={row["isActive"] === false ? t("mobile.staff.services.inactive") : t("mobile.staff.services.active")} tone={row["isActive"] === false ? "default" : "success"} />} /></Card>
           )) : <Text style={styles.text}>{t("mobile.staff.services.noTypes")}</Text>}
-          <Text style={styles.heading}>{t("mobile.staff.services.sessionsHeading")}</Text>
+          <SectionHeader title={t("mobile.staff.services.sessionsHeading")} />
           {sessions.length ? sessions.map((row, index) => (
-            <View key={field(row, "id", `session-${index}`)} style={styles.card}>
-              <Text style={styles.heading}>{field(row, "title") || field(row, "sessionDate", t("mobile.staff.services.sessionFallback"))}</Text>
-              <Text style={styles.text}>{[field(row, "sessionDate"), field(row, "status")].filter(Boolean).join(" · ")}</Text>
-            </View>
+            <Card key={field(row, "id", `session-${index}`)}><ListRow icon="calendar-outline" title={field(row, "title") || field(row, "sessionDate", t("mobile.staff.services.sessionFallback"))} subtitle={[field(row, "sessionDate"), field(row, "status")].filter(Boolean).join(" · ")} /></Card>
           )) : <Text style={styles.text}>{t("mobile.staff.services.noSessions")}</Text>}
         </>
       )}

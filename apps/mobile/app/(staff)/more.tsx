@@ -1,4 +1,5 @@
-import { Button, ScrollView, Text } from "react-native"
+import { ScrollView, Text, View } from "react-native"
+import { Button, Card, SectionHeader } from "../../components/ui"
 import { dictionaries, type MessageKey, type Translate } from "@church/config/i18n"
 import { LanguagePicker } from "../../components/language-picker"
 import { SpacesSection } from "../../components/spaces-section"
@@ -22,11 +23,11 @@ export default function MoreScreen() {
     <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.title}>{t("mobile.staff.more.title")}</Text>
       <LanguagePicker />
-      <Text style={styles.heading}>{typeof user?.name === "string" ? user.name : t("mobile.staff.more.signedIn")}</Text>
-      {user?.activeRole ? <Text style={styles.text}>{roleLabel(user.activeRole, t)}</Text> : null}
-      <Button title={t("wiring.spaces.toMember")} onPress={() => setSpace("member")} />
+      <Card><SectionHeader title={typeof user?.name === "string" ? user.name : t("mobile.staff.more.signedIn")} />
+      {user?.activeRole ? <Text style={styles.text}>{roleLabel(user.activeRole, t)}</Text> : null}</Card>
+      <Button title={t("wiring.spaces.toMember")} icon="people-outline" onPress={() => setSpace("member")} />
       <SpacesSection />
-      <Button title={t("common.signOut")} onPress={() => void signOut()} />
+      <Button title={t("common.signOut")} variant="secondary" icon="log-out-outline" onPress={() => void signOut()} />
     </ScrollView>
   )
 }

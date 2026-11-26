@@ -6,6 +6,7 @@ import { useT } from "../lib/locale"
 import { useSession } from "../lib/session"
 import { NotConnectedState } from "./not-connected-state"
 import { EmptyState, ErrorState, LoadingState, styles } from "./screen-state"
+import { Card } from "./ui"
 
 export type StaffRow = Record<string, unknown>
 

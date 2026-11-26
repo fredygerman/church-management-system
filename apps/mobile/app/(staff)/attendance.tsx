@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { Button, Pressable, ScrollView, Text, TextInput, View } from "react-native"
+import { Pressable, ScrollView, Text, View } from "react-native"
 import type { MessageKey } from "@church/config/i18n"
 import { api } from "../../lib/api"
 import { submitManualCheckin, submitQrCheckin, type CheckinOutcome } from "../../lib/checkin"
@@ -12,6 +12,7 @@ const toMembers = (value: unknown): Member[] => asRows(value) as unknown as Memb
 import { useT } from "../../lib/locale"
 import { useSession } from "../../lib/session"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
+import { Button, Card, ListRow, SectionHeader, TextField } from "../../components/ui"
 
 // Permission: manage:attendance (POST sessions/:id/checkins/manual, POST checkins/qr/:token).
 // Reads: GET /attendance/sessions (open ones are offered), GET /members (batch selection).
@@ -129,7 +130,7 @@ export default function AttendanceScreen() {
   return (
     <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.title}>{t("wiring.checkin.title")}</Text>
-      <Text style={styles.heading}>{t("wiring.checkin.sessionHeading")}</Text>
+      <SectionHeader title={t("wiring.checkin.sessionHeading")} />
       {sessions.length === 0 ? <Text style={styles.text}>{t("wiring.checkin.noOpenSessions")}</Text> : sessions.map((session) => {
         const active = session.id === sessionId
         return (
@@ -138,7 +139,7 @@ export default function AttendanceScreen() {
             accessibilityRole="radio"
             accessibilityState={{ selected: active }}
             onPress={() => { setSessionId(session.id); setResults([]); setSummary("") }}
-            style={[styles.card, { minHeight: 44, paddingVertical: 10 }]}
+            style={[styles.card, { minHeight: 60, paddingVertical: 10, borderRadius: 12, backgroundColor: "white" }]}
           >
             <Text style={styles.heading}>{session.title || session.sessionDate}</Text>
             <Text style={styles.text}>{active ? t("wiring.checkin.sessionSelected") : t("wiring.checkin.sessionTap")}</Text>
@@ -146,15 +147,15 @@ export default function AttendanceScreen() {
         )
       })}
 
-      <Text style={styles.heading}>{t("wiring.checkin.manualHeading")}</Text>
-      <TextInput accessibilityLabel={t("wiring.checkin.memberIdLabel")} autoCapitalize="none" onChangeText={setMemberId} style={styles.input} value={memberId} />
-      <Button title={t("wiring.checkin.checkIn")} disabled={busy} onPress={() => void singleCheckIn("manual")} />
+      <SectionHeader title={t("wiring.checkin.manualHeading")} />
+      <TextField label={t("wiring.checkin.memberIdLabel")} accessibilityLabel={t("wiring.checkin.memberIdLabel")} autoCapitalize="none" onChangeText={setMemberId} value={memberId} />
+      <Button title={t("wiring.checkin.checkIn")} icon="checkmark-circle-outline" disabled={busy} onPress={() => void singleCheckIn("manual")} />
 
-      <Text style={styles.heading}>{t("wiring.checkin.qrHeading")}</Text>
-      <TextInput accessibilityLabel={t("wiring.checkin.qrLabel")} autoCapitalize="none" onChangeText={setToken} style={styles.input} value={token} />
-      <Button title={t("wiring.checkin.qrCheckIn")} disabled={busy} onPress={() => void singleCheckIn("qr")} />
+      <SectionHeader title={t("wiring.checkin.qrHeading")} />
+      <TextField label={t("wiring.checkin.qrLabel")} accessibilityLabel={t("wiring.checkin.qrLabel")} autoCapitalize="none" onChangeText={setToken} value={token} />
+      <Button title={t("wiring.checkin.qrCheckIn")} icon="qr-code-outline" disabled={busy} onPress={() => void singleCheckIn("qr")} />
 
-      <Text style={styles.heading}>{t("wiring.checkin.batchHeading")}</Text>
+      <SectionHeader title={t("wiring.checkin.batchHeading")} />
       {members.length === 0 ? <Text style={styles.text}>{t("wiring.checkin.noMembers")}</Text> : members.map((member) => {
         const checked = selected.includes(member.id)
         return (
@@ -163,13 +164,13 @@ export default function AttendanceScreen() {
             accessibilityRole="checkbox"
             accessibilityState={{ checked }}
             onPress={() => toggle(member.id)}
-            style={[styles.card, { minHeight: 44, paddingVertical: 10 }]}
+            style={[styles.card, { minHeight: 52, paddingVertical: 10, borderRadius: 12, backgroundColor: "white" }]}
           >
             <Text style={styles.text}>{`${checked ? t("wiring.checkin.checked") : t("wiring.checkin.unchecked")} · ${nameOf(member.id)}`}</Text>
           </Pressable>
         )
       })}
-      <Button title={t("wiring.checkin.batchSubmit", { count: selected.length })} disabled={busy || selected.length === 0} onPress={() => void batchCheckIn()} />
+      <Button title={t("wiring.checkin.batchSubmit", { count: selected.length })} icon="people-outline" disabled={busy || selected.length === 0} onPress={() => void batchCheckIn()} />
 
       {notice ? <Text accessibilityLiveRegion="polite" style={styles.error}>{notice}</Text> : null}
       {busy ? <Text style={styles.text}>{t("wiring.checkin.submitting")}</Text> : null}

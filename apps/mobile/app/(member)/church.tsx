@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react"
-import { Text, View } from "react-native"
+import { ScrollView, Text, View } from "react-native"
+import { Ionicons } from "@expo/vector-icons"
+import { HeroBanner, ListRow, SectionHeader } from "../../components/ui"
+import { colors, spacing, type } from "../../theme"
 import type { MessageKey } from "@church/config/i18n"
 import { ApiError, api } from "../../lib/api"
 import { useT } from "../../lib/locale"
@@ -45,5 +48,13 @@ export default function ChurchScreen() {
   if (loading) return <LoadingState />
   if (error) return <ErrorState message={"text" in error ? error.text : t(error.key)} onRetry={() => setAttempt((value) => value + 1)} />
   if (!church) return <ErrorState message={t("mobile.shared.church.unavailable")} onRetry={() => setAttempt((value) => value + 1)} />
-  return <View style={styles.content}><Text style={styles.title}>{typeof church.name === "string" ? church.name : t("mobile.shared.church.fallbackName")}</Text>{(["location", "leadPastorName", "phone", "email", "description"] as const).map((field) => typeof church[field] === "string" ? <Text key={field} style={styles.text}>{church[field]}</Text> : null)}</View>
+  const name = typeof church.name === "string" ? church.name : t("mobile.shared.church.fallbackName")
+  const location = typeof church.location === "string" ? church.location : undefined
+  const description = typeof church.description === "string" ? church.description : undefined
+  return <ScrollView contentContainerStyle={[styles.content, { gap: spacing.lg }]}>
+    <HeroBanner title={name} subtitle={location} />
+    <View><SectionHeader title={t("mobile.shared.church.fallbackName")} />{description ? <Text style={{ ...type.body, color: colors.muted }}>{description}</Text> : null}
+      {typeof church.leadPastorName === "string" ? <ListRow icon="person-outline" title={church.leadPastorName} /> : null}
+    </View>
+  </ScrollView>
 }

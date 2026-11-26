@@ -5,6 +5,8 @@ import { useSession } from "../../lib/session"
 import { useT } from "../../lib/locale"
 import type { Translate } from "@church/config/i18n"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
+import { Card, Pill } from "../../components/ui"
+import { colors, spacing, type } from "../../theme"
 
 type LibraryDocument = {
   id: string
@@ -114,7 +116,7 @@ export default function LibraryScreen() {
         value={query}
       />
     </View>}
-    contentContainerStyle={styles.content}
+    contentContainerStyle={[styles.content, libraryStyles.content]}
     data={visibleDocuments}
     keyboardShouldPersistTaps="handled"
     keyExtractor={(document) => document.id}
@@ -127,21 +129,28 @@ export default function LibraryScreen() {
         accessibilityState={{ busy }}
         disabled={Boolean(downloadingId)}
         onPress={() => void openDocument(item)}
-        style={styles.card}
+        style={libraryStyles.pressable}
       >
-        <View style={libraryStyles.rowHeader}>
-          <Text style={styles.heading}>{item.title}</Text>
-          {busy ? <ActivityIndicator accessibilityLabel={t("mobile.member.library.opening")} /> : null}
-        </View>
-        {item.description ? <Text style={styles.text}>{item.description}</Text> : null}
-        <Text style={libraryStyles.metadata}>{fileType(item, t)} · {formatFileSize(item.size_bytes, t)}</Text>
-        {rowError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{rowError}</Text> : null}
+        <Card style={libraryStyles.mediaCard}>
+          <View style={libraryStyles.rowHeader}>
+            <View style={libraryStyles.cover}><Text style={libraryStyles.coverText}>{fileType(item, t).slice(0, 3)}</Text></View>
+            <View style={libraryStyles.copy}><Text style={styles.heading}>{item.title}</Text>{item.description ? <Text style={libraryStyles.description}>{item.description}</Text> : null}<Pill label={`${fileType(item, t)} · ${formatFileSize(item.size_bytes, t)}`} /></View>
+            {busy ? <ActivityIndicator accessibilityLabel={t("mobile.member.library.opening")} /> : null}
+          </View>
+          {rowError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{rowError}</Text> : null}
+        </Card>
       </Pressable>
     }}
   />
 }
 
 const libraryStyles = StyleSheet.create({
-  metadata: { color: "#4b5563", fontSize: 14 },
-  rowHeader: { alignItems: "center", flexDirection: "row", justifyContent: "space-between" },
+  content: { padding: spacing.lg, gap: spacing.md },
+  pressable: { marginBottom: spacing.md, minHeight: 44 },
+  mediaCard: { marginBottom: 0 },
+  rowHeader: { alignItems: "center", flexDirection: "row", gap: spacing.md },
+  cover: { alignItems: "center", backgroundColor: colors.tint, borderRadius: 12, height: 92, justifyContent: "center", width: 68 },
+  coverText: { ...type.caption, color: colors.brand, fontWeight: "700" },
+  copy: { flex: 1, gap: spacing.xs },
+  description: { ...type.supporting, color: colors.muted },
 })
