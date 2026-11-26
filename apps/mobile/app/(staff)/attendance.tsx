@@ -5,6 +5,10 @@ import { api } from "../../lib/api"
 import { submitManualCheckin, submitQrCheckin, type CheckinOutcome } from "../../lib/checkin"
 import { createRequestGate } from "../../lib/request-gate"
 import { roleHasTabPermission } from "../../lib/claims"
+import { asRows } from "../../components/staff-read-screen"
+
+// The members endpoint answers { data, meta }; asRows unwraps the rows.
+const toMembers = (value: unknown): Member[] => asRows(value) as unknown as Member[]
 import { useT } from "../../lib/locale"
 import { useSession } from "../../lib/session"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
@@ -53,7 +57,7 @@ export default function AttendanceScreen() {
     const isCurrent = gate.start()
     setLoadState("loading")
     setSessions([]); setMembers([]); setSessionId(null); setSelected([]); setResults([]); setSummary(""); setNotice("")
-    Promise.all([api.get<Session[]>("/attendance/sessions"), api.get<Member[]>("/members")]).then(
+    Promise.all([api.get<Session[]>("/attendance/sessions"), api.get<unknown>("/members?limit=200").then(toMembers)]).then(
       ([sessionData, memberData]) => {
         if (!isCurrent()) return
         setSessions(Array.isArray(sessionData) ? sessionData.filter((session) => session.status === "open") : [])

@@ -14,13 +14,15 @@ export function SpaceNav({ space }: { space: Space }) {
   const { churchId } = useParams<{ churchId?: string }>()
   const { data: session } = useSession()
   const items = spaceDestinations(space, churchId ?? "", session?.user?.role)
+  // Pages reached from the More hub keep the More item highlighted.
+  const hubRoutes = ["portal/library", "portal/inbox", "portal/events", "portal/prayer"]
 
   if (items.length === 0) return null
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-border bg-background pb-[env(safe-area-inset-bottom)] md:static md:flex-col md:border-0 md:bg-transparent md:pb-0">
       {items.map((item) => {
-        const active = pathname === item.href || pathname.startsWith(`${item.href}/`)
+        const active = pathname === item.href || pathname.startsWith(`${item.href}/`) || (item.key === "more" && hubRoutes.some((segment) => pathname.includes(`/${segment}`)))
         return (
           <Link
             key={item.key}
