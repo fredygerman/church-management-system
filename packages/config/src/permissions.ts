@@ -19,6 +19,8 @@ export enum UserRole {
   ZONE_LEADER = 'zone_leader',       // Zone/small group leader
   DEPARTMENT_LEADER = 'department_leader', // Department/ministry leader
   MEMBER = 'member',                 // Regular church member
+  USHER = 'usher',                   // Service greeter: attendance check-in and visitor intake
+  PUBLISHER = 'publisher',           // Publishes announcements and communications
 }
 
 // ============================================================================
@@ -112,6 +114,17 @@ export type PermissionAction =
 // ROLE TO PERMISSIONS MAPPING
 // ============================================================================
 
+// Self-service set shared by every role that extends MEMBER (usher, publisher).
+// Kept as a named constant because PERMISSION_MAP cannot reference itself.
+const MEMBER_PERMISSIONS: PermissionAction[] = [
+  'read:member', // Own profile only
+  'view:attendance',
+  'view:communications',
+  'view:lifecycle-dashboard',
+  'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests', 'read:own-giving-history',
+  'view:giving-goals', 'view:events', 'rsvp:event',
+];
+
 export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
   [UserRole.SUPER_ADMIN]: [
     // All permissions
@@ -195,14 +208,27 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'view:giving-goals', 'view:events', 'rsvp:event',
   ],
 
-  [UserRole.MEMBER]: [
-    'read:member', // Own profile only
-    'view:attendance',
-    'view:communications',
-    'view:lifecycle-dashboard',
-    'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests', 'read:own-giving-history',
-    'view:giving-goals', 'view:events', 'rsvp:event',
-  ],
+  [UserRole.MEMBER]: MEMBER_PERMISSIONS,
+
+  // Usher: attendance check-in and visitor intake. No delete, settings, giving reports or full member records.
+  [UserRole.USHER]: uniquePermissions([
+    ...MEMBER_PERMISSIONS,
+    'view:attendance', 'manage:attendance',
+    'view:visitors', 'create:visitor',
+    'search:members',
+  ]),
+
+  // Publisher: communications and announcements. Same exclusions as usher.
+  [UserRole.PUBLISHER]: uniquePermissions([
+    ...MEMBER_PERMISSIONS,
+    'view:communications', 'manage:communications',
+    'view:announcements', 'publish:announcements',
+  ]),
+}
+
+/** Drops duplicate entries while keeping first-seen order. */
+function uniquePermissions(permissions: PermissionAction[]): PermissionAction[] {
+  return Array.from(new Set(permissions));
 }
 
 // ============================================================================

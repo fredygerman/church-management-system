@@ -63,6 +63,8 @@ export default async function ProfilePage({
     [UserRole.ZONE_LEADER]: t("staff.profile.roleName.zoneLeader"),
     [UserRole.DEPARTMENT_LEADER]: t("staff.profile.roleName.departmentLeader"),
     [UserRole.MEMBER]: t("staff.profile.roleName.member"),
+    [UserRole.USHER]: t("staff.profile.roleName.usher"),
+    [UserRole.PUBLISHER]: t("staff.profile.roleName.publisher"),
   }
 
   return (

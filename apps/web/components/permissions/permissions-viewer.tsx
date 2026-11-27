@@ -30,6 +30,8 @@ const roleLabels: Record<UserRole, MessageKey> = {
   [UserRole.ZONE_LEADER]: "final.permissions.role.zoneLeader",
   [UserRole.DEPARTMENT_LEADER]: "final.permissions.role.departmentLeader",
   [UserRole.MEMBER]: "final.permissions.role.member",
+  [UserRole.USHER]: "final.permissions.role.usher",
+  [UserRole.PUBLISHER]: "final.permissions.role.publisher",
 }
 
 const roleDescriptions: Record<UserRole, MessageKey> = {
@@ -39,6 +41,8 @@ const roleDescriptions: Record<UserRole, MessageKey> = {
   [UserRole.ZONE_LEADER]: "final.permissions.roleDesc.zoneLeader",
   [UserRole.DEPARTMENT_LEADER]: "final.permissions.roleDesc.departmentLeader",
   [UserRole.MEMBER]: "final.permissions.roleDesc.member",
+  [UserRole.USHER]: "final.permissions.roleDesc.usher",
+  [UserRole.PUBLISHER]: "final.permissions.roleDesc.publisher",
 }
 
 // Category labels reuse the profile page keys; the risk and attendance keys are sweep.b.
