@@ -142,6 +142,7 @@ import {
 } from "./tables/passwordRecoveryTokens"
 import { churchInvitations, type ChurchInvitation, type NewChurchInvitation } from "./tables/churchInvitations"
 import { announcementAttachments, type AnnouncementAttachment, type NewAnnouncementAttachment } from "./tables/announcementAttachments"
+import { announcements, announcementSettings, announcementStatusEnum, type Announcement, type NewAnnouncement, type AnnouncementSettings, type NewAnnouncementSettings } from "./tables/announcements"
 import { verseEntries, verseOverrides, verseEntriesRelations, verseOverridesRelations, type VerseEntry, type NewVerseEntry, type VerseOverride, type NewVerseOverride } from "./tables/verses"
 import {
   contactVerifications,
@@ -180,6 +181,13 @@ import {
 } from "./tables/relations"
 
 export {
+  announcements,
+  announcementSettings,
+  announcementStatusEnum,
+  type Announcement,
+  type NewAnnouncement,
+  type AnnouncementSettings,
+  type NewAnnouncementSettings,
   verseEntries,
   verseOverrides,
   verseEntriesRelations,

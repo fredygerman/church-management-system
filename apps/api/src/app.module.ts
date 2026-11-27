@@ -22,6 +22,7 @@ import { InvitationsModule } from './invitations/invitations.module'
 import { VerificationModule } from './verification/verification.module'
 import { AnnouncementAttachmentsModule } from './announcement-attachments/announcement-attachments.module'
 import { VersesModule } from './verses/verses.module'
+import { AnnouncementsModule } from './announcements/announcements.module'
 import { ChurchModule } from './churches/churches.module'
 import { MembersModule } from './members/members.module'
 import { ZonesModule } from './zones/zones.module'
@@ -61,6 +62,7 @@ import config from './config'
     VerificationModule,
     AnnouncementAttachmentsModule,
     VersesModule,
+    AnnouncementsModule,
     ChurchModule,
     MembersModule,
     ZonesModule,
