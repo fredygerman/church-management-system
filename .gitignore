@@ -75,3 +75,6 @@ Thumbs.db
 # Monorepo specific
 .turbo/
 .pnpm/
+
+# Expo local state (RM-018)
+apps/mobile/.expo/

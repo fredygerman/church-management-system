@@ -26,6 +26,13 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  // Behind Cloudflare and Traefik the client IP is in X-Forwarded-For. Trust only the configured hop count (RM-015).
+  const trustProxyHops = Number.parseInt(process.env.TRUST_PROXY_HOPS ?? '1', 10);
+  app
+    .getHttpAdapter()
+    .getInstance()
+    .set('trust proxy', Number.isFinite(trustProxyHops) && trustProxyHops >= 0 ? trustProxyHops : 1);
+
   // Apply security headers early
   app.use(helmet());
 
@@ -73,7 +80,10 @@ async function bootstrap() {
     }),
   );
 
-  SwaggerModule.setup('docs', app, document);
+  // The API reference is internal: mount it outside production, or in production only when explicitly enabled (RM-015).
+  if (nodeEnv !== 'production' || process.env.ENABLE_DOCS === 'true') {
+    SwaggerModule.setup('docs', app, document);
+  }
 
   // CORS configuration
   app.enableCors({

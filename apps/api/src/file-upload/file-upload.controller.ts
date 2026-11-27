@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Logger,
+  NotFoundException,
   UploadedFile,
   UseInterceptors,
   UseGuards,
@@ -84,23 +85,25 @@ export class FileUploadController {
   @RequirePermission('manage:files')
   @UseInterceptors(FileInterceptor('file', { limits: MULTIPART_LIMITS }))
   async runDiagnostics(@UploadedFile() file?: MulterFile): Promise<any> {
+    // Off unless the operator enables it for a specific debugging session (RM-015, D-30).
+    if (process.env.ENABLE_STORAGE_DIAGNOSTICS !== 'true') {
+      throw new NotFoundException();
+    }
     this.logger.log('========== DIAGNOSTICS START ==========');
     const diagnostics: any = {
       timestamp: new Date().toISOString(),
       checks: {},
     };
 
-    // Check 1: Environment variables
+    // Check 1: Environment variables. Presence only, never key material.
     this.logger.log('Check 1: Environment variables');
     diagnostics.checks.environment = {
       nodeEnv: process.env.NODE_ENV,
       s3Endpoint: config.s3StorageEndpoint,
       s3BucketName: config.s3BucketName,
       s3PublicUrl: config.s3PublicUrl,
-      s3AccessKeyId: config.s3AccessKeyId
-        ? `${config.s3AccessKeyId.substring(0, 5)}...`
-        : 'NOT SET',
-      s3SecretKeyId: config.s3SecretKeyId ? '***' : 'NOT SET',
+      s3AccessKeyIdSet: !!config.s3AccessKeyId,
+      s3SecretKeySet: !!config.s3SecretKeyId,
     };
 
     // Check 2: File information (if provided)
