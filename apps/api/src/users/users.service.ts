@@ -1,3 +1,4 @@
+import { randomUUID } from 'crypto';
 import {
   Injectable,
   NotFoundException,
@@ -16,6 +17,24 @@ import {
 } from '../database/schema';
 import { eq, and, isNull } from 'drizzle-orm';
 import { Database } from '../database/interfaces/database.interfaces';
+import {
+  AVATAR_ERROR_CODES,
+  AVATAR_MAX_BYTES,
+  AVATAR_SIGNED_GET_TTL_SECONDS,
+  buildAvatarKey,
+  detectAvatarImageType,
+  stripImageMetadata,
+} from './avatar-image';
+
+/** The account as returned to clients: the raw storage key is replaced by a signed URL. */
+export type AccountView = Omit<User, 'avatarKey'> & { avatarUrl: string | null };
+
+/** Multer in-memory file, as delivered by FileInterceptor('file'). */
+export interface AvatarUploadFile {
+  buffer?: Buffer;
+  size?: number;
+  mimetype?: string;
+}
 
 @Injectable()
 export class UsersService implements OnModuleInit {
@@ -132,6 +151,132 @@ export class UsersService implements OnModuleInit {
       .limit(1);
 
     return user || null;
+  }
+
+  /**
+   * Client-facing account: drops the raw avatar key and adds a 15-minute signed
+   * GET URL (null when no avatar is set or the URL cannot be signed).
+   */
+  async toAccountView(user: User): Promise<AccountView> {
+    const { avatarKey, ...rest } = user;
+    return { ...rest, avatarUrl: await this.signAvatarUrl(avatarKey) };
+  }
+
+  /**
+   * Stores a member's own photo as a private object, then points the user row at it.
+   * The previous object is deleted after the row is updated (best effort).
+   */
+  async uploadAvatar(
+    userId: string,
+    file: AvatarUploadFile | undefined,
+  ): Promise<{ avatarUrl: string | null; avatarUpdatedAt: string | null }> {
+    const buffer = file?.buffer;
+    if (!buffer || buffer.length === 0) {
+      throw new BadRequestException({
+        message: 'Avatar file is required',
+        code: AVATAR_ERROR_CODES.MISSING_FILE,
+      });
+    }
+    if (buffer.length > AVATAR_MAX_BYTES) {
+      throw new BadRequestException({
+        message: 'Avatar file must be 5 MB or smaller',
+        code: AVATAR_ERROR_CODES.TOO_LARGE,
+      });
+    }
+
+    // Magic bytes decide the type; the client-supplied MIME header is ignored.
+    const imageType = detectAvatarImageType(buffer);
+    if (!imageType) {
+      throw new BadRequestException({
+        message: 'Avatar must be a JPEG, PNG or WebP image',
+        code: AVATAR_ERROR_CODES.TYPE_UNSUPPORTED,
+      });
+    }
+
+    const current = await this.getUserById(userId);
+    if (!current) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Store a copy without EXIF, XMP or other metadata (location and device data).
+    let cleaned: Buffer;
+    try {
+      cleaned = stripImageMetadata(buffer, imageType);
+    } catch {
+      throw new BadRequestException({
+        message: 'Avatar image could not be read',
+        code: AVATAR_ERROR_CODES.IMAGE_INVALID,
+      });
+    }
+
+    const key = buildAvatarKey(userId, imageType, randomUUID());
+    await this.fileUploadService.putPrivateObject(key, cleaned, imageType);
+
+    let updated: User | undefined;
+    try {
+      [updated] = await this.db
+        .update(users)
+        .set({ avatarKey: key, avatarUpdatedAt: new Date() })
+        .where(and(eq(users.id, userId), isNull(users.deletedAt)))
+        .returning();
+    } catch (error: any) {
+      // Do not leave an orphaned object when the row was not updated.
+      await this.deleteObjectBestEffort(key);
+      throw error;
+    }
+
+    if (!updated) {
+      await this.deleteObjectBestEffort(key);
+      throw new NotFoundException('User not found');
+    }
+
+    if (current.avatarKey && current.avatarKey !== key) {
+      await this.deleteObjectBestEffort(current.avatarKey);
+    }
+
+    this.logger.log(`Avatar updated for user: ${userId}`);
+    return {
+      avatarUrl: await this.signAvatarUrl(key),
+      avatarUpdatedAt: updated.avatarUpdatedAt ? updated.avatarUpdatedAt.toISOString() : null,
+    };
+  }
+
+  /** Clears the avatar columns first, then deletes the stored object (best effort). */
+  async removeAvatar(userId: string): Promise<void> {
+    const current = await this.getUserById(userId);
+    if (!current) {
+      throw new NotFoundException('User not found');
+    }
+
+    await this.db
+      .update(users)
+      .set({ avatarKey: null, avatarUpdatedAt: null })
+      .where(and(eq(users.id, userId), isNull(users.deletedAt)));
+
+    if (current.avatarKey) {
+      await this.deleteObjectBestEffort(current.avatarKey);
+    }
+
+    this.logger.log(`Avatar removed for user: ${userId}`);
+  }
+
+  private async signAvatarUrl(key: string | null | undefined): Promise<string | null> {
+    if (!key) return null;
+    try {
+      return await this.fileUploadService.getSignedGetUrl(key, AVATAR_SIGNED_GET_TTL_SECONDS);
+    } catch (error: any) {
+      this.logger.warn(`Avatar URL signing failed: ${error?.name ?? 'Error'}`);
+      return null;
+    }
+  }
+
+  /** Storage errors are logged by name only and never reach the client. Keys are not logged here. */
+  private async deleteObjectBestEffort(key: string): Promise<void> {
+    try {
+      await this.fileUploadService.deleteFromS3(key);
+    } catch (error: any) {
+      this.logger.warn(`Avatar object delete failed: ${error?.name ?? 'Error'}`);
+    }
   }
 
   /**

@@ -1,28 +1,38 @@
 import {
   Controller,
   Get,
+  Post,
   Patch,
   Delete,
   Body,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   Request,
   HttpCode,
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
   ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
+import type { AvatarUploadFile } from './users.service';
+import { AVATAR_MAX_BYTES } from './avatar-image';
+import { MULTIPART_LIMITS } from '../file-upload/file-upload.controller';
 import { JwtAuthGuard, RoleGuard } from '../auth/guards';
 import { Roles } from '../auth/decorators';
 import { UserRole } from '../auth/types/permission.types';
 import { RequirePermission } from '../auth/decorators/require-permission.decorator';
 import type { RoleType } from '../database/schema';
+
+const AVATAR_UPLOAD_LIMITS = { ...MULTIPART_LIMITS, fileSize: AVATAR_MAX_BYTES };
 
 @ApiTags('User Account Management')
 @Controller('users')
@@ -77,7 +87,7 @@ export class UsersController {
     const userId = req.user.id;
     const account = await this.usersService.getAccount(userId);
 
-    return account;
+    return this.usersService.toAccountView(account);
   }
 
   /**
@@ -125,7 +135,62 @@ export class UsersController {
 
     this.logger.log(`User ${userId} updated account details`);
 
+    return { ...result, user: await this.usersService.toAccountView(result.user) };
+  }
+
+  /**
+   * POST /api/users/me/avatar
+   * Upload the current user's own photo (multipart field 'file': JPEG, PNG or WebP, max 5 MB)
+   */
+  @Post('me/avatar')
+  @UseInterceptors(FileInterceptor('file', { limits: AVATAR_UPLOAD_LIMITS }))
+  @RequirePermission('update:self')
+  @HttpCode(HttpStatus.OK)
+  @ApiConsumes('multipart/form-data')
+  @ApiOperation({
+    summary: 'Upload profile photo',
+    description: 'Stores a private avatar after checking the file signature (JPEG, PNG, WebP)',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { file: { type: 'string', format: 'binary' } },
+      required: ['file'],
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Avatar stored; returns a 15-minute signed avatarUrl' })
+  @ApiResponse({ status: 400, description: 'AVATAR_MISSING_FILE, AVATAR_TOO_LARGE or AVATAR_TYPE_UNSUPPORTED' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async uploadAvatar(
+    @Request() req: any,
+    @UploadedFile() file?: AvatarUploadFile,
+  ) {
+    const userId = req.user.id;
+    const result = await this.usersService.uploadAvatar(userId, file);
+
+    this.logger.log(`User ${userId} uploaded a profile photo`);
+
     return result;
+  }
+
+  /**
+   * DELETE /api/users/me/avatar
+   * Remove the current user's profile photo
+   */
+  @Delete('me/avatar')
+  @RequirePermission('update:self')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({
+    summary: 'Remove profile photo',
+    description: 'Clears the avatar columns and deletes the stored object',
+  })
+  @ApiResponse({ status: 204, description: 'Avatar removed' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async removeAvatar(@Request() req: any): Promise<void> {
+    const userId = req.user.id;
+    await this.usersService.removeAvatar(userId);
+
+    this.logger.log(`User ${userId} removed profile photo`);
   }
 
   /**
