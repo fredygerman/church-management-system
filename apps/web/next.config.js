@@ -9,6 +9,10 @@ const nextConfig = {
   // Already doing linting and typechecking as separate tasks in CI
   // eslint: { ignoreDuringBuilds: true },
   // typescript: { ignoreBuildErrors: true },
+  // Announcement images and PDFs go through server actions; phone photos exceed the 1 MB default.
+  experimental: {
+    serverActions: { bodySizeLimit: "12mb" },
+  },
   images: {
     remotePatterns: [
       {

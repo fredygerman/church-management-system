@@ -9,6 +9,7 @@ import {
   Shield,
   UserCircle,
   ClipboardCheck,
+  Bell,
   Megaphone,
   KeyRound,
   Database,
@@ -75,6 +76,12 @@ export const sidebarConfig: SidebarSection[] = [
         href: "/dashboard/communications",
         icon: Megaphone,
         permissions: ["view:communications", "manage:communications"],
+      },
+      {
+        title: "nav.announcements",
+        href: "/dashboard/announcements",
+        icon: Bell,
+        permissions: ["view:announcements"],
       },
       {
         title: "nav.content",
