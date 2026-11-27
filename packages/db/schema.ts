@@ -140,6 +140,11 @@ import {
   type PasswordRecoveryToken,
   type NewPasswordRecoveryToken,
 } from "./tables/passwordRecoveryTokens"
+import {
+  contactVerifications,
+  contactVerificationsRelations,
+} from "./tables/contactVerifications"
+import { contactConsents, contactConsentsRelations } from "./tables/contactConsents"
 
 // Import all relations
 import {
@@ -172,6 +177,10 @@ import {
 } from "./tables/relations"
 
 export {
+  contactVerifications,
+  contactVerificationsRelations,
+  contactConsents,
+  contactConsentsRelations,
   users,
   refreshTokens,
   roleEnum,
