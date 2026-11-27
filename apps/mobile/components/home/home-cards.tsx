@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from "react-native"
+import { router } from "expo-router"
 import { Ionicons } from "@expo/vector-icons"
 import type { Locale, Translate } from "@church/config/i18n"
 import { Card } from "../ui"
@@ -28,10 +29,10 @@ export function UpcomingCard({ item, locale, onPress }: { item: UpcomingItem; lo
 
 export type AnnouncementItem = { id: string; title: string; excerpt: string; sentAt: Date | null }
 
-/** Recent announcement: title, two-line body excerpt and relative date. */
+/** Recent announcement: title, two-line summary and relative date. Tapping opens the full announcement. */
 export function AnnouncementCard({ item, locale, now, t }: { item: AnnouncementItem; locale: Locale; now: Date; t: Translate }) {
   const when = item.sentAt ? formatRelativeDar(item.sentAt, now, locale, t) : ""
-  return <Card style={styles.announcement}>
+  return <Card onPress={() => router.push(`/(member)/announcements/${encodeURIComponent(item.id)}`)} style={styles.announcement}>
     <Text numberOfLines={2} style={styles.title}>{item.title}</Text>
     {item.excerpt ? <Text numberOfLines={2} style={styles.excerpt}>{item.excerpt}</Text> : null}
     {when ? <Text style={styles.caption}>{when}</Text> : null}

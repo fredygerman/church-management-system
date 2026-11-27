@@ -15,6 +15,8 @@ export default function MemberLayout() {
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="events" options={{ title: t("mobile.member.tabs.events") }} />
       <Stack.Screen name="events/[id]" options={{ title: t("mobile.member.tabs.event") }} />
+      <Stack.Screen name="announcements" options={{ title: t("mobile.announcements.title") }} />
+      <Stack.Screen name="announcements/[id]" options={{ title: t("mobile.announcements.detail.title") }} />
       <Stack.Screen name="prayer" options={{ title: t("mobile.member.tabs.prayer") }} />
       <Stack.Screen name="inbox" options={{ title: t("wiring.nav.inbox") }} />
       <Stack.Screen name="library-catalog" options={{ title: t("wiring.nav.resources") }} />

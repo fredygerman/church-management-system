@@ -9,7 +9,7 @@ import { EmptyState, ErrorState, LoadingState } from "../../../components/screen
 import { Card, SectionHeader } from "../../../components/ui"
 import { HomeHero } from "../../../components/home/home-hero"
 import { HomeAction } from "../../../components/home/home-action"
-import { VerseCard } from "../../../components/home/verse-card"
+import { VerseOfTheDay } from "../../../components/verses/verse-of-the-day"
 import { AnnouncementCard, UpcomingCard, type AnnouncementItem, type UpcomingItem } from "../../../components/home/home-cards"
 import { darDayIndex, darMidnightFromDateOnly } from "../../../components/home/dar-time"
 import { colors, shadow, spacing } from "../../../theme"
@@ -23,8 +23,6 @@ type ServiceSession = {
 }
 
 type EventItem = { id?: string; title?: string | null; startsAt?: string | null; location?: string | null }
-
-const VERSE_COUNT = 7
 
 /** Strips markup and collapses whitespace so API bodies read as plain text. */
 function plainText(value: unknown): string {
@@ -73,11 +71,11 @@ export default function HomeScreen() {
     const churchId = typeof user?.churchId === "string" ? user.churchId : null
     // The church name is display-only; a failure just falls back to a generic label.
     const church = churchId ? api.get<Record<string, unknown> | null>(`/churches/${churchId}`).catch(() => null) : Promise.resolve(null)
-    Promise.all([api.get<Record<string, unknown> | null>("/members/me"), api.get<Record<string, unknown>[]>("/communications/announcements"), church]).then(
+    Promise.all([api.get<Record<string, unknown> | null>("/members/me"), api.get<{ items?: Record<string, unknown>[] }>("/announcements"), church]).then(
       ([memberData, announcementData, churchData]) => {
         if (!isCurrent()) return
         setMember(memberData)
-        setAnnouncements(Array.isArray(announcementData) ? announcementData : [])
+        setAnnouncements(Array.isArray(announcementData?.items) ? announcementData.items : [])
         setChurchName(typeof churchData?.name === "string" && churchData.name.trim() ? churchData.name.trim() : null)
         setStatus("ready")
       },
@@ -145,9 +143,9 @@ export default function HomeScreen() {
 
   const announcementItems = useMemo<AnnouncementItem[]>(() => announcements.map((item, index) => ({
     id: String(item.id ?? index),
-    title: firstText(item.subject, item.name, item.title) || t("mobile.member.home.announcementFallback"),
-    excerpt: firstText(item.body, item.content),
-    sentAt: validDate(item.sentAt),
+    title: firstText(item.title) || t("mobile.member.home.announcementFallback"),
+    excerpt: firstText(item.summary),
+    sentAt: validDate(item.publishedAt ?? item.createdAt),
   })), [announcements, t])
 
   if (status === "loading") return <LoadingState />
@@ -158,7 +156,6 @@ export default function HomeScreen() {
   const activeRole = typeof user?.activeRole === "string" && user.activeRole ? user.activeRole : "member"
   const roleLabel = activeRole === "member" ? t("mobile.member.home.roleMember") : activeRole.charAt(0).toUpperCase() + activeRole.slice(1)
   const displayChurch = churchName ?? t("mobile.member.home.churchFallback")
-  const verseIndex = (darDayIndex(new Date()) + 4) % VERSE_COUNT // 1970-01-01 was a Thursday; index 0 is Sunday.
   const now = new Date()
 
   return <ScrollView style={homeStyles.screen} contentContainerStyle={homeStyles.content}>
@@ -173,8 +170,8 @@ export default function HomeScreen() {
         {isStaff ? <HomeAction icon="people-outline" label={t("wiring.spaces.toStaff")} onPress={() => setSpace("staff")} /> : null}
       </View>
     </View>
-    {/* D-23: Swahili verse text is not yet church-approved; hide the card until it is. */}
-    {locale === "sw" ? null : <VerseCard heading={t("mobile.member.home.verseHeading")} text={t(`mobile.member.home.verseText.${verseIndex}` as "mobile.member.home.verseText.0")} reference={t(`mobile.member.home.verseRef.${verseIndex}` as "mobile.member.home.verseRef.0")} />}
+    {/* Verse of the day comes from the API. It renders nothing when the API has no text for the language (D-23). */}
+    <VerseOfTheDay />
     <View>
       <SectionHeader title={t("mobile.member.home.upcomingHeading")} actionLabel={t("mobile.member.home.seeAll")} onAction={() => router.push("/(member)/events")} />
       {servicesStatus === "loading" ? <LoadingState /> : servicesStatus === "error" ? <ErrorState message={t("mobile.member.home.servicesError")} onRetry={() => setServicesAttempt((value) => value + 1)} /> : upcoming ? <UpcomingCard item={upcoming} locale={locale} onPress={() => router.push(upcoming.route as "/(member)/events")} /> : <Card><EmptyState message={t("mobile.member.home.noUpcoming")} /></Card>}
