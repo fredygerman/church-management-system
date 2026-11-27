@@ -1,3 +1,6 @@
+// jest.config has no 'tsx' extension, so the React Email templates cannot be loaded here. Auth tests never send mail.
+jest.mock('../mail/mail.service', () => ({ MailService: class MailService {} }))
+
 import { ForbiddenException, UnauthorizedException } from '@nestjs/common'
 import { AuthController } from './auth.controller'
 

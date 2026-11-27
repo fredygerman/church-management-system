@@ -1,3 +1,6 @@
+// jest.config has no 'tsx' extension, so the React Email templates cannot be loaded here. Auth tests never send mail.
+jest.mock('../mail/mail.service', () => ({ MailService: class MailService {} }))
+
 jest.mock('drizzle-orm', () => ({
   and: (...predicates: Array<((row: any) => boolean) | undefined>) =>
     (row: any) => predicates.filter(Boolean).every((predicate) => predicate!(row)),
@@ -80,7 +83,7 @@ describe('AuthService OAuth provider-subject mapping', () => {
 
   beforeEach(async () => {
     churchDb.__reset()
-    service = new AuthService({ getDatabase: async () => (require('@church/db') as any).db } as any, {} as any)
+    service = new AuthService({ getDatabase: async () => (require('@church/db') as any).db } as any, {} as any, {} as any)
     await service.onModuleInit()
   })
 

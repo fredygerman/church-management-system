@@ -31,7 +31,11 @@ export class CreateAnnouncementDto {
   @IsObject()
   body!: Record<string, unknown>
 
-  @ApiPropertyOptional({ enum: ['in_app', 'email', 'sms'], isArray: true, description: 'in_app is always included' })
+  @ApiPropertyOptional({
+    enum: ['in_app'],
+    isArray: true,
+    description: 'Only in_app is accepted until consent and verification exist (D-19). Other channels return 400 CHANNEL_NOT_AVAILABLE',
+  })
   @IsOptional()
   @IsArray()
   channels?: string[]
@@ -76,7 +80,7 @@ export class UpdateAnnouncementDto {
   @IsObject()
   body?: Record<string, unknown>
 
-  @ApiPropertyOptional({ enum: ['in_app', 'email', 'sms'], isArray: true })
+  @ApiPropertyOptional({ enum: ['in_app'], isArray: true, description: 'Other channels return 400 CHANNEL_NOT_AVAILABLE (D-19)' })
   @IsOptional()
   @IsArray()
   channels?: string[]

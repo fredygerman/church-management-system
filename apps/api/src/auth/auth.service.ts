@@ -28,6 +28,7 @@ import {
 } from '../database/schema';
 import { Database } from '../database/interfaces/database.interfaces';
 import config from '../config';
+import { MailService } from '../mail/mail.service';
 import { isPlatformAdmin } from './platform-admin';
 import type { VerifiedGoogleIdentity } from './google-identity-verifier';
 
@@ -88,6 +89,7 @@ export class AuthService implements OnModuleInit {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {
     this.logger.log('Auth service initialized');
   }
@@ -599,13 +601,28 @@ export class AuthService implements OnModuleInit {
       .values({ userId: user.id, tokenHash, expiresAt })
       .returning();
 
-    // DEC-05 keeps external sending disabled. A configured delivery capability
-    // may consume this opaque URL later; the token is never returned or logged.
+    // The raw token travels only inside the emailed link. It is never returned or logged.
     const resetUrl = new URL('/auth/reset-password', config.frontendUrl);
     resetUrl.searchParams.set('token', rawToken);
-    this.logger.log(`Password recovery flow prepared for configured delivery for user ${user.id}`);
-    void resetUrl;
+    this.dispatchPasswordResetEmail(user.id, user.email, user.name, resetUrl.toString());
     return genericResponse;
+  }
+
+  /**
+   * Sends the reset email off the request path, so the response time does not reveal whether the
+   * account exists. Failures are logged with the user id only, never the link or the token.
+   */
+  private dispatchPasswordResetEmail(userId: string, to: string, name: string, resetUrl: string): void {
+    void this.mailService
+      .sendPasswordResetEmail(to, name, resetUrl)
+      .then((result) => {
+        if (!result.success) {
+          this.logger.error(`Password reset email was not sent for user ${userId}: ${result.error ?? 'unknown error'}`);
+        }
+      })
+      .catch(() => {
+        this.logger.error(`Password reset email failed for user ${userId}`);
+      });
   }
 
   async confirmPasswordRecovery(token: string, newPassword: string) {

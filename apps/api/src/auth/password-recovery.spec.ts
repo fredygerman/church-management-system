@@ -1,3 +1,6 @@
+// jest.config has no 'tsx' extension, so the React Email templates cannot be loaded here. The fake mail sender is passed in directly.
+jest.mock('../mail/mail.service', () => ({ MailService: class MailService {} }))
+
 jest.mock('crypto', () => {
   const actual = jest.requireActual('crypto')
   return { ...actual, randomBytes: jest.fn(() => Buffer.from('test-recovery-token')) }
@@ -88,6 +91,7 @@ jest.mock('@church/db', () => {
 import { UnauthorizedException } from '@nestjs/common'
 import { createHash } from 'crypto'
 import { AuthService } from './auth.service'
+import config from '../config'
 
 const churchDb = require('@church/db') as any
 
@@ -100,7 +104,8 @@ describe('AuthService password recovery', () => {
     churchDb.__reset()
     churchDb.__seedUser({ id: 'user-a', email: 'a@example.com', passwordHash: 'old-hash' })
     churchDb.__seedRefresh({ id: 'refresh-a', userId: 'user-a' })
-    service = new AuthService({ getDatabase: async () => churchDb.db } as any, {} as any)
+    const fakeMail = { sendPasswordResetEmail: jest.fn().mockResolvedValue({ success: true, messageId: 'msg-1' }) }
+    service = new AuthService({ getDatabase: async () => churchDb.db } as any, {} as any, fakeMail as any)
     await service.onModuleInit()
   })
 
@@ -141,5 +146,90 @@ describe('AuthService password recovery', () => {
       await service.requestPasswordRecovery('unknown@example.com', `ip-${index}`)
     }
     await expect(service.requestPasswordRecovery('unknown@example.com', 'ip-5')).rejects.toThrow()
+  })
+})
+
+describe('AuthService password recovery delivery', () => {
+  const RAW_TOKEN = Buffer.from('test-recovery-token').toString('base64url')
+  const LOG_LEVELS = ['log', 'warn', 'error', 'debug', 'verbose'] as const
+  const previousDelivery = process.env.PASSWORD_RECOVERY_DELIVERY_CONFIGURED
+  let service: AuthService
+  let mail: { sendPasswordResetEmail: jest.Mock }
+  let logSpies: jest.SpyInstance[]
+
+  // Email sending is fire-and-forget, so let the queued promise callbacks run first.
+  const settle = () => new Promise((resolve) => setImmediate(resolve))
+  const loggedText = () =>
+    logSpies.flatMap((spy) => spy.mock.calls.map((args) => args.map(String).join(' '))).join('\n')
+
+  beforeEach(async () => {
+    process.env.PASSWORD_RECOVERY_DELIVERY_CONFIGURED = 'true'
+    churchDb.__reset()
+    churchDb.__seedUser({ id: 'user-a', name: 'Amina', email: 'a@example.com', passwordHash: 'old-hash' })
+    mail = { sendPasswordResetEmail: jest.fn().mockResolvedValue({ success: true, messageId: 'msg-1' }) }
+    service = new AuthService({ getDatabase: async () => churchDb.db } as any, {} as any, mail as any)
+    await service.onModuleInit()
+    logSpies = LOG_LEVELS.map((level) => jest.spyOn((service as any).logger, level).mockImplementation(() => undefined))
+  })
+
+  afterAll(() => {
+    if (previousDelivery === undefined) delete process.env.PASSWORD_RECOVERY_DELIVERY_CONFIGURED
+    else process.env.PASSWORD_RECOVERY_DELIVERY_CONFIGURED = previousDelivery
+  })
+
+  it('emails one reset link to a known account, and the link carries the raw token', async () => {
+    await service.requestPasswordRecovery('A@Example.com', 'ip-known')
+    await settle()
+
+    expect(mail.sendPasswordResetEmail).toHaveBeenCalledTimes(1)
+    const [to, name, link] = mail.sendPasswordResetEmail.mock.calls[0]
+    expect(to).toBe('a@example.com')
+    expect(name).toBe('Amina')
+    const url = new URL(link)
+    expect(url.origin).toBe(new URL(config.frontendUrl).origin)
+    expect(url.pathname).toBe('/auth/reset-password')
+    expect(url.searchParams.get('token')).toBe(RAW_TOKEN)
+  })
+
+  it('sends nothing for an unknown email, and the response is identical for known and unknown emails', async () => {
+    const known = await service.requestPasswordRecovery('a@example.com', 'ip-1')
+    const unknown = await service.requestPasswordRecovery('nobody@example.com', 'ip-2')
+    await settle()
+
+    expect(mail.sendPasswordResetEmail).toHaveBeenCalledTimes(1)
+    expect(mail.sendPasswordResetEmail.mock.calls[0][0]).toBe('a@example.com')
+    expect(unknown).toEqual(known)
+  })
+
+  it('never logs the raw token or the reset link', async () => {
+    await service.requestPasswordRecovery('a@example.com', 'ip-3')
+    await settle()
+
+    const logged = loggedText()
+    expect(logged).not.toContain(RAW_TOKEN)
+    expect(logged).not.toContain('reset-password')
+    expect(logged).not.toContain('token=')
+  })
+
+  it('logs an error without the token and keeps the response unchanged when mail is not configured', async () => {
+    const unknown = await service.requestPasswordRecovery('nobody@example.com', 'ip-4')
+    mail.sendPasswordResetEmail.mockResolvedValueOnce({ success: false, error: 'Email service not configured' })
+    const known = await service.requestPasswordRecovery('a@example.com', 'ip-5')
+    await settle()
+
+    expect(known).toEqual(unknown)
+    const errorSpy = logSpies[LOG_LEVELS.indexOf('error')]
+    expect(errorSpy).toHaveBeenCalledWith('Password reset email was not sent for user user-a: Email service not configured')
+    expect(loggedText()).not.toContain(RAW_TOKEN)
+  })
+
+  it('logs a thrown mail failure by user id only, and the request still succeeds', async () => {
+    mail.sendPasswordResetEmail.mockRejectedValueOnce(new Error('smtp unreachable'))
+    const response = await service.requestPasswordRecovery('a@example.com', 'ip-6')
+    await settle()
+
+    expect(response).toEqual(await service.requestPasswordRecovery('nobody@example.com', 'ip-7'))
+    expect(logSpies[LOG_LEVELS.indexOf('error')]).toHaveBeenCalledWith('Password reset email failed for user user-a')
+    expect(loggedText()).not.toContain(RAW_TOKEN)
   })
 })

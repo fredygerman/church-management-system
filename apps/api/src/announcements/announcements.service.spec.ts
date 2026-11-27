@@ -106,6 +106,14 @@ class InMemoryAnnouncementRepository implements AnnouncementRepository {
     return list.slice(0, query.limit).map((row) => ({ ...row }))
   }
 
+  async findDueScheduled(now: Date, limit: number): Promise<AnnouncementRow[]> {
+    return [...this.rows.values()]
+      .filter((row) => row.status === 'scheduled' && !row.deletedAt && row.scheduledAt !== null && row.scheduledAt.getTime() <= now.getTime())
+      .sort((a, b) => a.scheduledAt!.getTime() - b.scheduledAt!.getTime())
+      .slice(0, limit)
+      .map((row) => ({ ...row }))
+  }
+
   async findViewerProfile(churchId: string, userId: string): Promise<ViewerProfile | null> {
     const profile = this.viewers.get(`${churchId}:${userId}`)
     if (!profile) return null
@@ -191,8 +199,21 @@ describe('AnnouncementsService', () => {
       expect(await errorOf(service.create(admin, draft({ body })))).toMatchObject({ code: 'ANNOUNCEMENT_BODY_INVALID' })
     })
 
-    it('rejects an unknown channel with INVALID_CHANNELS', async () => {
-      expect(await errorOf(service.create(admin, draft({ channels: ['push'] })))).toMatchObject({ status: 400, code: 'INVALID_CHANNELS' })
+    it('refuses email or sms with CHANNEL_NOT_AVAILABLE (400) and stores in_app only', async () => {
+      expect(await errorOf(service.create(admin, draft({ channels: ['in_app', 'email'] })))).toEqual({ status: 400, code: 'CHANNEL_NOT_AVAILABLE' })
+      expect(await errorOf(service.create(admin, draft({ channels: ['sms'] })))).toEqual({ status: 400, code: 'CHANNEL_NOT_AVAILABLE' })
+      expect((await service.create(admin, draft({ channels: ['in_app'] }))).channels).toEqual(['in_app'])
+    })
+
+    it('rejects a non-array channels value with INVALID_CHANNELS', async () => {
+      expect(await errorOf(service.create(admin, draft({ channels: 'in_app' })))).toEqual({ status: 400, code: 'INVALID_CHANNELS' })
+    })
+
+    it('refuses email or sms on update with CHANNEL_NOT_AVAILABLE and keeps the stored channels', async () => {
+      const view = await service.create(admin, draft())
+      expect(await errorOf(service.update(admin, view.id, { channels: ['sms'] } as UpdateAnnouncementDto)))
+        .toEqual({ status: 400, code: 'CHANNEL_NOT_AVAILABLE' })
+      expect((await service.get(admin, view.id)).channels).toEqual(['in_app'])
     })
 
     it('rejects an SMS body over the cap with SMS_TOO_LONG, and accepts one at the cap', async () => {
@@ -474,6 +495,72 @@ describe('AnnouncementsService', () => {
 
       expect((await service.list(admin, { status: 'draft' })).items.map((item) => item.id)).toEqual([draftView.id])
       expect((await service.list(memberFemale, { status: 'draft' })).items.map((item) => item.id)).toEqual([publishedView.id])
+    })
+  })
+
+  describe('scheduler pass (publishDueScheduled)', () => {
+    const inTwoHours = () => new Date(clock.now.getTime() + 2 * 3_600_000).toISOString()
+    const hoursLater = (hours: number) => new Date(clock.now.getTime() + hours * 3_600_000)
+
+    it('publishes only scheduled rows whose time has passed; future and cancelled rows stay put', async () => {
+      const due = await service.create(admin, draft({ title: 'Due' }))
+      const later = await service.create(admin, draft({ title: 'Later' }))
+      const cancelled = await service.create(admin, draft({ title: 'Cancelled' }))
+      await service.schedule(admin, due.id, { scheduledAt: inTwoHours() } as ScheduleAnnouncementDto)
+      await service.schedule(admin, later.id, { scheduledAt: hoursLater(5).toISOString() } as ScheduleAnnouncementDto)
+      await service.schedule(admin, cancelled.id, { scheduledAt: inTwoHours() } as ScheduleAnnouncementDto)
+      await service.cancel(admin, cancelled.id)
+
+      clock.now = hoursLater(3)
+      expect(await service.publishDueScheduled()).toEqual({ published: 1, held: 0, failed: 0 })
+
+      expect((await service.get(admin, due.id)).status).toBe('published')
+      expect((await service.get(admin, later.id)).status).toBe('scheduled')
+      expect((await service.get(admin, cancelled.id)).status).toBe('cancelled')
+      expect((await service.list(memberFemale, {})).items.map((item) => item.id)).toEqual([due.id])
+    })
+
+    it('treats a schedule as due at the exact minute it is reached, and not one millisecond before', async () => {
+      const view = await service.create(admin, draft())
+      const scheduledAt = new Date(clock.now.getTime() + 60_000)
+      await service.schedule(admin, view.id, { scheduledAt: scheduledAt.toISOString() } as ScheduleAnnouncementDto)
+
+      clock.now = new Date(scheduledAt.getTime() - 1)
+      expect(await service.publishDueScheduled()).toEqual({ published: 0, held: 0, failed: 0 })
+      clock.now = scheduledAt
+      expect(await service.publishDueScheduled()).toEqual({ published: 1, held: 0, failed: 0 })
+    })
+
+    it('holds a due schedule for approval when the church now requires it, and does not publish it (D-05)', async () => {
+      const view = await service.create(admin, draft())
+      await service.schedule(admin, view.id, { scheduledAt: inTwoHours() } as ScheduleAnnouncementDto)
+      repo.approvalSettings.set(CHURCH_A, true)
+
+      clock.now = hoursLater(3)
+      expect(await service.publishDueScheduled()).toEqual({ published: 0, held: 1, failed: 0 })
+      expect((await service.get(admin, view.id)).status).toBe('pending_approval')
+      expect((await service.list(memberFemale, {})).items).toEqual([])
+
+      // A different admin still has to approve it, as on the publish endpoint.
+      const published = await service.publish(secondAdmin, view.id)
+      expect(published).toMatchObject({ status: 'published', approvedBy: 'admin-a2' })
+    })
+
+    it('counts a row that cannot go out as failed and still publishes the others', async () => {
+      const broken = await service.create(admin, draft({ title: 'Broken' }))
+      const fine = await service.create(admin, draft({ title: 'Fine' }))
+      await service.schedule(admin, broken.id, { scheduledAt: inTwoHours() } as ScheduleAnnouncementDto)
+      await service.schedule(admin, fine.id, { scheduledAt: inTwoHours() } as ScheduleAnnouncementDto)
+      repo.rows.get(broken.id)!.audience = { allMembers: false }
+
+      clock.now = hoursLater(3)
+      expect(await service.publishDueScheduled()).toEqual({ published: 1, held: 0, failed: 1 })
+      expect((await service.get(admin, broken.id)).status).toBe('scheduled')
+      expect((await service.get(admin, fine.id)).status).toBe('published')
+    })
+
+    it('does nothing when no schedule is due', async () => {
+      expect(await service.publishDueScheduled()).toEqual({ published: 0, held: 0, failed: 0 })
     })
   })
 })

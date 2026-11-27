@@ -1,11 +1,12 @@
 import { BadRequestException, HttpStatus, Inject, Injectable } from '@nestjs/common'
-import { resolveTransition, type AnnouncementAction } from './announcement-state'
+import { isScheduleDue, resolveTransition, type AnnouncementAction } from './announcement-state'
 import {
   isAudienceEmpty,
   isMemberVisible,
   isStaffRole,
   normalizeAudience,
   normalizeChannels,
+  type ChannelResult,
   SCHEDULE_MIN_LEAD_MS,
   SMS_BODY_MAX_CHARS,
 } from './announcement-rules'
@@ -64,6 +65,11 @@ export interface AnnouncementListQuery {
 
 const DEFAULT_PAGE_LIMIT = 20
 const MAX_PAGE_LIMIT = 100
+const DUE_BATCH_SIZE = 50
+// The scheduler is not a person, so it gets no approval rights. Its transitions only publish
+// already-scheduled rows, which never reach the approval branch that checks the actor's role.
+const SCHEDULER_ACTOR_ID = 'system:announcement-scheduler'
+const SCHEDULER_ROLE = 'system'
 const MAX_IDEMPOTENCY_KEY_LENGTH = 64
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const STATUS_FILTERS: readonly AnnouncementStatus[] = ['draft', 'pending_approval', 'scheduled', 'published', 'cancelled']
@@ -75,7 +81,7 @@ export class AnnouncementsService {
   async create(actor: AnnouncementActor, dto: CreateAnnouncementDto): Promise<AnnouncementView> {
     const title = normalizeTitle(dto.title)
     const body = requireValidBody(dto.body)
-    const channels = unwrap(normalizeChannels(dto.channels), 'INVALID_CHANNELS')
+    const channels = unwrapChannels(normalizeChannels(dto.channels))
     const audience = unwrap(normalizeAudience(dto.audience), 'INVALID_AUDIENCE')
     const smsBody = normalizeSmsBody(dto.smsBody)
     const expiresAt = parseOptionalDate(dto.expiresAt)
@@ -110,7 +116,7 @@ export class AnnouncementsService {
     if (dto.title !== undefined) patch.title = normalizeTitle(dto.title)
     if (dto.summary !== undefined) patch.summary = normalizeSummary(dto.summary ?? undefined)
     if (dto.body !== undefined) patch.body = requireValidBody(dto.body)
-    if (dto.channels !== undefined) patch.channels = unwrap(normalizeChannels(dto.channels), 'INVALID_CHANNELS')
+    if (dto.channels !== undefined) patch.channels = unwrapChannels(normalizeChannels(dto.channels))
     if (dto.audience !== undefined) patch.audience = unwrap(normalizeAudience(dto.audience), 'INVALID_AUDIENCE')
     if (dto.smsBody !== undefined) patch.smsBody = normalizeSmsBody(dto.smsBody ?? undefined)
     if (dto.expiresAt !== undefined) {
@@ -224,6 +230,31 @@ export class AnnouncementsService {
       throw announcementError(HttpStatus.NOT_FOUND, 'ANNOUNCEMENT_NOT_FOUND', 'Announcement not found')
     }
     return this.toView(row, false, true)
+  }
+
+  /**
+   * Scheduler pass. Publishes scheduled announcements whose time has passed, through the same transition
+   * the publish endpoint uses, so approval rules still apply: a row that now needs approval goes back to
+   * pending_approval and is counted as held. A failing row is counted and does not stop the others.
+   */
+  async publishDueScheduled(limit = DUE_BATCH_SIZE): Promise<{ published: number; held: number; failed: number }> {
+    const now = this.now()
+    const due = (await this.repo.findDueScheduled(now, limit)).filter((row) =>
+      isScheduleDue(row.status, row.scheduledAt, now),
+    )
+
+    const counts = { published: 0, held: 0, failed: 0 }
+    for (const row of due) {
+      const actor: AnnouncementActor = { churchId: row.churchId, userId: SCHEDULER_ACTOR_ID, role: SCHEDULER_ROLE }
+      try {
+        const view = await this.transition(actor, row.id, 'publish', null, null)
+        if (view.status === 'published') counts.published += 1
+        else counts.held += 1
+      } catch {
+        counts.failed += 1
+      }
+    }
+    return counts
   }
 
   /** Clock seam for tests; production uses the wall clock. */
@@ -402,8 +433,13 @@ function parseOptionalDate(value: string | undefined): Date | null {
   return date
 }
 
-function unwrap<T>(result: { ok: true; value: T } | { ok: false; message: string }, code: 'INVALID_CHANNELS' | 'INVALID_AUDIENCE'): T {
+function unwrap<T>(result: { ok: true; value: T } | { ok: false; message: string }, code: 'INVALID_AUDIENCE'): T {
   if (result.ok === false) throw announcementError(HttpStatus.BAD_REQUEST, code, result.message)
+  return result.value
+}
+
+function unwrapChannels(result: ChannelResult): AnnouncementChannel[] {
+  if (result.ok === false) throw announcementError(HttpStatus.BAD_REQUEST, result.code, result.message)
   return result.value
 }
 

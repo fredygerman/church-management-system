@@ -101,15 +101,26 @@ describe('normalizeChannels', () => {
     expect(normalizeChannels(undefined)).toEqual({ ok: true, value: ['in_app'] })
   })
 
-  it('always includes in_app and keeps a canonical order', () => {
-    expect(normalizeChannels(['sms'])).toEqual({ ok: true, value: ['in_app', 'sms'] })
-    expect(normalizeChannels(['sms', 'email', 'email'])).toEqual({ ok: true, value: ['in_app', 'email', 'sms'] })
+  it('accepts in_app alone, including repeated or empty input, and stores in_app only', () => {
+    expect(normalizeChannels(['in_app'])).toEqual({ ok: true, value: ['in_app'] })
+    expect(normalizeChannels(['in_app', 'in_app'])).toEqual({ ok: true, value: ['in_app'] })
+    expect(normalizeChannels([])).toEqual({ ok: true, value: ['in_app'] })
   })
 
-  it('rejects unknown channels and non-array input', () => {
-    expect(normalizeChannels(['push']).ok).toBe(false)
-    expect(normalizeChannels('sms').ok).toBe(false)
-    expect(normalizeChannels([42]).ok).toBe(false)
+  it.each([
+    [['email']],
+    [['sms']],
+    [['in_app', 'sms']],
+    [['sms', 'email']],
+    [['push']],
+    [[42]],
+  ])('refuses %j with CHANNEL_NOT_AVAILABLE while consent is not in place (D-19)', (input) => {
+    expect(normalizeChannels(input)).toMatchObject({ ok: false, code: 'CHANNEL_NOT_AVAILABLE' })
+  })
+
+  it('rejects non-array input with INVALID_CHANNELS', () => {
+    expect(normalizeChannels('in_app')).toMatchObject({ ok: false, code: 'INVALID_CHANNELS' })
+    expect(normalizeChannels({ 0: 'in_app' })).toMatchObject({ ok: false, code: 'INVALID_CHANNELS' })
   })
 })
 

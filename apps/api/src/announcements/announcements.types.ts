@@ -100,6 +100,8 @@ export interface AnnouncementRepository {
   ): Promise<AnnouncementRow | null>
   /** Keyset page ordered by (coalesce(published_at, created_at) desc, id desc). */
   page(query: PageQuery): Promise<AnnouncementRow[]>
+  /** Scheduler only. Not tenant-scoped: scheduled rows with scheduled_at <= now, oldest first, at most `limit`. */
+  findDueScheduled(now: Date, limit: number): Promise<AnnouncementRow[]>
   findViewerProfile(churchId: string, userId: string): Promise<ViewerProfile | null>
   getRequireApproval(churchId: string): Promise<boolean>
 }
@@ -118,6 +120,7 @@ export type AnnouncementErrorCode =
   | 'SCHEDULE_TOO_SOON'
   | 'INVALID_EXPIRY'
   | 'INVALID_CHANNELS'
+  | 'CHANNEL_NOT_AVAILABLE'
   | 'INVALID_AUDIENCE'
   | 'INVALID_IDEMPOTENCY_KEY'
   | 'INVALID_CURSOR'

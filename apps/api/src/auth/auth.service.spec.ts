@@ -1,3 +1,6 @@
+// jest.config has no 'tsx' extension, so the React Email templates cannot be loaded here. Auth tests never send mail.
+jest.mock('../mail/mail.service', () => ({ MailService: class MailService {} }));
+
 import { NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { AuthService } from './auth.service';
@@ -24,7 +27,7 @@ describe('AuthService refresh token verification', () => {
 
   beforeEach(() => {
     jwtService = { verifyAsync: jest.fn(), sign: jest.fn().mockReturnValue('signed') };
-    service = new AuthService({} as any, jwtService as any);
+    service = new AuthService({} as any, jwtService as any, {} as any);
   });
 
   it('accepts a verified refresh token payload', async () => {
@@ -163,7 +166,7 @@ describe('AuthService refresh token rotation', () => {
   beforeEach(async () => {
     db = createFakeDb();
     jwtService = new JwtService({ secret: config.jwt.secret });
-    service = new AuthService({ getDatabase: async () => db } as any, jwtService);
+    service = new AuthService({ getDatabase: async () => db } as any, jwtService, {} as any);
     await service.onModuleInit();
     jest.spyOn(service, 'getProfile').mockResolvedValue(user as any);
     jest.spyOn(service, 'getPreferredMembership').mockResolvedValue(null);
@@ -298,7 +301,7 @@ describe('AuthService refresh token rotation', () => {
 
 describe('AuthService listOwnMemberships', () => {
   it("returns only the caller's non-suspended memberships", async () => {
-    const service = new AuthService({} as any, {} as any);
+    const service = new AuthService({} as any, {} as any, {} as any);
     const getUserMemberships = jest.spyOn(service, 'getUserMemberships').mockResolvedValue([
       { id: 'm1', churchId: 'c1', churchName: 'Alpha', role: 'member', status: 'active', memberId: null, assignedZoneId: null, isDefaultChurch: true, churchLocation: null },
       { id: 'm2', churchId: 'c2', churchName: 'Beta', role: 'admin', status: 'suspended', memberId: null, assignedZoneId: null, isDefaultChurch: false, churchLocation: null },

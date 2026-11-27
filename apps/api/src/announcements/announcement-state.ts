@@ -80,6 +80,11 @@ export function resolveTransition(input: TransitionInput): TransitionOutcome {
   return ok(action === 'schedule' ? 'scheduled' : 'published', false)
 }
 
+/** A scheduled row is due once its time has passed. Only the scheduler pass uses this. */
+export function isScheduleDue(status: AnnouncementStatus, scheduledAt: Date | null, now: Date): boolean {
+  return status === 'scheduled' && scheduledAt !== null && scheduledAt.getTime() <= now.getTime()
+}
+
 /** Editing is allowed only for drafts. */
 export function isEditable(status: AnnouncementStatus): boolean {
   return status === 'draft'

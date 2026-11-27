@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { and, desc, eq, gt, inArray, isNull, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gt, inArray, isNull, lte, or, sql } from 'drizzle-orm'
 import {
   announcements,
   announcementSettings,
@@ -103,6 +103,22 @@ export class DrizzleAnnouncementRepository implements AnnouncementRepository {
       .where(and(...conditions))
       .orderBy(sql`${sortAt} desc`, desc(announcements.id))
       .limit(query.limit)
+    return rows.map(toRow)
+  }
+
+  async findDueScheduled(now: Date, limit: number): Promise<AnnouncementRow[]> {
+    const rows = await db
+      .select()
+      .from(announcements)
+      .where(
+        and(
+          eq(announcements.status, 'scheduled'),
+          lte(announcements.scheduledAt, now),
+          isNull(announcements.deletedAt),
+        ),
+      )
+      .orderBy(asc(announcements.scheduledAt), asc(announcements.id))
+      .limit(limit)
     return rows.map(toRow)
   }
 

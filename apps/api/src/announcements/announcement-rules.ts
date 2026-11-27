@@ -10,7 +10,6 @@ import type {
 
 /** Pure rules for channels, audience and visibility (D-16). No I/O. */
 
-export const ANNOUNCEMENT_CHANNELS: readonly AnnouncementChannel[] = ['in_app', 'email', 'sms']
 export const AUDIENCE_GENDERS: readonly Gender[] = ['male', 'female', 'others']
 export const AUDIENCE_MARITAL_STATUSES: readonly MaritalStatus[] = ['single', 'married', 'divorced', 'widowed']
 export const AUDIENCE_MAX_ZONES = 100
@@ -22,6 +21,10 @@ const AUDIENCE_KEYS = new Set(['allMembers', 'zoneIds', 'genders', 'maritalStatu
 
 export type RuleResult<T> = { ok: true; value: T } | { ok: false; message: string }
 
+export type ChannelResult =
+  | { ok: true; value: AnnouncementChannel[] }
+  | { ok: false; code: 'INVALID_CHANNELS' | 'CHANNEL_NOT_AVAILABLE'; message: string }
+
 /**
  * Staff are the roles that can see every announcement (including drafts). The matrix grants
  * view:announcements to admin, branch admin, publisher and super admin, and not to member.
@@ -31,20 +34,25 @@ export function isStaffRole(role: string | undefined | null): boolean {
   return roleHasPermission(role as UserRole, 'view:announcements')
 }
 
-/** in_app is always included. Missing input means in_app only. */
-export function normalizeChannels(input: unknown): RuleResult<AnnouncementChannel[]> {
+/**
+ * Only in_app is accepted. Email and SMS need consent and verification first (decision D-19), so any
+ * other channel is refused with CHANNEL_NOT_AVAILABLE and nothing is stored for it. Missing input or an
+ * empty list means in_app.
+ */
+export function normalizeChannels(input: unknown): ChannelResult {
   if (input === undefined || input === null) return { ok: true, value: ['in_app'] }
-  if (!Array.isArray(input)) return { ok: false, message: 'channels must be an array' }
+  if (!Array.isArray(input)) return { ok: false, code: 'INVALID_CHANNELS', message: 'channels must be an array' }
 
-  const requested = new Set<string>()
   for (const channel of input) {
-    if (typeof channel !== 'string' || !ANNOUNCEMENT_CHANNELS.includes(channel as AnnouncementChannel)) {
-      return { ok: false, message: 'channels may only contain in_app, email or sms' }
+    if (channel !== 'in_app') {
+      return {
+        ok: false,
+        code: 'CHANNEL_NOT_AVAILABLE',
+        message: 'Only in_app is available. Email and SMS channels are not enabled yet',
+      }
     }
-    requested.add(channel)
   }
-  requested.add('in_app')
-  return { ok: true, value: ANNOUNCEMENT_CHANNELS.filter((channel) => requested.has(channel)) }
+  return { ok: true, value: ['in_app'] }
 }
 
 /**
