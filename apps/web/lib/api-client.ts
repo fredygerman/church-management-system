@@ -111,6 +111,17 @@ async function serverFetch<D = any>({
       cache: requestConfig.skipAuth ? "default" : ("no-store" as RequestCache),
     })
 
+    // 204 No Content (for example DELETE) has no body to parse; it is a success.
+    if (response.status === 204) {
+      return {
+        success: true,
+        data: undefined as D,
+        timestamp: new Date().toISOString(),
+        path: url.pathname,
+        statusCode: 204,
+      } as ApiResponse<D>
+    }
+
     let data: ApiResponse<D> = {} as ApiResponse<D>
     try {
       data = await response.json()

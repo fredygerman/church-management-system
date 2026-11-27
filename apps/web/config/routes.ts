@@ -24,6 +24,8 @@ export const protectedRoutes: Record<string, PermissionAction> = {
   "/[churchId]/dashboard/more": "read:self",
   "/[churchId]/dashboard/members": "read:member",
   "/[churchId]/dashboard/zones": "read:zone",
+  "/[churchId]/dashboard/invitations": "manage:invitations",
+  "/[churchId]/dashboard/verses": "view:verses",
   "/[churchId]/dashboard/departments": "read:department",
   "/[churchId]/dashboard/families": "view:families",
   "/[churchId]/dashboard/visitors": "view:visitors",
