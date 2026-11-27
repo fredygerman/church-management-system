@@ -6,6 +6,7 @@ import { formatLocaleDate, type Locale } from "@church/config"
 
 import { Button } from "@/components/ui/button"
 import { PortalDeniedState, isForbiddenError } from "@/components/portal/portal-denied-state"
+import { VerseOfDayCard, type VerseOfDay } from "@/components/verses/verse-of-day-card"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -15,6 +16,20 @@ function HomeLoading() {
   return (
     <div className="border-border bg-card h-24 animate-pulse rounded-lg border" />
   )
+}
+
+// Verse of the day (picked by the API per day, or set by staff). A failed request
+// renders nothing, so no raw error text reaches the member.
+async function VerseSection({ churchId, locale }: { churchId: string; locale: Locale }) {
+  let verse: VerseOfDay | null = null
+  try {
+    verse = await apiGet<VerseOfDay>("/verses/today", { churchId, locale })
+  } catch (error) {
+    const digest = (error as { digest?: unknown } | null)?.digest
+    if (typeof digest === "string" && digest.startsWith("NEXT_REDIRECT")) throw error
+    verse = null
+  }
+  return <VerseOfDayCard verse={verse} locale={locale} />
 }
 
 interface ServiceSession {
@@ -89,6 +104,10 @@ async function HomeContent({ churchId }: { churchId: string }) {
             {t("portal.home.subtitle")}
           </p>
         </div>
+
+        <Suspense fallback={<HomeLoading />}>
+          <VerseSection churchId={churchId} locale={locale} />
+        </Suspense>
 
         <section className="border-border bg-card rounded-lg border p-5">
           <h2 className="text-foreground text-base font-semibold">
