@@ -21,7 +21,12 @@ export class ApiError extends Error {
   }
 }
 
-type ApiEnvelope<T> = { success: boolean; message?: string; data?: T }
+type ApiEnvelope<T> = { success: boolean; message?: string; data?: T; meta?: PageMeta }
+
+// Pagination fields the list endpoints return in `meta` (for example GET /members).
+export type PageMeta = { total?: number; page?: number; limit?: number; total_pages?: number }
+export type Page<T> = { data: T; meta?: PageMeta }
+
 let onSessionExpired: (() => void) | undefined
 
 // Errors raised in this module are translated with the language the user picked (set by LocaleProvider).
@@ -85,7 +90,7 @@ async function readMessage(response: Response): Promise<string | undefined> {
   }
 }
 
-async function readEnvelope<T>(response: Response): Promise<T> {
+async function readFullEnvelope<T>(response: Response): Promise<ApiEnvelope<T> | undefined> {
   let body: ApiEnvelope<T> | undefined
   try {
     body = (await response.json()) as ApiEnvelope<T>
@@ -96,7 +101,17 @@ async function readEnvelope<T>(response: Response): Promise<T> {
   if (!response.ok || body?.success === false) {
     throw new ApiError(body?.message || `Request failed (${response.status})`, "http", response.status)
   }
-  return body?.data as T
+  return body
+}
+
+async function readEnvelope<T>(response: Response): Promise<T> {
+  return (await readFullEnvelope<T>(response))?.data as T
+}
+
+// Keeps `meta` so callers can page through a list; plain api.get drops it.
+async function readPage<T>(response: Response): Promise<Page<T>> {
+  const body = await readFullEnvelope<T>(response)
+  return { data: body?.data as T, meta: body?.meta }
 }
 
 function isStoredTokens(value: unknown): value is StoredTokens {
@@ -202,11 +217,11 @@ async function renew(refreshToken: string, gen: number): Promise<StoredTokens> {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function request<T>(path: string, init: RequestInit = {}, read: (response: Response) => Promise<T> = readEnvelope): Promise<T> {
   const gen = generation
   const sent = await currentTokens()
   const response = await send(path, init, sent?.accessToken)
-  if (response.status !== 401 || !sent) return readEnvelope<T>(response)
+  if (response.status !== 401 || !sent) return read(response)
 
   // Tokens may already have been rotated by a concurrent call; use them instead of refreshing again.
   let fresh = await currentTokens()
@@ -216,11 +231,13 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   // Retry once with the new access token; a second 401 means the session is gone.
   const retried = await send(path, init, fresh.accessToken)
   if (retried.status === 401) return expireSession(gen)
-  return readEnvelope<T>(retried)
+  return read(retried)
 }
 
 export const api = {
   get: <T>(path: string) => request<T>(path),
+  // Returns the rows plus `meta` (pagination totals) for list endpoints.
+  getPage: <T>(path: string) => request<Page<T>>(path, {}, readPage),
   post: <T>(path: string, body?: unknown) => request<T>(path, { body: body === undefined ? undefined : JSON.stringify(body), method: "POST" }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { body: body === undefined ? undefined : JSON.stringify(body), method: "PATCH" }),
   put: <T>(path: string, body?: unknown) => request<T>(path, { body: body === undefined ? undefined : JSON.stringify(body), method: "PUT" }),

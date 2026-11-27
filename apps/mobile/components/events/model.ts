@@ -1,6 +1,6 @@
 import type { Ionicons } from "@expo/vector-icons"
-import type { Locale } from "@church/config/i18n"
-import { copy, dayKey, timeFromServiceName, weekdayName } from "./format"
+import { translate, type Locale } from "@church/config/i18n"
+import { copy, dayKey, formatSessionDate, timeFromServiceName } from "./format"
 
 export type IconName = keyof typeof Ionicons.glyphMap
 export type RsvpStatus = "going" | "maybe" | "declined"
@@ -68,8 +68,9 @@ function serviceIcon(name: string): IconName {
 }
 
 /**
- * Weekly schedule: one row per service type, using the weekday of its next upcoming session.
- * Sessions carry a date but no time, so a time appears only when the service name states one.
+ * Schedule: one row per service type, showing the date of its next upcoming session.
+ * It does not claim a recurrence: sessions carry a date but no weekly rule. Sessions carry no time either,
+ * so a time appears only when the service name states one.
  */
 export function serviceSchedule(sessions: ServiceSession[], today: string, locale: Locale): ServiceSchedule[] {
   const next = new Map<string, { name: string; date: string }>()
@@ -81,10 +82,9 @@ export function serviceSchedule(sessions: ServiceSession[], today: string, local
   return [...next.entries()]
     .sort(([, a], [, b]) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0))
     .map(([id, { name, date }]) => {
-      const day = weekdayName(date, locale)
       const time = timeFromServiceName(name)
-      const every = copy(locale, { en: "Every {day}", sw: "Kila {day}" }, { day })
-      return { id, name, subtitle: time ? `${every} · ${time}` : every, icon: serviceIcon(name) }
+      const next = translate(locale, "mobile.member.services.nextSession", { date: formatSessionDate(date, locale) })
+      return { id, name, subtitle: time ? `${next} · ${time}` : next, icon: serviceIcon(name) }
     })
 }
 

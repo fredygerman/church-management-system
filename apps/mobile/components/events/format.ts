@@ -66,11 +66,11 @@ export function formatTimeRange(startsAt: string, endsAt: string | null): string
   return endsAt ? `${start} – ${formatClock(endsAt)}` : start
 }
 
-/** Weekday name for a plain YYYY-MM-DD session date (noon UTC avoids any day shift). */
-export function weekdayName(sessionDate: string, locale: Locale): string {
+/** Full date of a plain YYYY-MM-DD session date, e.g. "Sun, 29 Nov 2026" (noon UTC avoids any day shift). */
+export function formatSessionDate(sessionDate: string, locale: Locale): string {
   const [year, month, day] = sessionDate.split("-").map(Number)
   if (!year || !month || !day) return sessionDate
-  return new Intl.DateTimeFormat(DATE_TAGS[locale], { weekday: "long", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, day, 12)))
+  return new Intl.DateTimeFormat(DATE_TAGS[locale], { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(Date.UTC(year, month - 1, day, 12)))
 }
 
 /** Reads a clock time such as "9:00 asubuhi" or "6:00 Mchana" from a service name, as "9:00 AM". */

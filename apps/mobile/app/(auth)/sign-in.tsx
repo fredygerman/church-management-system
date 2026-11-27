@@ -4,6 +4,7 @@ import { ApiError, api } from "../../lib/api"
 import { useSession } from "../../lib/session"
 import { useT } from "../../lib/locale"
 import { Button, TextField } from "../../components/ui"
+import { CHURCH_NAME } from "../../config/church"
 import { colors, spacing, type } from "../../theme"
 
 export default function SignInScreen() {
@@ -31,7 +32,7 @@ export default function SignInScreen() {
 
   return <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={styles.container}>
     <View style={styles.form}>
-      <Text style={styles.title}>Mito Ya Baraka Church</Text>
+      <Text style={styles.title}>{CHURCH_NAME ?? t("sidebar.footer.appName")}</Text>
       <Text style={styles.message}>{t("mobile.member.signIn.subtitle")}</Text>
       <TextField label={t("mobile.member.signIn.email")} accessibilityLabel={t("mobile.member.signIn.email")} autoCapitalize="none" autoComplete="email" keyboardType="email-address" onChangeText={setEmail} placeholder={t("mobile.member.signIn.email")} value={email} />
       <TextField label={t("mobile.member.signIn.password")} accessibilityLabel={t("mobile.member.signIn.password")} autoCapitalize="none" autoComplete="password" onChangeText={setPassword} placeholder={t("mobile.member.signIn.password")} secureTextEntry value={password} />

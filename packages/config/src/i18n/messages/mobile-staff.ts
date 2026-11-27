@@ -15,6 +15,7 @@ export const mobileStaffMessages = {
     'mobile.staff.people.title': 'People',
     'mobile.staff.people.empty': 'There are no members yet.',
     'mobile.staff.people.unnamed': 'Member',
+    'mobile.staff.people.truncated': 'Showing {shown} of {total} members. The directory is too long to show in full here.',
     'mobile.staff.services.title': 'Services',
     'mobile.staff.services.empty': 'There are no service types or sessions yet.',
     'mobile.staff.services.typesHeading': 'Service types',
@@ -51,6 +52,7 @@ export const mobileStaffMessages = {
     'mobile.staff.people.title': 'Wanachama',
     'mobile.staff.people.empty': 'Bado hakuna wanachama.',
     'mobile.staff.people.unnamed': 'Mwanachama',
+    'mobile.staff.people.truncated': 'Inaonyesha {shown} kati ya wanachama {total}. Orodha ni ndefu mno kuonyeshwa yote hapa.', // sw-review-pending
     'mobile.staff.services.title': 'Huduma',
     'mobile.staff.services.empty': 'Bado hakuna aina za huduma wala vipindi.',
     'mobile.staff.services.typesHeading': 'Aina za huduma',

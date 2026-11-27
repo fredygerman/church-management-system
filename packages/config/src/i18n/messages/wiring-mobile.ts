@@ -19,6 +19,7 @@ export const wiringMobileMessages = {
     'wiring.checkin.qrCheckIn': 'Check in by QR (uses the member ID above)',
     'wiring.checkin.batchHeading': 'Select members for batch check-in',
     'wiring.checkin.noMembers': 'No members are available.',
+    'wiring.checkin.membersTruncated': 'Showing {shown} of {total} members. Not every member is listed here.',
     'wiring.checkin.checked': 'Selected',
     'wiring.checkin.unchecked': 'Not selected',
     'wiring.checkin.batchSubmit': 'Check in selected ({count})',
@@ -92,6 +93,7 @@ export const wiringMobileMessages = {
     'wiring.checkin.qrCheckIn': 'Ingia kwa QR (inatumia kitambulisho hapo juu)',
     'wiring.checkin.batchHeading': 'Chagua wanachama kwa kuingia kwa pamoja',
     'wiring.checkin.noMembers': 'Hakuna wanachama wanaopatikana.',
+    'wiring.checkin.membersTruncated': 'Inaonyesha {shown} kati ya wanachama {total}. Wanachama wote hawajaorodheshwa hapa.', // sw-review-pending
     'wiring.checkin.checked': 'Imechaguliwa',
     'wiring.checkin.unchecked': 'Haijachaguliwa',
     'wiring.checkin.batchSubmit': 'Ingiza waliochaguliwa ({count})',

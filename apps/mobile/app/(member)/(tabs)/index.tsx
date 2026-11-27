@@ -177,7 +177,7 @@ export default function HomeScreen() {
       {servicesStatus === "loading" ? <LoadingState /> : servicesStatus === "error" ? <ErrorState message={t("mobile.member.home.servicesError")} onRetry={() => setServicesAttempt((value) => value + 1)} /> : upcoming ? <UpcomingCard item={upcoming} locale={locale} onPress={() => router.push(upcoming.route as "/(member)/events")} /> : <Card><EmptyState message={t("mobile.member.home.noUpcoming")} /></Card>}
     </View>
     <View>
-      <SectionHeader title={t("mobile.member.home.announcementsHeading")} />
+      <SectionHeader title={t("mobile.member.home.announcementsHeading")} actionLabel={t("mobile.member.home.seeAll")} onAction={() => router.push("/(member)/announcements")} />
       {announcementItems.length ? <View style={homeStyles.stack}>{announcementItems.map((item) => <AnnouncementCard key={item.id} item={item} locale={locale} now={now} t={t} />)}</View> : <Card><EmptyState message={t("mobile.member.home.noAnnouncements")} /></Card>}
     </View>
     </View>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react"
 import { FlatList, Pressable, Text, View } from "react-native"
 import { Ionicons } from "@expo/vector-icons"
+import { useRouter, type Href } from "expo-router"
 import { Card, Pill } from "../../components/ui"
 import { colors, spacing, type } from "../../theme"
 import { ApiError } from "../../lib/api"
@@ -10,10 +11,30 @@ import { EmptyState, ErrorState, LoadingState, styles } from "../../components/s
 import { formatRelativeTime } from "../../components/events/format"
 import { describeNotification } from "../../components/events/model"
 
-// Per-recipient inbox. Opening an item marks it read; a failed mark keeps the item unread and reports it.
-// Targets are not followed yet (the typed target descriptor needs its own route resolver).
+// Per-recipient inbox. Opening an item with a target marks it read and opens the target; a failed mark keeps the item unread and reports it.
+// Items without a route are read-only: no press, so they stay unread until "Mark all as read".
+
+// Target types the API produces (events.service.ts, file-upload.service.ts). Any other type has no route yet.
+function routeFor(target: NotificationItem["target"]): Href | null {
+  if (!target) return null
+  const param = (key: string) => {
+    const value = target.params[key]
+    return typeof value === "string" && value.length > 0 ? value : null
+  }
+  if (target.type === "event") {
+    const eventId = param("eventId")
+    return eventId ? `/(member)/events/${encodeURIComponent(eventId)}` : null
+  }
+  if (target.type === "library_resource") {
+    const resourceId = param("resourceId")
+    return resourceId ? { pathname: "/library-detail", params: { id: resourceId } } : null
+  }
+  return null
+}
+
 export default function InboxScreen() {
   const { t, locale } = useT()
+  const router = useRouter()
   const [items, setItems] = useState<NotificationItem[]>([])
   const [unreadOnly, setUnreadOnly] = useState(false)
   const [cursor, setCursor] = useState<string | null>(null)
@@ -101,11 +122,14 @@ export default function InboxScreen() {
     ListFooterComponent={cursor ? <Pressable accessibilityRole="button" onPress={() => void loadMore()} style={{ minHeight: 44, justifyContent: "center", alignItems: "center" }}>
       <Text style={styles.heading}>{t("wiring.inbox.loadMore")}</Text>
     </Pressable> : undefined}
-    renderItem={({ item }) => <NotificationRow item={item} onPress={() => void markRead(item)} />}
+    renderItem={({ item }) => {
+      const route = routeFor(item.target)
+      return <NotificationRow item={item} onPress={route ? () => { void markRead(item); router.push(route) } : undefined} />
+    }}
   />
 }
 
-function NotificationRow({ item, onPress }: { item: NotificationItem; onPress: () => void }) {
+function NotificationRow({ item, onPress }: { item: NotificationItem; onPress?: () => void }) {
   const { t, locale } = useT()
   const unread = item.readAt == null
   const info = describeNotification(item.templateKey, item.templateData, locale, t("wiring.inbox.item"))

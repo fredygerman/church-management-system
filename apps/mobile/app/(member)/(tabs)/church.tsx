@@ -9,35 +9,24 @@ import { useT } from "../../../lib/locale"
 import { createRequestGate } from "../../../lib/request-gate"
 import { useSession } from "../../../lib/session"
 import { ErrorState, LoadingState, styles } from "../../../components/screen-state"
+import { formatSessionDate, todayKey } from "../../../components/events/format"
 
 // Server messages are shown as the server sent them; our own messages are translated at render time.
 type Failure = { text: string } | { key: MessageKey }
 
-// Placeholder text seeded on some churches; it is not a real description, so the About card is hidden for it.
-const PLACEHOLDER_DESCRIPTION = "Demo church data"
-
 type ServiceSession = { id: string; title: string | null; sessionDate: string; serviceType?: { name?: string | null } | null }
-type ServiceSummary = { day: number; name: string }
+type ServiceSummary = { date: string; name: string }
 
-// Session dates are calendar dates (YYYY-MM-DD) with no clock time, so the weekday is read in UTC to avoid device-zone shifts.
-function weekdayOf(date: string): number | null {
-  const [year, month, day] = date.split("-").map(Number)
-  if (!year || !month || !day) return null
-  return new Date(Date.UTC(year, month - 1, day)).getUTCDay()
-}
-
-// One line per weekday and service name, Sunday first, using the nearest upcoming session as the representative.
-function summariseServices(sessions: ServiceSession[]): ServiceSummary[] {
-  const seen = new Map<string, ServiceSummary>()
+// One row per service name, using its nearest upcoming session. Session dates are YYYY-MM-DD strings, so string order is date order.
+function nextServices(sessions: ServiceSession[], today: string): ServiceSummary[] {
+  const next = new Map<string, ServiceSummary>()
   const ordered = [...sessions].sort((a, b) => a.sessionDate.localeCompare(b.sessionDate))
   for (const session of ordered) {
-    const day = weekdayOf(session.sessionDate)
-    if (day === null) continue
+    if (!session.sessionDate || session.sessionDate < today) continue
     const name = session.serviceType?.name?.trim() || session.title?.trim() || ""
-    const key = `${day}|${name}`
-    if (!seen.has(key)) seen.set(key, { day, name })
+    if (!next.has(name)) next.set(name, { date: session.sessionDate, name })
   }
-  return [...seen.values()].sort((a, b) => a.day - b.day).slice(0, 4)
+  return [...next.values()].sort((a, b) => a.date.localeCompare(b.date)).slice(0, 4)
 }
 
 // A view-drawn cross on a tint circle: the church mark without any photo.
@@ -87,7 +76,7 @@ export default function ChurchScreen() {
     setServices([])
     if (!churchId) return () => { active = false }
     api.get<ServiceSession[]>("/attendance/sessions").then(
-      (sessions) => { if (active && Array.isArray(sessions)) setServices(summariseServices(sessions)) },
+      (sessions) => { if (active && Array.isArray(sessions)) setServices(nextServices(sessions, todayKey())) },
       () => { if (active) setServices([]) },
     )
     return () => { active = false }
@@ -99,9 +88,8 @@ export default function ChurchScreen() {
   const name = typeof church.name === "string" ? church.name : t("mobile.shared.church.fallbackName")
   const location = typeof church.location === "string" ? church.location : undefined
   const description = typeof church.description === "string" ? church.description.trim() : ""
-  const showAbout = description.length > 0 && description !== PLACEHOLDER_DESCRIPTION
+  const showAbout = description.length > 0
   const pastor = typeof church.leadPastorName === "string" ? church.leadPastorName.trim() : ""
-  const serviceLabel = (summary: ServiceSummary) => t(`mobile.member.church.day.${summary.day}` as MessageKey)
 
   return <ScrollView contentContainerStyle={[styles.content, { padding: spacing.lg, gap: spacing.md }]}>
     <Card style={{ alignItems: "center", gap: spacing.sm, paddingVertical: spacing.xl }}>
@@ -126,9 +114,9 @@ export default function ChurchScreen() {
     {services.length > 0 ? <Card>
       <SectionHeader title={t("mobile.member.church.serviceTimes")} />
       {services.map((summary) => <ListRow
-        key={`${summary.day}|${summary.name}`}
+        key={`${summary.date}|${summary.name}`}
         icon="calendar-outline"
-        title={serviceLabel(summary)}
+        title={t("mobile.member.services.nextSession", { date: formatSessionDate(summary.date, locale) })}
         subtitle={summary.name || undefined}
         trailing={<View />}
       />)}

@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useState } from "react"
 import { Pressable, ScrollView, Text, View } from "react-native"
+import { router } from "expo-router"
 import { ApiError, api } from "../../../lib/api"
 import { useSession } from "../../../lib/session"
 import { useT } from "../../../lib/locale"
 import { ErrorState, LoadingState, styles } from "../../../components/screen-state"
+import { ChurchSwitcher } from "../../../components/church-switcher"
 import { LanguagePicker } from "../../../components/language-picker"
 import { SpacesSection } from "../../../components/spaces-section"
 import { AvatarEditor } from "../../../components/profile/avatar-editor"
-import { Button, Card, ListRow, TextField } from "../../../components/ui"
+import { Button, Card, ListRow, SectionHeader, TextField } from "../../../components/ui"
 import { colors, radii, spacing, type } from "../../../theme"
 
 // The header already names the screen, so there is no page title here.
@@ -127,6 +129,14 @@ export default function ProfileScreen() {
       <Text style={{ ...type.supporting, color: colors.muted }}>{t("mobile.member.profile.staffHint")}</Text>
       <Button variant="primary" icon="swap-horizontal-outline" title={t("wiring.spaces.toStaff")} onPress={() => setSpace("staff")} />
     </Card> : null}
+
+    <View style={{ gap: spacing.sm }}>
+      <SectionHeader title={t("mobile.member.profile.switchOrJoin")} />
+      <Card style={{ gap: spacing.md }}>
+        <ChurchSwitcher />
+        <ListRow icon="add-circle-outline" title={t("join.title")} onPress={() => router.push("/join")} />
+      </Card>
+    </View>
 
     <SpacesSection />
 

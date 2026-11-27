@@ -5,17 +5,14 @@ import { api } from "../../lib/api"
 import { submitManualCheckin, submitQrCheckin, type CheckinOutcome } from "../../lib/checkin"
 import { createRequestGate } from "../../lib/request-gate"
 import { roleHasTabPermission } from "../../lib/claims"
-import { asRows } from "../../components/staff-read-screen"
-
-// The members endpoint answers { data, meta }; asRows unwraps the rows.
-const toMembers = (value: unknown): Member[] => asRows(value) as unknown as Member[]
+import { fetchAllMembers } from "../../lib/members-api"
 import { useT } from "../../lib/locale"
 import { useSession } from "../../lib/session"
 import { EmptyState, ErrorState, LoadingState, styles } from "../../components/screen-state"
 import { Button, Card, ListRow, SectionHeader, TextField } from "../../components/ui"
 
 // Permission: manage:attendance (POST sessions/:id/checkins/manual, POST checkins/qr/:token).
-// Reads: GET /attendance/sessions (open ones are offered), GET /members (batch selection).
+// Reads: GET /attendance/sessions (open ones are offered), GET /members, every page (batch selection).
 type Session = { id: string; title: string | null; sessionDate: string; status: string }
 type Member = { id: string; firstName?: string | null; lastName?: string | null }
 type Result = { key: string; label: string; outcome: CheckinOutcome }
@@ -43,6 +40,7 @@ export default function AttendanceScreen() {
   const [loadState, setLoadState] = useState<"loading" | "ready" | "error">("loading")
   const [sessions, setSessions] = useState<Session[]>([])
   const [members, setMembers] = useState<Member[]>([])
+  const [membersTruncated, setMembersTruncated] = useState<{ shown: number; total: number } | null>(null)
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [memberId, setMemberId] = useState("")
   const [token, setToken] = useState("")
@@ -57,12 +55,13 @@ export default function AttendanceScreen() {
     if (!allowed) return
     const isCurrent = gate.start()
     setLoadState("loading")
-    setSessions([]); setMembers([]); setSessionId(null); setSelected([]); setResults([]); setSummary(""); setNotice("")
-    Promise.all([api.get<Session[]>("/attendance/sessions"), api.get<unknown>("/members?limit=200").then(toMembers)]).then(
+    setSessions([]); setMembers([]); setMembersTruncated(null); setSessionId(null); setSelected([]); setResults([]); setSummary(""); setNotice("")
+    Promise.all([api.get<Session[]>("/attendance/sessions"), fetchAllMembers<Member>()]).then(
       ([sessionData, memberData]) => {
         if (!isCurrent()) return
         setSessions(Array.isArray(sessionData) ? sessionData.filter((session) => session.status === "open") : [])
-        setMembers(Array.isArray(memberData) ? memberData : [])
+        setMembers(memberData.rows)
+        setMembersTruncated(memberData.truncated ? { shown: memberData.rows.length, total: memberData.total } : null)
         setLoadState("ready")
       },
       () => { if (isCurrent()) setLoadState("error") },
@@ -156,6 +155,7 @@ export default function AttendanceScreen() {
       <Button title={t("wiring.checkin.qrCheckIn")} icon="qr-code-outline" disabled={busy} onPress={() => void singleCheckIn("qr")} />
 
       <SectionHeader title={t("wiring.checkin.batchHeading")} />
+      {membersTruncated ? <Text accessibilityLiveRegion="polite" style={styles.text}>{t("wiring.checkin.membersTruncated", membersTruncated)}</Text> : null}
       {members.length === 0 ? <Text style={styles.text}>{t("wiring.checkin.noMembers")}</Text> : members.map((member) => {
         const checked = selected.includes(member.id)
         return (

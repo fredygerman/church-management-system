@@ -82,6 +82,7 @@ export const mobileMemberMessages = {
     'mobile.member.church.leadership': 'Leadership',
     'mobile.member.church.leadPastor': 'Lead pastor',
     'mobile.member.church.serviceTimes': 'Service times',
+    'mobile.member.services.nextSession': 'Next: {date}',
     'mobile.member.church.day.0': 'Sunday',
     'mobile.member.church.day.1': 'Monday',
     'mobile.member.church.day.2': 'Tuesday',
@@ -92,6 +93,7 @@ export const mobileMemberMessages = {
     'mobile.member.profile.memberRole': 'Member',
     'mobile.member.profile.myDetails': 'My details',
     'mobile.member.profile.staffHint': 'Switch to staff mode for church leadership and operations.',
+    'mobile.member.profile.switchOrJoin': 'Switch or join church',
     'mobile.member.signIn.subtitle': 'Sign in to your church account.',
     'mobile.member.signIn.email': 'Email',
     'mobile.member.signIn.password': 'Password',
@@ -210,6 +212,7 @@ export const mobileMemberMessages = {
     'mobile.member.church.leadership': 'Uongozi',
     'mobile.member.church.leadPastor': 'Mchungaji kiongozi',
     'mobile.member.church.serviceTimes': 'Ratiba ya ibada',
+    'mobile.member.services.nextSession': 'Ijayo: {date}', // sw-review-pending
     'mobile.member.church.day.0': 'Jumapili',
     'mobile.member.church.day.1': 'Jumatatu',
     'mobile.member.church.day.2': 'Jumanne',
@@ -220,6 +223,7 @@ export const mobileMemberMessages = {
     'mobile.member.profile.memberRole': 'Mshiriki',
     'mobile.member.profile.myDetails': 'Taarifa zangu',
     'mobile.member.profile.staffHint': 'Pata zana za uongozi, uratibu wa huduma na ripoti za tawi.',
+    'mobile.member.profile.switchOrJoin': 'Badili au jiunge na kanisa', // sw-review-pending
     'mobile.member.signIn.subtitle': 'Ingia kwenye akaunti yako ya kanisa.',
     'mobile.member.signIn.email': 'Barua pepe',
     'mobile.member.signIn.password': 'Nenosiri',
