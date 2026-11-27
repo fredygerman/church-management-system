@@ -224,6 +224,8 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>(path, { body: body === undefined ? undefined : JSON.stringify(body), method: "POST" }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { body: body === undefined ? undefined : JSON.stringify(body), method: "PATCH" }),
   put: <T>(path: string, body?: unknown) => request<T>(path, { body: body === undefined ? undefined : JSON.stringify(body), method: "PUT" }),
+  // 204 No Content has no body; readEnvelope returns undefined for it.
+  delete: <T = void>(path: string) => request<T>(path, { method: "DELETE" }),
 }
 
 export async function signOutRequest() {

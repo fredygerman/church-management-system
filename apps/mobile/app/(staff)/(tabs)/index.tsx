@@ -3,7 +3,8 @@ import { ScrollView, Text, View } from "react-native"
 import { ApiError, api } from "../../../lib/api"
 import { useT } from "../../../lib/locale"
 import { ErrorState, LoadingState, styles } from "../../../components/screen-state"
-import { Card, SectionHeader, Pill } from "../../../components/ui"
+import { router } from "expo-router"
+import { Button, Card, SectionHeader, Pill } from "../../../components/ui"
 import { colors, spacing, type } from "../../../theme"
 import { StyleSheet } from "react-native"
 
@@ -45,6 +46,7 @@ export default function DashboardScreen() {
         <Card style={dashboardStyles.stat}><Text style={dashboardStyles.value}>{stats.pendingVisitors}</Text><Pill label={t("mobile.staff.dashboard.pendingVisitors")} tone="warning" /></Card>
       ) : null}
       </View>
+      <Button title={t("verses.title")} variant="secondary" icon="book-outline" onPress={() => router.push("/verses")} />
     </ScrollView>
   )
 }
