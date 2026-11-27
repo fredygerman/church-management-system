@@ -6,6 +6,7 @@ import { useT } from "../../../lib/locale"
 import { ErrorState, LoadingState, styles } from "../../../components/screen-state"
 import { LanguagePicker } from "../../../components/language-picker"
 import { SpacesSection } from "../../../components/spaces-section"
+import { AvatarEditor } from "../../../components/profile/avatar-editor"
 import { Button, Card, ListRow, TextField } from "../../../components/ui"
 import { colors, radii, spacing, type } from "../../../theme"
 
@@ -17,8 +18,6 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<Record<string, unknown> | null>(null)
   const [churchName, setChurchName] = useState("")
   const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [picture, setPicture] = useState("")
   const [error, setError] = useState("")
   const [saveError, setSaveError] = useState("")
   const [confirmation, setConfirmation] = useState("")
@@ -29,8 +28,6 @@ export default function ProfileScreen() {
   const applyProfile = (value: Record<string, unknown>) => {
     setProfile(value)
     setName(typeof value.name === "string" ? value.name : "")
-    setEmail(typeof value.email === "string" ? value.email : "")
-    setPicture(typeof value.picture === "string" ? value.picture : "")
   }
   const load = useCallback(async () => {
     setLoading(true)
@@ -61,11 +58,12 @@ export default function ProfileScreen() {
     setSaveError("")
     setConfirmation("")
     if (!name.trim()) { setSaveError(t("mobile.member.profile.nameRequired")); return }
-    if (!email.trim()) { setSaveError(t("mobile.member.profile.emailRequired")); return }
     setSaving(true)
     try {
-      const result = await api.patch<{ user?: Record<string, unknown>; message?: string }>("/users/me", { name: name.trim(), email: email.trim(), picture: picture.trim() || undefined })
-      if (result.user) applyProfile(result.user)
+      // Only the name is sent. Email is read-only here (D-29), and the photo has its own endpoint.
+      const result = await api.patch<{ user?: Record<string, unknown>; message?: string }>("/users/me", { name: name.trim() })
+      // A response without avatarUrl must not clear the photo already shown.
+      if (result.user) applyProfile({ avatarUrl: profile?.avatarUrl ?? null, ...result.user })
       setEditing(false)
       setConfirmation(result.message || t("mobile.member.profile.saved"))
     } catch (caught) {
@@ -80,15 +78,18 @@ export default function ProfileScreen() {
   if (!profile) return <ErrorState message={t("mobile.member.profile.unavailable")} onRetry={() => void load()} />
 
   const displayName = typeof profile.name === "string" && profile.name.trim() ? profile.name.trim() : t("mobile.member.profile.title")
-  const initials = displayName.split(/\s+/).map((part) => part[0] ?? "").slice(0, 2).join("").toUpperCase()
   const emailText = typeof profile.email === "string" ? profile.email : undefined
+  const avatarUrl = typeof profile.avatarUrl === "string" ? profile.avatarUrl : null
 
   return <ScrollView contentContainerStyle={{ padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.huge, backgroundColor: colors.canvas }} keyboardShouldPersistTaps="handled">
     <Card style={{ backgroundColor: colors.brandStrong, borderColor: colors.brandStrong, alignItems: "center", paddingVertical: spacing.xl, gap: spacing.xs }}>
-      <View accessible={false} style={{ width: 84, height: 84, borderRadius: 42, backgroundColor: colors.tint, alignItems: "center", justifyContent: "center", marginBottom: spacing.sm }}>
-        <Text style={{ ...type.h2, color: colors.brandStrong }}>{initials}</Text>
-      </View>
-      <Text accessibilityRole="header" style={{ ...type.h2, color: "#FFFFFF", textAlign: "center" }}>{displayName}</Text>
+      <AvatarEditor
+        name={displayName}
+        avatarUrl={avatarUrl}
+        tone="dark"
+        onChange={(url) => setProfile((current) => (current ? { ...current, avatarUrl: url } : current))}
+      />
+      <Text accessibilityRole="header" style={{ ...type.h2, color: "#FFFFFF", textAlign: "center", marginTop: spacing.sm }}>{displayName}</Text>
       <Text style={{ ...type.supporting, color: "#E0E7FF", textAlign: "center" }}>
         {[t("mobile.member.profile.memberRole"), churchName].filter(Boolean).join(" · ")}
       </Text>
@@ -98,8 +99,11 @@ export default function ProfileScreen() {
 
     {editing ? <Card style={{ gap: spacing.md }}>
       <TextField autoCapitalize="words" editable={!saving} label={t("mobile.member.profile.name")} onChangeText={setName} value={name} />
-      <TextField autoCapitalize="none" autoComplete="email" editable={!saving} keyboardType="email-address" label={t("mobile.member.profile.email")} onChangeText={setEmail} value={email} />
-      <TextField autoCapitalize="none" editable={!saving} label={t("mobile.member.profile.pictureUrl")} onChangeText={setPicture} value={picture} />
+      <View style={{ gap: spacing.xs }}>
+        <Text style={{ ...type.supporting, color: colors.muted }}>{t("mobile.member.profile.email")}</Text>
+        <Text style={{ ...type.body, color: colors.ink }}>{emailText ?? ""}</Text>
+        <Text style={{ ...type.supporting, color: colors.muted }}>{t("profile.email.readOnly")}</Text>
+      </View>
       {saveError ? <Text accessibilityLiveRegion="polite" style={styles.error}>{saveError}</Text> : null}
       <Button disabled={saving} loading={saving} title={saving ? t("common.saving") : t("mobile.member.profile.saveChanges")} onPress={() => void save()} />
       <Button disabled={saving} variant="secondary" title={t("common.cancel")} onPress={() => { applyProfile(profile); setEditing(false); setSaveError("") }} />
