@@ -2,6 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { formatLocaleDate, formatLocaleNumber } from './format'
 import { DEFAULT_LOCALE, dictionaries, parseLocale, translate, type MessageKey } from './index'
+import { IDENTICAL_ALLOWLIST } from './identical-allowlist'
+import './hardcoded.test'
 
 const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort()
 
@@ -18,6 +20,14 @@ test('every English key has a non-empty Swahili string with the same key set', (
   assert.deepEqual(swKeys, enKeys)
   for (const key of enKeys) {
     assert.ok(dictionaries.sw[key as MessageKey].trim().length > 0, `empty Swahili string for ${key}`)
+  }
+})
+
+test('identical English and Swahili values are explicitly allowlisted', () => {
+  for (const key of Object.keys(dictionaries.en) as MessageKey[]) {
+    if (dictionaries.en[key] === dictionaries.sw[key]) {
+      assert.ok(IDENTICAL_ALLOWLIST.has(key), `identical English/Swahili value needs review: ${key}`)
+    }
   }
 })
 
