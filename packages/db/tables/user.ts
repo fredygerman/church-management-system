@@ -2,6 +2,8 @@ import { sql } from "drizzle-orm"
 import {
   boolean,
   date,
+  timestamp,
+  smallint,
   integer,
   pgEnum,
   pgTable,
@@ -16,6 +18,8 @@ export const roleEnum = pgEnum("role", [
   "branch_admin",
   "zone_leader",
   "member",
+  "usher",
+  "publisher",
 ])
 
 export type RoleType = (typeof roleEnum.enumValues)[number]
@@ -30,6 +34,13 @@ export const users = pgTable(
     name: varchar("name", { length: 255 }).notNull(),
     email: varchar("email", { length: 255 }).notNull().unique(),
     phone: varchar("phone", { length: 20 }).unique(),
+    emailVerifiedAt: timestamp("email_verified_at"),
+    phoneE164: varchar("phone_e164", { length: 20 }).unique(),
+    phoneVerifiedAt: timestamp("phone_verified_at"),
+    avatarKey: varchar("avatar_key", { length: 512 }),
+    avatarUpdatedAt: timestamp("avatar_updated_at"),
+    failedLoginCount: smallint("failed_login_count").default(0).notNull(),
+    lockedUntil: timestamp("locked_until"),
     picture: varchar("picture", { length: 255 }),
     passwordHash: varchar("password_hash", { length: 255 }),
     role: roleEnum("role").default("member"),
