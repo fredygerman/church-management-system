@@ -4,6 +4,8 @@ export const staffMessages = {
     'staff.common.yes': 'Yes',
     'staff.common.no': 'No',
     'staff.common.retry': 'Retry',
+    'staff.common.unavailableTitle': 'Information unavailable',
+    'staff.common.unavailableMessage': 'This could not be loaded right now. Please try again in a moment.',
     'staff.common.name': 'Name',
     'staff.serviceTypes.title': 'Service Types',
     'staff.serviceTypes.description': 'Create reusable templates like Sunday Worship or Midweek Service.',
@@ -87,6 +89,8 @@ export const staffMessages = {
     'staff.common.yes': 'Ndiyo',
     'staff.common.no': 'Hapana',
     'staff.common.retry': 'Jaribu tena',
+    'staff.common.unavailableTitle': 'Taarifa hazipatikani', // sw-review-pending
+    'staff.common.unavailableMessage': 'Hii haikuweza kupakiwa kwa sasa. Tafadhali jaribu tena baada ya muda.', // sw-review-pending
     'staff.common.name': 'Jina',
     'staff.serviceTypes.title': 'Aina za Huduma',
     'staff.serviceTypes.description': 'Tengeneza violezo vya kutumiwa tena, kama Ibada ya Jumapili au Huduma ya Katikati ya Wiki.',

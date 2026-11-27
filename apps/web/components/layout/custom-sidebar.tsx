@@ -162,9 +162,10 @@ export function CustomSidebar({
 
         {/* Footer */}
         <div className="border-t border-border px-4 py-4 text-xs text-muted-foreground bg-muted/30">
-          <p className="font-semibold text-foreground">{t("sidebar.footer.appName")}</p>
-          <p className="mt-1">v0.0.1</p>
-          <p className="mt-2">© {new Date().getFullYear()} Mito Ya Baraka Church</p>
+          <p className="font-semibold text-foreground">
+            {currentChurch?.name || t("sidebar.footer.appName")}
+          </p>
+          <p className="mt-2">© {new Date().getFullYear()}</p>
         </div>
       </aside>
 

@@ -1,13 +1,22 @@
 import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
 import { createTemplate, getTemplates } from '@/actions/communications'
+import { UnavailableState } from '@/components/ui/unavailable-state'
 import { getTranslator } from '@/lib/i18n/server'
+import { loadOrUnavailable } from '@/lib/load-or-unavailable'
 
-interface PageProps { params: Promise<{ churchId: string }> }
+interface PageProps {
+  params: Promise<{ churchId: string }>
+  searchParams: Promise<{ error?: string }>
+}
 
-export default async function CommunicationTemplatesPage({ params }: PageProps) {
+export default async function CommunicationTemplatesPage({ params, searchParams }: PageProps) {
   const { churchId } = await params
+  const { error } = await searchParams
   const t = await getTranslator()
-  const templates = await getTemplates(churchId).catch(() => []) as any[]
+  const templatesResult = await loadOrUnavailable(() => getTemplates(churchId))
+  // A failed request is shown as unavailable, not as "no templates yet".
+  const templates = templatesResult.status === 'ok' ? (templatesResult.data as any[]) : null
 
   async function createAction(formData: FormData) {
     'use server'
@@ -15,7 +24,9 @@ export default async function CommunicationTemplatesPage({ params }: PageProps) 
     const channel = String(formData.get('channel') || '') as 'sms' | 'email'
     const subject = String(formData.get('subject') || '')
     const body = String(formData.get('body') || '')
-    if (!name || !channel || !body) return
+    if (!name || !channel || !body) {
+      redirect(`/${churchId}/dashboard/communications/templates?error=required`)
+    }
     await createTemplate({ churchId, name, channel, subject: subject || undefined, body })
     revalidatePath(`/${churchId}/dashboard/communications/templates`)
   }
@@ -41,10 +52,13 @@ export default async function CommunicationTemplatesPage({ params }: PageProps) 
           <input name="subject" placeholder={t('staff.communications.templates.subject')} className="rounded-md border px-3 py-2 text-sm" />
         </div>
         <textarea name="body" placeholder={t('staff.communications.templates.body')} className="min-h-28 rounded-md border px-3 py-2 text-sm" required />
+        {error === 'required' ? (
+          <p role="alert" className="text-sm text-destructive">{t('staff.communications.templates.requiredError')}</p>
+        ) : null}
         <button className="w-fit rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground" type="submit">{t('staff.communications.templates.create')}</button>
       </form>
 
-      <div className="rounded-md border">
+      {templates ? <div className="rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
@@ -68,7 +82,7 @@ export default async function CommunicationTemplatesPage({ params }: PageProps) 
             )}
           </tbody>
         </table>
-      </div>
+      </div> : <UnavailableState title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />}
     </div>
   )
 }

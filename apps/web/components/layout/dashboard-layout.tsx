@@ -26,6 +26,7 @@ import { ModeToggle } from "@/components/layout/mode-toggle"
 import Link from "next/link"
 import { sidebarConfig } from "@/config/sidebar"
 import { generateCombinedTitle, isUUID } from "@/lib/utils"
+import { getInitials } from "@/lib/initials"
 import { useT } from "@/components/i18n/locale-provider"
 import type { MessageKey } from "@church/config"
 
@@ -113,13 +114,13 @@ export function DashboardLayout({
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative size-8 rounded-full">
                   <Avatar className="size-8">
-                    <AvatarImage
-                      src={
-                        user?.image || "https://i.ibb.co/R0rhgvP/shadcn-avatar.jpg"
-                      }
-                      alt={user?.name || t("final.common.user")}
-                    />
-                    <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                    {user?.image ? (
+                      <AvatarImage
+                        src={user.image}
+                        alt={user.name || t("final.common.user")}
+                      />
+                    ) : null}
+                    <AvatarFallback>{getInitials(user?.name, "U")}</AvatarFallback>
                   </Avatar>
                 </Button>
               </DropdownMenuTrigger>

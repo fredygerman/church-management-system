@@ -1,13 +1,17 @@
 import { revalidatePath } from 'next/cache'
 import { listDuplicates, refreshDuplicates, resolveDuplicate } from '@/actions/data-quality'
+import { UnavailableState } from '@/components/ui/unavailable-state'
 import { getTranslator } from '@/lib/i18n/server'
+import { loadOrUnavailable } from '@/lib/load-or-unavailable'
 
 interface PageProps { params: Promise<{ churchId: string }> }
 
 export default async function DuplicateQueuePage({ params }: PageProps) {
   const t = await getTranslator()
   const { churchId } = await params
-  const rows = await listDuplicates(churchId).catch(() => []) as any[]
+  const rowsResult = await loadOrUnavailable(() => listDuplicates(churchId))
+  // A failed request is shown as unavailable, not as "no pending duplicates".
+  const rows = rowsResult.status === 'ok' ? (rowsResult.data as any[]) : null
 
   async function refreshAction() {
     'use server'
@@ -27,7 +31,7 @@ export default async function DuplicateQueuePage({ params }: PageProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between"><h1 className="text-2xl font-semibold">{t('staff.dataQuality.duplicates.title')}</h1><form action={refreshAction}><button className="rounded-md border px-3 py-2 text-sm">{t('staff.dataQuality.duplicates.refresh')}</button></form></div>
-      <div className="rounded-md border">
+      {rows ? <div className="rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted/40"><tr><th className="px-3 py-2 text-left">{t('staff.dataQuality.duplicates.reason')}</th><th className="px-3 py-2 text-left">{t('staff.dataQuality.duplicates.confidence')}</th><th className="px-3 py-2 text-left">{t('staff.dataQuality.duplicates.action')}</th></tr></thead>
           <tbody>
@@ -47,7 +51,7 @@ export default async function DuplicateQueuePage({ params }: PageProps) {
             {!rows.length && <tr><td colSpan={3} className="px-3 py-4 text-muted-foreground">{t('staff.dataQuality.duplicates.empty')}</td></tr>}
           </tbody>
         </table>
-      </div>
+      </div> : <UnavailableState title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />}
     </div>
   )
 }

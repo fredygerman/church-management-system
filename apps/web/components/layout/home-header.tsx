@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { ModeToggle } from "@/components/layout/mode-toggle"
 import { useT } from "@/components/i18n/locale-provider"
+import { getInitials } from "@/lib/initials"
 
 export default function HomeHeader() {
   const { t } = useT()
@@ -48,13 +49,13 @@ export default function HomeHeader() {
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="relative size-8 rounded-full">
               <Avatar className="size-8">
-                <AvatarImage
-                  src={
-                    user.image || "https://i.ibb.co/R0rhgvP/shadcn-avatar.jpg"
-                  }
-                  alt={user.name || t("final.common.user")}
-                />
-                <AvatarFallback>{user.name?.charAt(0) || "C"}</AvatarFallback>
+                {user.image ? (
+                  <AvatarImage
+                    src={user.image}
+                    alt={user.name || t("final.common.user")}
+                  />
+                ) : null}
+                <AvatarFallback>{getInitials(user.name, "U")}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>

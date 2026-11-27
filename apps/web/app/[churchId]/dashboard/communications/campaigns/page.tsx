@@ -3,7 +3,9 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { cancelCampaign, getCampaigns, sendCampaignNow } from '@/actions/communications'
 import { checkPermission, ensurePermission } from '@/lib/permissions-server'
+import { UnavailableState } from '@/components/ui/unavailable-state'
 import { getTranslator } from '@/lib/i18n/server'
+import { loadOrUnavailable } from '@/lib/load-or-unavailable'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -28,7 +30,9 @@ export default async function CampaignsPage({ params, searchParams }: PageProps)
   const statusLabel = (value: string) => (value in statusKeys ? t(statusKeys[value as keyof typeof statusKeys]) : value)
   const canManageCampaigns = await checkPermission('manage:communications')
   const canSendCampaigns = await checkPermission('send:communications')
-  const campaigns = await getCampaigns(churchId, { status, channel }).catch(() => []) as any[]
+  const campaignsResult = await loadOrUnavailable(() => getCampaigns(churchId, { status, channel }))
+  // A failed request is shown as unavailable, not as "no campaigns found".
+  const campaigns = campaignsResult.status === 'ok' ? (campaignsResult.data as any[]) : null
 
   async function sendNowAction(formData: FormData) {
     'use server'
@@ -107,7 +111,7 @@ export default async function CampaignsPage({ params, searchParams }: PageProps)
         </div>
       )}
 
-      <div className="rounded-md border">
+      {campaigns ? <div className="rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
@@ -150,7 +154,7 @@ export default async function CampaignsPage({ params, searchParams }: PageProps)
             )}
           </tbody>
         </table>
-      </div>
+      </div> : <UnavailableState title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />}
     </div>
   )
 }

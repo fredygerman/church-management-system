@@ -1,5 +1,7 @@
 import { getAtRiskMembers } from '@/actions/attendance'
+import { UnavailableState } from '@/components/ui/unavailable-state'
 import { getTranslator } from '@/lib/i18n/server'
+import { loadOrUnavailable } from '@/lib/load-or-unavailable'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -8,7 +10,9 @@ interface PageProps {
 export default async function AtRiskMembersPage({ params }: PageProps) {
   const t = await getTranslator()
   const { churchId } = await params
-  const rows = await getAtRiskMembers(churchId).catch(() => []) as any[]
+  const rowsResult = await loadOrUnavailable(() => getAtRiskMembers(churchId))
+  // A failed request is shown as unavailable, not as "no at-risk members".
+  const rows = rowsResult.status === 'ok' ? (rowsResult.data as any[]) : null
 
   return (
     <div className="space-y-6">
@@ -17,7 +21,7 @@ export default async function AtRiskMembersPage({ params }: PageProps) {
         <p className="text-sm text-muted-foreground">{t('staff.attendance.atRisk.description')}</p>
       </div>
 
-      <div className="rounded-md border">
+      {rows ? <div className="rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
@@ -45,7 +49,7 @@ export default async function AtRiskMembersPage({ params }: PageProps) {
             )}
           </tbody>
         </table>
-      </div>
+      </div> : <UnavailableState title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />}
     </div>
   )
 }

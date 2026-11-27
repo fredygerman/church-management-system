@@ -26,7 +26,7 @@ export const commonMessages = {
     'nav.content': 'Content',
     'nav.dataQuality': 'Data Quality',
     'nav.familyLifecycle': 'Family Lifecycle',
-    'nav.attendanceV2': 'Attendance V2',
+    'nav.attendanceV2': 'Attendance trends',
     'nav.members': 'Members',
     'nav.zones': 'Zones',
     'nav.departments': 'Departments',
@@ -89,7 +89,7 @@ export const commonMessages = {
     'nav.content': 'Maudhui',
     'nav.dataQuality': 'Ubora wa Takwimu',
     'nav.familyLifecycle': 'Mzunguko wa Maisha ya Familia',
-    'nav.attendanceV2': 'Mahudhurio V2',
+    'nav.attendanceV2': 'Mwelekeo wa Mahudhurio', // sw-review-pending
     'nav.members': 'Wanachama',
     'nav.zones': 'Kanda',
     'nav.departments': 'Idara',

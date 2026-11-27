@@ -1,14 +1,18 @@
 import Link from 'next/link'
 import { revalidatePath } from 'next/cache'
 import { listImportJobs, previewImport } from '@/actions/data-quality'
+import { UnavailableState } from '@/components/ui/unavailable-state'
 import { getTranslator } from '@/lib/i18n/server'
+import { loadOrUnavailable } from '@/lib/load-or-unavailable'
 
 interface PageProps { params: Promise<{ churchId: string }> }
 
 export default async function DataQualityPage({ params }: PageProps) {
   const t = await getTranslator()
   const { churchId } = await params
-  const jobs = await listImportJobs(churchId).catch(() => []) as any[]
+  const jobsResult = await loadOrUnavailable(() => listImportJobs(churchId))
+  // A failed request is shown as unavailable, not as "no import jobs yet".
+  const jobs = jobsResult.status === 'ok' ? (jobsResult.data as any[]) : null
 
   async function previewAction(formData: FormData) {
     'use server'
@@ -56,7 +60,7 @@ export default async function DataQualityPage({ params }: PageProps) {
         <button className="w-fit rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground" type="submit">{t('staff.dataQuality.previewImport')}</button>
       </form>
 
-      <div className="rounded-md border">
+      {jobs ? <div className="rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted/40">
             <tr>
@@ -75,7 +79,7 @@ export default async function DataQualityPage({ params }: PageProps) {
             {!jobs.length && <tr><td colSpan={4} className="px-3 py-4 text-muted-foreground">{t('staff.dataQuality.noJobs')}</td></tr>}
           </tbody>
         </table>
-      </div>
+      </div> : <UnavailableState title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />}
     </div>
   )
 }

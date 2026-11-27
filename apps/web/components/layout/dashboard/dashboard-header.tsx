@@ -26,6 +26,7 @@ import { ModeToggle } from "@/components/layout/mode-toggle"
 import { DashboardBreadcrumb } from "./dashboard-breadcrumb"
 import { useT } from "@/components/i18n/locale-provider"
 import { churchPath } from "@/lib/shell/navigation"
+import { getInitials } from "@/lib/initials"
 
 interface DashboardHeaderProps {
   onMenuClick?: () => void
@@ -71,13 +72,13 @@ export function DashboardHeader({ onMenuClick }: DashboardHeaderProps) {
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="relative size-8 rounded-full">
                 <Avatar className="size-8">
-                  <AvatarImage
-                    src={
-                      user?.image || "https://i.ibb.co/R0rhgvP/shadcn-avatar.jpg"
-                    }
-                    alt={user?.name || t("final.common.user")}
-                  />
-                  <AvatarFallback>{user?.name?.charAt(0) || "U"}</AvatarFallback>
+                  {user?.image ? (
+                    <AvatarImage
+                      src={user.image}
+                      alt={user.name || t("final.common.user")}
+                    />
+                  ) : null}
+                  <AvatarFallback>{getInitials(user?.name, "U")}</AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>

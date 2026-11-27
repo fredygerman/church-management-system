@@ -66,6 +66,7 @@ export const staffPeopleMessages = {
     'staff.communications.templates.body': 'Message body',
     'staff.communications.templates.create': 'Create Template',
     'staff.communications.templates.empty': 'No templates yet.',
+    'staff.communications.templates.requiredError': 'Enter a template name, choose a channel and write a message body.',
 
     'staff.communications.errors.missingId': 'Missing campaign id.',
     'staff.communications.errors.missingBody': 'Provide a message body or choose a template.',
@@ -227,6 +228,7 @@ export const staffPeopleMessages = {
     'staff.communications.templates.body': 'Ujumbe',
     'staff.communications.templates.create': 'Tengeneza Kiolezo',
     'staff.communications.templates.empty': 'Bado hakuna violezo.',
+    'staff.communications.templates.requiredError': 'Weka jina la kiolezo, chagua njia na uandike ujumbe.', // sw-review-pending
 
     'staff.communications.errors.missingId': 'Kitambulisho cha kampeni hakipo.',
     'staff.communications.errors.missingBody': 'Weka ujumbe au chagua kiolezo.',

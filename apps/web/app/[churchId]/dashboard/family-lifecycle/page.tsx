@@ -1,16 +1,21 @@
 import { revalidatePath } from 'next/cache'
 import { createLifecycleRule, getFamilyLifecycleDashboard, listFamilySuggestions, resolveFamilySuggestion } from '@/actions/family-lifecycle'
+import { UnavailableState } from '@/components/ui/unavailable-state'
 import { getTranslator } from '@/lib/i18n/server'
+import { loadOrUnavailable } from '@/lib/load-or-unavailable'
 
 interface PageProps { params: Promise<{ churchId: string }> }
 
 export default async function FamilyLifecyclePage({ params }: PageProps) {
   const t = await getTranslator()
   const { churchId } = await params
-  const [dashboard, suggestions] = await Promise.all([
-    getFamilyLifecycleDashboard(churchId).catch(() => ({ upcomingMilestones: [], pendingConnections: [], recentRelationships: [] })),
-    listFamilySuggestions(churchId).catch(() => []),
+  const [dashboardResult, suggestionsResult] = await Promise.all([
+    loadOrUnavailable(() => getFamilyLifecycleDashboard(churchId)),
+    loadOrUnavailable(() => listFamilySuggestions(churchId)),
   ]) as any
+  // A failed request is shown as unavailable, not as "nothing to show".
+  const dashboard = dashboardResult.status === 'ok' ? dashboardResult.data : null
+  const suggestions = suggestionsResult.status === 'ok' ? suggestionsResult.data : null
 
   async function ruleAction(formData: FormData) {
     'use server'
@@ -48,9 +53,9 @@ export default async function FamilyLifecyclePage({ params }: PageProps) {
         <button className="w-fit rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground" type="submit">{t('staff.lifecycle.addRule')}</button>
       </form>
 
-      <div className="rounded-md border"><table className="w-full text-sm"><thead className="bg-muted/40"><tr><th className="px-3 py-2 text-left">{t('staff.lifecycle.upcomingMilestone')}</th><th className="px-3 py-2 text-left">{t('staff.lifecycle.date')}</th><th className="px-3 py-2 text-left">{t('staff.lifecycle.status')}</th></tr></thead><tbody>{dashboard.upcomingMilestones.map((m:any)=><tr key={m.id} className="border-t"><td className="px-3 py-2">{m.label}</td><td className="px-3 py-2">{m.milestoneDate}</td><td className="px-3 py-2">{m.status}</td></tr>)}{!dashboard.upcomingMilestones.length && <tr><td colSpan={3} className="px-3 py-4 text-muted-foreground">{t('staff.lifecycle.noMilestones')}</td></tr>}</tbody></table></div>
+      {dashboard ? <div className="rounded-md border"><table className="w-full text-sm"><thead className="bg-muted/40"><tr><th className="px-3 py-2 text-left">{t('staff.lifecycle.upcomingMilestone')}</th><th className="px-3 py-2 text-left">{t('staff.lifecycle.date')}</th><th className="px-3 py-2 text-left">{t('staff.lifecycle.status')}</th></tr></thead><tbody>{dashboard.upcomingMilestones.map((m:any)=><tr key={m.id} className="border-t"><td className="px-3 py-2">{m.label}</td><td className="px-3 py-2">{m.milestoneDate}</td><td className="px-3 py-2">{m.status}</td></tr>)}{!dashboard.upcomingMilestones.length && <tr><td colSpan={3} className="px-3 py-4 text-muted-foreground">{t('staff.lifecycle.noMilestones')}</td></tr>}</tbody></table></div> : <UnavailableState title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />}
 
-      <div className="rounded-md border"><table className="w-full text-sm"><thead className="bg-muted/40"><tr><th className="px-3 py-2 text-left">{t('staff.lifecycle.suggestion')}</th><th className="px-3 py-2 text-left">{t('staff.lifecycle.action')}</th></tr></thead><tbody>{suggestions.map((s:any)=><tr key={s.id} className="border-t"><td className="px-3 py-2">{s.reason}</td><td className="px-3 py-2"><form action={resolveAction} className="flex items-center gap-2"><input type="hidden" name="suggestionId" value={s.id} /><select name="decision" className="rounded-md border px-2 py-1 text-xs"><option value="approved">{t('staff.lifecycle.decision.approve')}</option><option value="declined">{t('staff.lifecycle.decision.decline')}</option><option value="ignored">{t('staff.lifecycle.decision.ignore')}</option></select><button className="rounded border px-2 py-1 text-xs" type="submit">{t('staff.lifecycle.apply')}</button></form></td></tr>)}{!suggestions.length && <tr><td colSpan={2} className="px-3 py-4 text-muted-foreground">{t('staff.lifecycle.noSuggestions')}</td></tr>}</tbody></table></div>
+      {suggestions ? <div className="rounded-md border"><table className="w-full text-sm"><thead className="bg-muted/40"><tr><th className="px-3 py-2 text-left">{t('staff.lifecycle.suggestion')}</th><th className="px-3 py-2 text-left">{t('staff.lifecycle.action')}</th></tr></thead><tbody>{suggestions.map((s:any)=><tr key={s.id} className="border-t"><td className="px-3 py-2">{s.reason}</td><td className="px-3 py-2"><form action={resolveAction} className="flex items-center gap-2"><input type="hidden" name="suggestionId" value={s.id} /><select name="decision" className="rounded-md border px-2 py-1 text-xs"><option value="approved">{t('staff.lifecycle.decision.approve')}</option><option value="declined">{t('staff.lifecycle.decision.decline')}</option><option value="ignored">{t('staff.lifecycle.decision.ignore')}</option></select><button className="rounded border px-2 py-1 text-xs" type="submit">{t('staff.lifecycle.apply')}</button></form></td></tr>)}{!suggestions.length && <tr><td colSpan={2} className="px-3 py-4 text-muted-foreground">{t('staff.lifecycle.noSuggestions')}</td></tr>}</tbody></table></div> : <UnavailableState title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />}
     </div>
   )
 }

@@ -64,9 +64,8 @@ export const staffAttendanceMessages = {
     'staff.attendance.riskSettings.enableOverride': 'Enable church override',
 
     // Attendance intelligence V2 (attendance/v2)
-    'staff.attendance.v2.title': 'Attendance Intelligence V2',
+    'staff.attendance.v2.title': 'Attendance trends',
     'staff.attendance.v2.groupBy.zone': 'zone',
-    'staff.attendance.v2.groupBy.branch': 'branch',
     'staff.attendance.v2.groupBy.gender': 'gender',
     'staff.attendance.v2.groupBy.ageBand': 'age_band',
     'staff.attendance.v2.totalSessions': 'Total Sessions',
@@ -260,9 +259,8 @@ export const staffAttendanceMessages = {
     'staff.attendance.riskSettings.enableOverride': 'Washa mpangilio maalum wa kanisa',
 
     // Attendance intelligence V2 (attendance/v2)
-    'staff.attendance.v2.title': 'Uchambuzi wa Mahudhurio V2',
+    'staff.attendance.v2.title': 'Mwelekeo wa Mahudhurio', // sw-review-pending
     'staff.attendance.v2.groupBy.zone': 'kanda',
-    'staff.attendance.v2.groupBy.branch': 'tawi',
     'staff.attendance.v2.groupBy.gender': 'jinsia',
     'staff.attendance.v2.groupBy.ageBand': 'kundi la umri',
     'staff.attendance.v2.totalSessions': 'Jumla ya Vikao',

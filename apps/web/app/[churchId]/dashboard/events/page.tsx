@@ -14,6 +14,8 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { EventCalendarGrid } from "@/components/event/event-calendar-grid"
+import { UnavailableState } from "@/components/ui/unavailable-state"
+import { loadOrUnavailable, type LoadResult } from "@/lib/load-or-unavailable"
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -43,11 +45,14 @@ async function DayAgenda({
   churchId: string
   selectedDate: string
   eventsPromise: Promise<any[]>
-  sessionsPromise: Promise<any[]>
+  sessionsPromise: Promise<LoadResult<any[]>>
 }) {
   const t = await getTranslator()
   const locale = await getLocale()
-  const [events, sessions] = await Promise.all([eventsPromise, sessionsPromise])
+  const [events, sessionsResult] = await Promise.all([eventsPromise, sessionsPromise])
+  const sessionsOk = sessionsResult.status === "ok"
+  const sessions = sessionsResult.status === "ok" ? sessionsResult.data : []
+  const unavailable = <UnavailableState title={t("staff.common.unavailableTitle")} message={t("staff.common.unavailableMessage")} />
 
   const dayEvents = events.filter((e) => String(e.startsAt).slice(0, 10) === selectedDate)
   // Read-only merge: service sessions are rendered alongside events for
@@ -55,10 +60,11 @@ async function DayAgenda({
   const daySessions = sessions.filter((s) => String(s.sessionDate).slice(0, 10) === selectedDate)
 
   if (dayEvents.length === 0 && daySessions.length === 0) {
-    return <p className="text-sm text-muted-foreground">{t("staff.events.agenda.empty")}</p>
+    return sessionsOk ? <p className="text-sm text-muted-foreground">{t("staff.events.agenda.empty")}</p> : unavailable
   }
 
   return (
+    <>
     <ul className="space-y-2">
       {dayEvents.map((event) => (
         <li key={event.id}>
@@ -94,6 +100,8 @@ async function DayAgenda({
         </li>
       ))}
     </ul>
+    {!sessionsOk && unavailable}
+    </>
   )
 }
 
@@ -113,13 +121,13 @@ export default async function EventsCalendarPage({ params, searchParams }: PageP
   const to = format(endOfMonth(monthAnchor), "yyyy-MM-dd")
 
   const eventsPromise = getEvents(churchId, { from, to })
-  const sessionsPromise = getServiceSessions(churchId, from, to)
-    .then((result) => (Array.isArray(result) ? result : []))
-    .catch(() => [])
+  const sessionsPromise = loadOrUnavailable(() => getServiceSessions(churchId, from, to))
+    .then((result) => (result.status === "ok" && Array.isArray(result.data) ? result : { status: "unavailable" as const }))
 
   const events = await eventsPromise
   const eventDates = Array.from(new Set(events.map((e) => String(e.startsAt).slice(0, 10))))
-  const sessions = await sessionsPromise
+  const sessionsResult = await sessionsPromise
+  const sessions: any[] = sessionsResult.status === "ok" ? sessionsResult.data : []
   const serviceDates = Array.from(new Set(sessions.map((s: any) => String(s.sessionDate).slice(0, 10))))
 
   return (

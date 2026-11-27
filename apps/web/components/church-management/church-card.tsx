@@ -10,6 +10,7 @@ import { signIn } from "next-auth/react"
 import { switchChurch } from "@/actions/church"
 import { Button } from "@/components/ui/button"
 import { useT } from "@/components/i18n/locale-provider"
+import { getInitials } from "@/lib/initials"
 import {
   Card,
   CardContent,
@@ -78,16 +79,23 @@ export function ChurchCard({
     <div className={className}>
       <Card className="overflow-hidden">
         <CardHeader className="relative h-48">
-          <Image
-            src={
-              church.imageUrl ||
-              "https://images.unsplash.com/photo-1519491050282-cf00c82424b4"
-            }
-            alt={church.name}
-            className="absolute inset-0 size-full object-cover"
-            width={250}
-            height={150}
-          />
+          {church.imageUrl ? (
+            <Image
+              src={church.imageUrl}
+              alt={church.name}
+              className="absolute inset-0 size-full object-cover"
+              width={250}
+              height={150}
+            />
+          ) : (
+            <div
+              role="img"
+              aria-label={church.name}
+              className="absolute inset-0 flex size-full items-center justify-center bg-neutral-600 text-5xl font-bold text-white/80"
+            >
+              {getInitials(church.name)}
+            </div>
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
           <div className="absolute inset-x-4 bottom-4">
             <CardTitle className="text-2xl font-bold text-white">
