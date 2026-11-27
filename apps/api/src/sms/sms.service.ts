@@ -7,6 +7,7 @@ import {
   NotificationType,
 } from '../../../../packages/config/src/types/notifications';
 import config from '../config';
+import { maskPhone } from '../../../../packages/config/src/utils/phone';
 import { eq, and } from 'drizzle-orm';
 import { Database } from '../database/interfaces/database.interfaces';
 
@@ -82,6 +83,45 @@ export class SmsService implements OnModuleInit {
   /**
    * Send SMS via the messaging service API with full notification tracking
    */
+  /**
+   * Sends a one-time code or other secret text (verification). Nothing is written to the
+   * notifications table, the text is never logged, and the recipient is logged masked.
+   * Use this for any message whose body must not persist.
+   */
+  async sendSensitiveSms(options: {
+    to: string;
+    text: string;
+    purpose: string;
+  }): Promise<{ ok: boolean; reference: string }> {
+    const reference = this.generateReference();
+    const masked = maskPhone(options.to);
+    try {
+      const response = await fetch(this.smsApiUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Basic ${this.getAuthToken()}`,
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          from: this.smsSenderId,
+          to: options.to,
+          text: options.text,
+          reference,
+        }),
+      });
+      this.logger.log(
+        `Sensitive SMS (${options.purpose}) to ${masked} ref ${reference}: HTTP ${response.status}`,
+      );
+      return { ok: response.ok, reference };
+    } catch (error) {
+      this.logger.error(
+        `Sensitive SMS (${options.purpose}) to ${masked} ref ${reference} failed: ${(error as Error)?.name ?? 'error'}`,
+      );
+      return { ok: false, reference };
+    }
+  }
+
   async sendSms(options: SendSmsOptions): Promise<SmsResponse> {
     const {
       userId,

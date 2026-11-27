@@ -20,6 +20,7 @@ export const membershipStatusEnum = pgEnum("membership_status", [
   "active",
   "invited",
   "suspended",
+  "pending_approval",
 ])
 
 export type MembershipStatusType = (typeof membershipStatusEnum.enumValues)[number]

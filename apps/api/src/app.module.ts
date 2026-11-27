@@ -18,6 +18,8 @@ import { DatabaseModule } from './database/database.module'
 import { FileUploadModule } from './file-upload/file-upload.module'
 import { HealthController } from './health/health.controller'
 import { ServiceStatusUtil } from './helpers/service-status.util'
+import { InvitationsModule } from './invitations/invitations.module'
+import { VerificationModule } from './verification/verification.module'
 import { ChurchModule } from './churches/churches.module'
 import { MembersModule } from './members/members.module'
 import { ZonesModule } from './zones/zones.module'
@@ -52,6 +54,9 @@ import config from './config'
     MailModule,
     SmsModule,
     FileUploadModule,
+    // Before ChurchModule: GET /churches/invitations must not match GET /churches/:id.
+    InvitationsModule,
+    VerificationModule,
     ChurchModule,
     MembersModule,
     ZonesModule,

@@ -140,6 +140,7 @@ import {
   type PasswordRecoveryToken,
   type NewPasswordRecoveryToken,
 } from "./tables/passwordRecoveryTokens"
+import { churchInvitations, type ChurchInvitation, type NewChurchInvitation } from "./tables/churchInvitations"
 import {
   contactVerifications,
   contactVerificationsRelations,
@@ -177,6 +178,9 @@ import {
 } from "./tables/relations"
 
 export {
+  churchInvitations,
+  type ChurchInvitation,
+  type NewChurchInvitation,
   contactVerifications,
   contactVerificationsRelations,
   contactConsents,

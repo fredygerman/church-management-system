@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core'
 import { Request } from 'express'
 import { UserContext, UserRole } from '../types/permission.types'
+import { SKIP_CHURCH_CONTEXT_KEY } from '../../invitations/skip-church-context.decorator'
 import { IS_PUBLIC_KEY } from '../decorators/public.decorator'
 import { and, eq, isNull } from 'drizzle-orm'
 import { db, userChurchMemberships } from '@church/db'
@@ -24,6 +25,15 @@ export class ChurchContextGuard implements CanActivate {
     ])
 
     if (isPublic) {
+      return true
+    }
+
+    // Routes that run before a church is chosen (the join flow) opt out explicitly.
+    const skipChurchContext = this.reflector.getAllAndOverride<boolean>(SKIP_CHURCH_CONTEXT_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ])
+    if (skipChurchContext) {
       return true
     }
 
