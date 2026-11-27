@@ -153,6 +153,10 @@ export const staffSweepBMessages = {
     'sweep.b.permission.rsvpEvent.description': 'Self-service RSVP to church events',
     'sweep.b.permission.manageNetworkEvents.label': 'Manage Network Events',
     'sweep.b.permission.manageNetworkEvents.description': 'Publish events visible across all branches, not just one church',
+    'sweep.b.permission.viewVerses.label': 'View Verse of the Day',
+    'sweep.b.permission.viewVerses.description': 'See the verse of the day and the church verse list',
+    'sweep.b.permission.manageVerses.label': 'Manage Verse of the Day',
+    'sweep.b.permission.manageVerses.description': 'Add, edit, and retire verses, and choose the verse for any day',
   },
   sw: {
     'sweep.b.report.attendanceTrends.title': 'Mwelekeo wa Mahudhurio',
@@ -305,5 +309,10 @@ export const staffSweepBMessages = {
     'sweep.b.permission.rsvpEvent.description': 'Jithibitishe mwenyewe kushiriki katika matukio ya kanisa',
     'sweep.b.permission.manageNetworkEvents.label': 'Simamia Matukio ya Mtandao',
     'sweep.b.permission.manageNetworkEvents.description': 'Chapisha matukio yanayoonekana katika matawi yote, si kanisa moja tu',
+    // sw-review-pending
+    'sweep.b.permission.viewVerses.label': 'Tazama Aya ya Siku',
+    'sweep.b.permission.viewVerses.description': 'Tazama aya ya siku na orodha ya aya za kanisa',
+    'sweep.b.permission.manageVerses.label': 'Simamia Aya ya Siku',
+    'sweep.b.permission.manageVerses.description': 'Ongeza, hariri na ondoa aya, na chagua aya ya siku yoyote',
   },
 } as const

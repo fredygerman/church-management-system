@@ -21,6 +21,7 @@ import { ServiceStatusUtil } from './helpers/service-status.util'
 import { InvitationsModule } from './invitations/invitations.module'
 import { VerificationModule } from './verification/verification.module'
 import { AnnouncementAttachmentsModule } from './announcement-attachments/announcement-attachments.module'
+import { VersesModule } from './verses/verses.module'
 import { ChurchModule } from './churches/churches.module'
 import { MembersModule } from './members/members.module'
 import { ZonesModule } from './zones/zones.module'
@@ -59,6 +60,7 @@ import config from './config'
     InvitationsModule,
     VerificationModule,
     AnnouncementAttachmentsModule,
+    VersesModule,
     ChurchModule,
     MembersModule,
     ZonesModule,

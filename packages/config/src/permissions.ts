@@ -110,6 +110,10 @@ export type PermissionAction =
   | 'rsvp:event'
   | 'manage:network-events'
 
+  // Verse of the day
+  | 'view:verses'
+  | 'manage:verses'
+
 // ============================================================================
 // ROLE TO PERMISSIONS MAPPING
 // ============================================================================
@@ -143,6 +147,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
     'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
     'manage:events', 'view:events', 'rsvp:event', 'manage:network-events',
+    'view:verses', 'manage:verses',
   ],
 
   [UserRole.ADMIN]: [
@@ -161,6 +166,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
     'manage:files', 'manage:mail', 'manage:sms', 'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
     'manage:events', 'view:events', 'rsvp:event', 'manage:network-events',
+    'view:verses', 'manage:verses',
   ],
 
   [UserRole.BRANCH_ADMIN]: [
@@ -178,10 +184,12 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'manage:files', 'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
     'view:announcements', 'publish:announcements', 'manage:invitations', 'search:members',
     'manage:events', 'view:events', 'rsvp:event',
+    'view:verses', 'manage:verses',
   ],
 
   [UserRole.ZONE_LEADER]: [
     'read:member',
+    'view:verses',
     'view:visitors', 'create:visitor', 'read:visitor',
     'read:zone',
     'view:attendance',
@@ -196,6 +204,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
 
   [UserRole.DEPARTMENT_LEADER]: [
     'read:member',
+    'view:verses',
     'view:visitors', 'create:visitor', 'read:visitor',
     'read:department',
     'view:attendance',
@@ -223,6 +232,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     ...MEMBER_PERMISSIONS,
     'view:communications', 'manage:communications',
     'view:announcements', 'publish:announcements',
+    'view:verses', 'manage:verses',
   ]),
 }
 
@@ -773,6 +783,22 @@ export const PERMISSION_METADATA: Record<PermissionAction, PermissionMetadata> =
     description: 'Publish events visible across all branches, not just one church',
     category: 'admin',
     riskLevel: 'high',
+  },
+  'view:verses': {
+    labelKey: 'sweep.b.permission.viewVerses.label',
+    descriptionKey: 'sweep.b.permission.viewVerses.description',
+    label: 'View Verse of the Day',
+    description: 'See the verse of the day and the church verse list',
+    category: 'admin',
+    riskLevel: 'low',
+  },
+  'manage:verses': {
+    labelKey: 'sweep.b.permission.manageVerses.label',
+    descriptionKey: 'sweep.b.permission.manageVerses.description',
+    label: 'Manage Verse of the Day',
+    description: 'Add, edit, and retire verses, and choose the verse for any day',
+    category: 'admin',
+    riskLevel: 'medium',
   },
 }
 
