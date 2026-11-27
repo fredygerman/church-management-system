@@ -19,7 +19,7 @@ function filesUnder(directory: string): string[] {
 
 function countEnglishLiterals(source: string): number {
   const patterns = [
-    /(?<!=)>\s*[A-Za-z][^<>{}]*\s*</g, // JSX text only; `=> void` is a type, not text
+    /(?<!=)>[ \t]*[A-Za-z][^<>{}()=;\n"]*</g, // JSX text on one line; arrows, generics and code are not text
     /\b(?:placeholder|accessibilityLabel)\s*=\s*"([^"]*[A-Za-z][^"]*)"/g,
     /\bAlert\.alert\(\s*(['"])([^'"\n]*[A-Za-z][^'"\n]*)\1/g,
   ]
