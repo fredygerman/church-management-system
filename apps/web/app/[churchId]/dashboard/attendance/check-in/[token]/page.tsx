@@ -4,6 +4,8 @@ import { qrCheckin } from '@/actions/attendance'
 import { searchMembers } from '@/actions/member'
 import { checkPermission, ensurePermission } from '@/lib/permissions-server'
 import { getTranslator } from '@/lib/i18n/server'
+import { loadOrUnavailable } from '@/lib/load-or-unavailable'
+import { UnavailableNotice } from '@/components/ui/unavailable-state'
 
 interface PageProps {
   params: Promise<{ churchId: string; token: string }>
@@ -16,7 +18,11 @@ export default async function QrCheckinTokenPage({ params, searchParams }: PageP
   const { q = '', ok = '', err = '' } = await searchParams
   const t = await getTranslator()
   const canManageAttendance = await checkPermission('manage:attendance')
-  const members = q ? await searchMembers(churchId, q).catch(() => []) as any[] : []
+  const membersResult = q
+    ? await loadOrUnavailable(() => searchMembers(churchId, q, { throwOnError: true }))
+    : { status: 'ok' as const, data: [] as any[] }
+  const membersFailed = membersResult.status === 'unavailable'
+  const members = membersResult.status === 'ok' ? membersResult.data : []
 
   async function submitAction(formData: FormData) {
     'use server'
@@ -60,6 +66,10 @@ export default async function QrCheckinTokenPage({ params, searchParams }: PageP
         </div>
       )}
 
+      {membersFailed && (
+        <UnavailableNotice title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />
+      )}
+
       <form action={submitAction} className="max-w-xl space-y-2 rounded-md border p-4">
         <input type="hidden" name="q" value={q} />
         <select name="memberId" className="w-full rounded-md border px-2 py-2 text-sm" required>
@@ -68,7 +78,7 @@ export default async function QrCheckinTokenPage({ params, searchParams }: PageP
             <option key={member.id} value={member.id}>{member.firstName} {member.lastName}</option>
           ))}
         </select>
-        <button disabled={!canManageAttendance} type="submit" className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{t('staff.attendance.checkin.checkIn')}</button>
+        <button disabled={!canManageAttendance || membersFailed} type="submit" className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{t('staff.attendance.checkin.checkIn')}</button>
       </form>
       {!canManageAttendance && (
         <p className="text-sm text-muted-foreground">{t('staff.attendance.qrToken.noPermission')}</p>

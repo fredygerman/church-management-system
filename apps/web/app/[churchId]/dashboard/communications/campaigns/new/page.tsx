@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createCampaign, getTemplates } from '@/actions/communications'
 import { ensurePermission, checkPermission } from '@/lib/permissions-server'
 import { getTranslator } from '@/lib/i18n/server'
+import { loadOrUnavailable } from '@/lib/load-or-unavailable'
+import { UnavailableNotice } from '@/components/ui/unavailable-state'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -13,7 +15,9 @@ export default async function NewCampaignPage({ params, searchParams }: PageProp
   const { churchId } = await params
   const { err = '' } = await searchParams
   const t = await getTranslator()
-  const templates = await getTemplates(churchId).catch(() => []) as any[]
+  const templatesResult = await loadOrUnavailable(() => getTemplates(churchId))
+  // Templates are optional (a body can be written instead), so the form stays usable on failure.
+  const templates = (templatesResult.status === 'ok' && Array.isArray(templatesResult.data) ? templatesResult.data : []) as any[]
 
   async function createAction(formData: FormData) {
     'use server'
@@ -67,6 +71,10 @@ export default async function NewCampaignPage({ params, searchParams }: PageProp
         <div className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
           {err}
         </div>
+      )}
+
+      {templatesResult.status === 'unavailable' && (
+        <UnavailableNotice title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />
       )}
 
       <form action={createAction} className="grid gap-3 rounded-md border p-4">

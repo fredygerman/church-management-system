@@ -202,20 +202,22 @@ export async function deleteMember(churchId: string, id: string): Promise<void> 
 // Function to search members by name or phone
 export async function searchMembers(
   churchId: string,
-  query: string
+  query: string,
+  options?: { throwOnError?: boolean }
 ): Promise<any[]> {
   try {
     if (!query.trim()) {
       return []
     }
-    
+
     const params = new URLSearchParams({
       q: query,
     })
-    
+
     const result = await apiGet(`/members/search?${params}`)
     return Array.isArray(result) ? result : []
   } catch (error) {
+    if (options?.throwOnError) throw error
     console.error('Error searching members:', error)
     return []
   }

@@ -8,7 +8,10 @@ import { getTranslator } from "@/lib/i18n/server"
 // Offering Categories
 // ============================================
 
-export async function getOfferingCategories(churchId: string): Promise<any[]> {
+export async function getOfferingCategories(
+  churchId: string,
+  options?: { throwOnError?: boolean }
+): Promise<any[]> {
   try {
     const result = await apiGet("/offering-categories", { churchId })
     return Array.isArray(result) ? result : []
@@ -16,6 +19,7 @@ export async function getOfferingCategories(churchId: string): Promise<any[]> {
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
       throw error
     }
+    if (options?.throwOnError) throw error
     console.error("Error fetching offering categories:", error)
     return []
   }

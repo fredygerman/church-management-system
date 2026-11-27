@@ -5,6 +5,8 @@ import { getServiceSessions, manualCheckin, qrCheckin } from '@/actions/attendan
 import { searchMembers } from '@/actions/member'
 import { checkPermission, ensurePermission } from '@/lib/permissions-server'
 import { getTranslator } from '@/lib/i18n/server'
+import { loadOrUnavailable } from '@/lib/load-or-unavailable'
+import { UnavailableNotice } from '@/components/ui/unavailable-state'
 
 interface PageProps {
   params: Promise<{ churchId: string }>
@@ -18,10 +20,20 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
   const t = await getTranslator()
   const canManageAttendance = await checkPermission('manage:attendance')
 
-  const [sessions, members] = await Promise.all([
-    getServiceSessions(churchId).then((rows: any[]) => rows.filter((row) => row.status === 'open')).catch(() => []),
-    q ? searchMembers(churchId, q).catch(() => []) : Promise.resolve([]),
+  const [sessionsResult, membersResult] = await Promise.all([
+    loadOrUnavailable(async () => {
+      const rows = await getServiceSessions(churchId)
+      if (!Array.isArray(rows)) throw new Error('Unexpected service sessions response')
+      return rows.filter((row: any) => row.status === 'open')
+    }),
+    q
+      ? loadOrUnavailable(() => searchMembers(churchId, q, { throwOnError: true }))
+      : Promise.resolve({ status: 'ok' as const, data: [] as any[] }),
   ])
+  const sessionsFailed = sessionsResult.status === 'unavailable'
+  const membersFailed = membersResult.status === 'unavailable'
+  const sessions = sessionsResult.status === 'ok' ? sessionsResult.data : []
+  const members = membersResult.status === 'ok' ? membersResult.data : []
 
   async function manualAction(formData: FormData) {
     'use server'
@@ -90,6 +102,10 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
         </div>
       )}
 
+      {(sessionsFailed || membersFailed) && (
+        <UnavailableNotice title={t('staff.common.unavailableTitle')} message={t('staff.common.unavailableMessage')} />
+      )}
+
       <div className="grid gap-4 md:grid-cols-2">
         <form action={manualAction} className="space-y-2 rounded-md border p-4">
           <input type="hidden" name="q" value={q} />
@@ -106,7 +122,7 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
               <option key={member.id} value={member.id}>{member.firstName} {member.lastName} {member.phone ? `(${member.phone})` : ''}</option>
             ))}
           </select>
-          <button type="submit" disabled={!canManageAttendance} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{t('staff.attendance.checkin.checkIn')}</button>
+          <button type="submit" disabled={!canManageAttendance || sessionsFailed || membersFailed} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{t('staff.attendance.checkin.checkIn')}</button>
         </form>
 
         <form action={qrAction} className="space-y-2 rounded-md border p-4">
@@ -119,7 +135,7 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
               <option key={member.id} value={member.id}>{member.firstName} {member.lastName} {member.phone ? `(${member.phone})` : ''}</option>
             ))}
           </select>
-          <button type="submit" disabled={!canManageAttendance} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{t('staff.attendance.checkin.checkInByQr')}</button>
+          <button type="submit" disabled={!canManageAttendance || membersFailed} className="rounded-md bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50">{t('staff.attendance.checkin.checkInByQr')}</button>
         </form>
       </div>
 
@@ -127,7 +143,7 @@ export default async function AttendanceCheckinPage({ params, searchParams }: Pa
         <p className="text-sm text-muted-foreground">{t('staff.attendance.checkin.noPermission')}</p>
       )}
 
-      {sessions.length === 0 && (
+      {sessions.length === 0 && !sessionsFailed && (
         <p className="text-sm text-muted-foreground">
           {t('staff.attendance.noOpenSessions')}{" "}
           <Link className="underline" href={`/${churchId}/dashboard/attendance/sessions`}>

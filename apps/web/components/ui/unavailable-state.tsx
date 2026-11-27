@@ -13,3 +13,13 @@ export function UnavailableState({ title, message }: UnavailableStateProps) {
     </div>
   )
 }
+
+/** Inline error for a form that still renders; use above the form, not in place of it. */
+export function UnavailableNotice({ title, message }: UnavailableStateProps) {
+  return (
+    <div role="alert" className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-800">
+      <p className="font-medium">{title}</p>
+      <p>{message}</p>
+    </div>
+  )
+}

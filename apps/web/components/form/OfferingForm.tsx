@@ -69,6 +69,8 @@ interface OfferingFormProps {
   goals: { id: string; name: string }[]
   initialData?: any
   isEditMode?: boolean
+  // Set when a source list failed to load: saving would drop links the user cannot see.
+  submitDisabled?: boolean
 }
 
 export function OfferingForm({
@@ -79,6 +81,7 @@ export function OfferingForm({
   goals,
   initialData,
   isEditMode = false,
+  submitDisabled = false,
 }: OfferingFormProps) {
   const { t } = useT()
   const offeringFormSchema = useMemo(() => buildOfferingFormSchema(t), [t])
@@ -343,7 +346,7 @@ export function OfferingForm({
           />
 
           <div className="flex gap-4">
-            <Button type="submit" disabled={isSubmitting} className="flex-1">
+            <Button type="submit" disabled={isSubmitting || submitDisabled} className="flex-1">
               {isSubmitting
                 ? t("sweep.a.form.saving")
                 : isEditMode

@@ -5,7 +5,6 @@ import { ApiError, api } from "../../../lib/api"
 import { useSession } from "../../../lib/session"
 import { useT } from "../../../lib/locale"
 import { ErrorState, LoadingState, styles } from "../../../components/screen-state"
-import { ChurchSwitcher } from "../../../components/church-switcher"
 import { LanguagePicker } from "../../../components/language-picker"
 import { SpacesSection } from "../../../components/spaces-section"
 import { AvatarEditor } from "../../../components/profile/avatar-editor"
@@ -132,9 +131,10 @@ export default function ProfileScreen() {
 
     <View style={{ gap: spacing.sm }}>
       <SectionHeader title={t("mobile.member.profile.switchOrJoin")} />
-      <Card style={{ gap: spacing.md }}>
-        <ChurchSwitcher />
-        <ListRow icon="add-circle-outline" title={t("join.title")} onPress={() => router.push("/join")} />
+      <Card style={{ padding: 0, overflow: "hidden" }}>
+        <View style={{ padding: spacing.md }}>
+          <ListRow icon="add-circle-outline" title={t("join.title")} onPress={() => router.push("/join")} />
+        </View>
       </Card>
     </View>
 

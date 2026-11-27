@@ -18,7 +18,10 @@ export interface GivingGoalInput {
 }
 
 // Staff list - church-scoped, includes private goals, requires manage:giving-goals.
-export async function getGivingGoals(churchId: string): Promise<any[]> {
+export async function getGivingGoals(
+  churchId: string,
+  options?: { throwOnError?: boolean }
+): Promise<any[]> {
   try {
     const result = await apiGet("/giving-goals", { churchId })
     return Array.isArray(result) ? result : []
@@ -26,6 +29,7 @@ export async function getGivingGoals(churchId: string): Promise<any[]> {
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {
       throw error
     }
+    if (options?.throwOnError) throw error
     console.error("Error fetching giving goals:", error)
     return []
   }
