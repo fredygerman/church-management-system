@@ -10,6 +10,7 @@ import helmet from 'helmet';
 import { IncomingMessage, ServerResponse } from 'http';
 import { getServiceStatus } from './helpers/util';
 import { assertProductionSecrets } from './security/production-secrets';
+import { runMigrationsIfEnabled } from './database/run-migrations';
 
 const { appUrl, port, frontendUrl, nodeEnv } = config;
 
@@ -18,6 +19,9 @@ async function bootstrap() {
 
   // Refuse to start in production on unset or committed-default signing secrets (RM-005).
   assertProductionSecrets();
+
+  // Opt-in (RUN_MIGRATIONS_ON_START=true). Throws on failure so the API never starts half-migrated.
+  await runMigrationsIfEnabled(logger);
 
   logger.log('🚀 Starting Church API Service...');
 
