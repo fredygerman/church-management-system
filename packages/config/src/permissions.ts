@@ -31,6 +31,12 @@ export type PermissionAction =
   | 'read:member'
   | 'update:member'
   | 'delete:member'
+  | 'search:members'
+  | 'view:announcements'
+  | 'publish:announcements'
+  | 'approve:announcements'
+  | 'manage:invitations'
+  | 'view:prayer-requests'
   
   // Visitors
   | 'view:visitors'
@@ -119,6 +125,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'manage:files', 'manage:mail', 'manage:sms',
     'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
+    'view:announcements', 'publish:announcements', 'approve:announcements', 'manage:invitations', 'search:members',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
     'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
@@ -136,6 +143,7 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'manage:offerings', 'view:giving-reports', 'manage:giving-goals', 'view:giving-goals',
     'manage:services', 'manage:attendance', 'view:attendance', 'manage:risk-settings', 'view:risk-flags',
     'manage:communications', 'view:communications', 'send:communications',
+    'view:announcements', 'publish:announcements', 'approve:announcements', 'manage:invitations', 'search:members',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
     'manage:files', 'manage:mail', 'manage:sms', 'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
@@ -154,7 +162,8 @@ export const PERMISSION_MAP: Record<UserRole, PermissionAction[]> = {
     'manage:communications', 'view:communications', 'send:communications',
     'manage:data-quality', 'view:data-quality', 'manage:attendance-analytics',
     'manage:lifecycle-rules', 'view:lifecycle-dashboard',
-    'manage:files', 'manage:sms', 'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
+    'manage:files', 'read:self', 'update:self', 'create:prayer-request', 'read:own-prayer-requests',
+    'view:announcements', 'publish:announcements', 'manage:invitations', 'search:members',
     'manage:events', 'view:events', 'rsvp:event',
   ],
 
@@ -240,6 +249,54 @@ export const PERMISSION_METADATA: Record<PermissionAction, PermissionMetadata> =
     descriptionKey: 'sweep.b.permission.deleteMember.description',
     label: 'Delete Member',
     description: 'Delete member records',
+    category: 'member',
+    riskLevel: 'high',
+  },
+  'search:members': {
+    labelKey: 'sweep.b.permission.searchMembers.label',
+    descriptionKey: 'sweep.b.permission.searchMembers.description',
+    label: 'Search Members',
+    description: 'Find members by name or phone (no full records)',
+    category: 'member',
+    riskLevel: 'low',
+  },
+  'view:announcements': {
+    labelKey: 'sweep.b.permission.viewAnnouncements.label',
+    descriptionKey: 'sweep.b.permission.viewAnnouncements.description',
+    label: 'View Announcements',
+    description: 'Read announcements and their delivery status',
+    category: 'admin',
+    riskLevel: 'low',
+  },
+  'publish:announcements': {
+    labelKey: 'sweep.b.permission.publishAnnouncements.label',
+    descriptionKey: 'sweep.b.permission.publishAnnouncements.description',
+    label: 'Publish Announcements',
+    description: 'Create, schedule and publish announcements',
+    category: 'admin',
+    riskLevel: 'medium',
+  },
+  'approve:announcements': {
+    labelKey: 'sweep.b.permission.approveAnnouncements.label',
+    descriptionKey: 'sweep.b.permission.approveAnnouncements.description',
+    label: 'Approve Announcements',
+    description: 'Approve another person’s announcement when approval is required',
+    category: 'admin',
+    riskLevel: 'medium',
+  },
+  'manage:invitations': {
+    labelKey: 'sweep.b.permission.manageInvitations.label',
+    descriptionKey: 'sweep.b.permission.manageInvitations.description',
+    label: 'Manage Invitations',
+    description: 'Create and revoke church join codes and approve join requests',
+    category: 'member',
+    riskLevel: 'medium',
+  },
+  'view:prayer-requests': {
+    labelKey: 'sweep.b.permission.viewPrayerRequests.label',
+    descriptionKey: 'sweep.b.permission.viewPrayerRequests.description',
+    label: 'View Prayer Requests',
+    description: 'Read prayer requests shared with pastoral staff (policy pending D-17)',
     category: 'member',
     riskLevel: 'high',
   },
