@@ -27,6 +27,7 @@ import {
 } from '@church/db';
 import { roleHasPermission } from '../auth/types/permission.types';
 import { NotificationsService } from '../notifications/notifications.service';
+import { assertValidPrivateKey, DEFAULT_SIGNED_GET_TTL_SECONDS } from './private-storage';
 
 // Local imports
 import { ExceptionConstants } from '../core/exceptions/exceptions.constants';
@@ -216,6 +217,41 @@ export class FileUploadService {
       this.logger.error(`Presigning failed: ${error?.name}: ${error?.message}`);
       throw new ServiceUnavailableException('Storage is unavailable');
     }
+  }
+
+  /**
+   * Writes a private object. No ACL is set, so the object is never publicly
+   * readable; clients get access through getSignedGetUrl. Throws a 503 when
+   * storage is not configured and a 400 for an invalid key.
+   */
+  async putPrivateObject(key: string, body: Buffer, contentType: string): Promise<string> {
+    this.ensureStorageConfigured();
+    const validKey = assertValidPrivateKey(key);
+    try {
+      await this.s3Client.send(
+        new PutObjectCommand({
+          Bucket: this.s3Config.bucket,
+          Key: validKey,
+          Body: body,
+          ContentType: contentType,
+          ContentLength: body.length,
+        }),
+      );
+    } catch (error: any) {
+      this.logger.error(`Private upload failed: ${error?.name}: ${error?.message}`);
+      throw new ServiceUnavailableException('Storage is unavailable');
+    }
+    return validKey;
+  }
+
+  /** Presigned GET URL for a private object. Expires after 900 seconds by default. */
+  async getSignedGetUrl(
+    key: string,
+    expiresInSeconds: number = DEFAULT_SIGNED_GET_TTL_SECONDS,
+  ): Promise<string> {
+    this.ensureStorageConfigured();
+    const validKey = assertValidPrivateKey(key);
+    return this.presignGetUrl(validKey, expiresInSeconds);
   }
 
   private toDocumentMetadata(document: any): DocumentMetadata {
