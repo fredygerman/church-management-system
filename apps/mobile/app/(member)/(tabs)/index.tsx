@@ -173,7 +173,8 @@ export default function HomeScreen() {
         {isStaff ? <HomeAction icon="people-outline" label={t("wiring.spaces.toStaff")} onPress={() => setSpace("staff")} /> : null}
       </View>
     </View>
-    <VerseCard heading={t("mobile.member.home.verseHeading")} text={t(`mobile.member.home.verseText.${verseIndex}` as "mobile.member.home.verseText.0")} reference={t(`mobile.member.home.verseRef.${verseIndex}` as "mobile.member.home.verseRef.0")} />
+    {/* D-23: Swahili verse text is not yet church-approved; hide the card until it is. */}
+    {locale === "sw" ? null : <VerseCard heading={t("mobile.member.home.verseHeading")} text={t(`mobile.member.home.verseText.${verseIndex}` as "mobile.member.home.verseText.0")} reference={t(`mobile.member.home.verseRef.${verseIndex}` as "mobile.member.home.verseRef.0")} />}
     <View>
       <SectionHeader title={t("mobile.member.home.upcomingHeading")} actionLabel={t("mobile.member.home.seeAll")} onAction={() => router.push("/(member)/events")} />
       {servicesStatus === "loading" ? <LoadingState /> : servicesStatus === "error" ? <ErrorState message={t("mobile.member.home.servicesError")} onRetry={() => setServicesAttempt((value) => value + 1)} /> : upcoming ? <UpcomingCard item={upcoming} locale={locale} onPress={() => router.push(upcoming.route as "/(member)/events")} /> : <Card><EmptyState message={t("mobile.member.home.noUpcoming")} /></Card>}
